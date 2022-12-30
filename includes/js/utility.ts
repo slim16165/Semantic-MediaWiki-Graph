@@ -1,10 +1,20 @@
-import d3 from "d3";
+import d3, {SimulationNodeDatum} from "d3";
 import {ColorHelper} from "./ColorHelper";
 import {MyClass} from "./app";
 
 interface SourceTarget{
     source: any,
     target: any
+}
+
+interface BuildTheArrowsParams {
+    svgCanvas: Selection;
+}
+
+interface TickParams {
+    link: Selection;
+    node: Selection;
+    linkText: Selection;
 }
 
 export class Utility {
@@ -82,7 +92,7 @@ export class Utility {
             // .force("link", d3.forceLink().id((d: any) => d.id).distance((d) => width < height ? width * 1 / 3 : height * 1 / 3))
             .force("center", d3.forceCenter(this.width / 2, this.height / 2))
             .on("tick", () => {
-                tick();
+                this.Tick({link: link, node: node, linkText: linkText});
             });
         // .start();
 
@@ -181,88 +191,61 @@ export class Utility {
             .text((d: any) => d.linkName);
 
 
-        const tick = function ()
-        {
-            link.attr("x1", (d: SourceTarget) => d.source.x)
-                .attr("y1", (d: SourceTarget) => d.source.y)
-                .attr("x2", (d: SourceTarget) => d.target.x)
-                .attr("y2", (d: SourceTarget) => d.target.y);
-
-            node.attr("cx", (d: any) => {
-                if (d.id === MyClass.focalNodeID) {
-                    const s = 1 / this.scale;
-                    return d.x = Math.max(60, Math.min(s * ($(".chart")[0].clientWidth - 60), d.x));
-                } else {
-                    const s = 1 / this.scale;
-                    return d.x = Math.max(20, Math.min(s * ($(".chart")[0].clientWidth - 20), d.x));
-                }
-            }).attr("cy", (d: any) => {
-                if (d.id === MyClass.focalNodeID
-                ) {
-                    const s = 1 / this.scale;
-                    return d.y = Math.max(60, Math.min(s * ($(".chart")[0].clientHeight - 60), d.y));
-                } else {
-                    const s = 1 / this.scale;
-                    return d.y = Math.max(20, Math.min(s * ($(".chart")[0].clientHeight - 20), d.y));
-                }
-            });
-
-            link.attr("x1", (d: SourceTarget) => d.source.x)
-                .attr("y1", (d: SourceTarget) => d.source.y)
-                .attr("x2", (d: SourceTarget) => d.target.x)
-                .attr("y2", (d: SourceTarget) => d.target.y);
-
-            node.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
-
-            linkText
-                .attr("x", (d: SourceTarget) => d.target.x > d.source.x ? (d.source.x + (d.target.x - d.source.x) / 2) : (d.target.x + (d.source.x - d.target.x) / 2))
-                .attr("y", (d: SourceTarget) => d.target.y > d.source.y ? (d.source.y + (d.target.y - d.source.y) / 2) : (d.target.y + (d.source.y - d.target.y) / 2));
-        }
-
-
         // Print Legend Title...
-        svgCanvas.append("text").attr("class", "region")
-            .text("Color Keys for Data Types...")
-            .attr("x", 15)
-            .attr("y", 25)
-            .style("fill", "Black")
-            .style("font", "bold 16px Arial")
-            .attr("text-anchor", "start");
-
+        this.PrintLegendTitle(svgCanvas);
 
         //Build the Arrows
-        svgCanvas.selectAll(".gLink").append("marker")
-            .attr("id", (d: any, i) => `arrow_${i}`)
-            .attr("viewBox", "0 -5 10 10")
-            .attr("refX", (d: any, i) =>
-                d.targetId === MyClass.focalNodeID ? 55 : 20
-            )
-            .attr("refY", 0)
-            .attr("markerWidth", 8)
-            .attr("markerHeight", 8)
-            .attr("orient", "auto")
-            .append("svg:path")
-            .attr("d", "M0,-5L10,0L0,5");
+        this.BuildTheArrows({svgCanvas : svgCanvas});
+
         // Plot the bullet circles...
-        svgCanvas.selectAll("focalNodeCanvas")
-            .data(sortedColors).enter().append("svg:circle") // Append circle elements
-            .attr("cx", 20)
-            .attr("cy", (d: any, i) => (45 + (i * 20)))
-            .attr("stroke-width", ".5")
-            .style("fill", (d: any, i) => ColorHelper.color_hash[d])
-            .attr("r", 6)
-            .attr("color_value", (d: any, i) => ColorHelper.color_hash[d])
-            .attr("type_value", (d: any, i) => d)
-            .attr("index_value", (d: any, i) => `index-${i}`)
-            .attr("class", (d: any) => {
-                const strippedString = d.replace(/ /g, "_");
-                return `legendBullet-${strippedString}`;
-            })
-            .on('mouseover', this.typeMouseOver)
-            .on("mouseout", this.typeMouseOut)
-            .on('click', this.clickLegend);
+        this.PlotTheBulletCircles({svgCanvas : svgCanvas}, sortedColors);
 
         // Create legend text that acts as label keys...
+        this.CreateLegendTextThatActsAsLabelKeys({svgCanvas : svgCanvas}, sortedColors);
+
+
+        d3.select(window).on('resize.updatesvg', this.updateWindow);
+    }
+
+    private static Tick({link, node, linkText}: TickParams)
+    {
+        link.attr("x1", (d: SourceTarget) => d.source.x)
+            .attr("y1", (d: SourceTarget) => d.source.y)
+            .attr("x2", (d: SourceTarget) => d.target.x)
+            .attr("y2", (d: SourceTarget) => d.target.y);
+
+        node.attr("cx", (d: any) => {
+            if (d.id === MyClass.focalNodeID) {
+                const s = 1 / this.scale;
+                return d.x = Math.max(60, Math.min(s * ($(".chart")[0].clientWidth - 60), d.x));
+            } else {
+                const s = 1 / this.scale;
+                return d.x = Math.max(20, Math.min(s * ($(".chart")[0].clientWidth - 20), d.x));
+            }
+        }).attr("cy", (d: any) => {
+            if (d.id === MyClass.focalNodeID
+            ) {
+                const s = 1 / this.scale;
+                return d.y = Math.max(60, Math.min(s * ($(".chart")[0].clientHeight - 60), d.y));
+            } else {
+                const s = 1 / this.scale;
+                return d.y = Math.max(20, Math.min(s * ($(".chart")[0].clientHeight - 20), d.y));
+            }
+        });
+
+        link.attr("x1", (d: SourceTarget) => d.source.x)
+            .attr("y1", (d: SourceTarget) => d.source.y)
+            .attr("x2", (d: SourceTarget) => d.target.x)
+            .attr("y2", (d: SourceTarget) => d.target.y);
+
+        node.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
+
+        linkText
+            .attr("x", (d: SourceTarget) => d.target.x > d.source.x ? (d.source.x + (d.target.x - d.source.x) / 2) : (d.target.x + (d.source.x - d.target.x) / 2))
+            .attr("y", (d: SourceTarget) => d.target.y > d.source.y ? (d.source.y + (d.target.y - d.source.y) / 2) : (d.target.y + (d.source.y - d.target.y) / 2));
+    }
+
+    private static CreateLegendTextThatActsAsLabelKeys({svgCanvas}: BuildTheArrowsParams, sortedColors: any[]) {
         svgCanvas.selectAll("a.legend_link")
             .data(sortedColors) // Instruct to bind dataSet to text elements
             .enter().append("svg:a") // Append legend elements
@@ -284,9 +267,51 @@ export class Utility {
             .style("font", "normal 14px Arial")
             .on('mouseover', this.typeMouseOver)
             .on("mouseout", this.typeMouseOut);
+    }
 
+    private static PlotTheBulletCircles({svgCanvas}: BuildTheArrowsParams, sortedColors: any[]) {
+        svgCanvas.selectAll("focalNodeCanvas")
+            .data(sortedColors).enter().append("svg:circle") // Append circle elements
+            .attr("cx", 20)
+            .attr("cy", (d: any, i) => (45 + (i * 20)))
+            .attr("stroke-width", ".5")
+            .style("fill", (d: any, i) => ColorHelper.color_hash[d])
+            .attr("r", 6)
+            .attr("color_value", (d: any, i) => ColorHelper.color_hash[d])
+            .attr("type_value", (d: any, i) => d)
+            .attr("index_value", (d: any, i) => `index-${i}`)
+            .attr("class", (d: any) => {
+                const strippedString = d.replace(/ /g, "_");
+                return `legendBullet-${strippedString}`;
+            })
+            .on('mouseover', this.typeMouseOver)
+            .on("mouseout", this.typeMouseOut)
+            .on('click', this.clickLegend);
+    }
 
-        d3.select(window).on('resize.updatesvg', this.updateWindow);
+    private static BuildTheArrows({svgCanvas}: BuildTheArrowsParams) {
+        svgCanvas.selectAll(".gLink").append("marker")
+            .attr("id", (d: any, i) => `arrow_${i}`)
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", (d: any, i) =>
+                d.targetId === MyClass.focalNodeID ? 55 : 20
+            )
+            .attr("refY", 0)
+            .attr("markerWidth", 8)
+            .attr("markerHeight", 8)
+            .attr("orient", "auto")
+            .append("svg:path")
+            .attr("d", "M0,-5L10,0L0,5");
+    }
+
+    private static PrintLegendTitle(svgCanvas: any) {
+        svgCanvas.append("text").attr("class", "region")
+            .text("Color Keys for Data Types...")
+            .attr("x", 15)
+            .attr("y", 25)
+            .style("fill", "Black")
+            .style("font", "bold 16px Arial")
+            .attr("text-anchor", "start");
     }
 
     public static updateWindow() {
@@ -305,14 +330,6 @@ export class Utility {
         const thisObject = d3.select(selector);
         const typeValue: string = thisObject.attr("type_value");
 
-        //    var selectedBullet = d3.selectAll(legendBulletSelector);
-        //  selectedBullet.style("fill", "none");
-        //    selectedBullet.style("stroke", colorValue);
-        //    selectedBullet.style("stroke-width", "3");
-        //  debugger;
-        //      $(".node [type_value='" + typeValue + "']").toggle();
-        //  [type_value='" + typeValue + "']")
-        //      var lis = $(".node");
         let invisibleType = [];
         const invIndexType = invisibleType.indexOf(typeValue);
         if (invIndexType > -1) {
@@ -356,8 +373,6 @@ export class Utility {
             }
         });
     };
-
-
 
     public static mouseClickNode(clickText) {
         let selector = this.this1;
@@ -425,6 +440,7 @@ export class Utility {
         Utility.setLegendStyles("strippedTypeValue", "colorValue", 6);
     };
 
+
     public static typeMouseOver(nodeSize) {
         let selector = this.this1;
         const thisObject = d3.select(selector);
@@ -432,38 +448,8 @@ export class Utility {
         const strippedTypeValue = typeValue.replace(/ /g, "_");
 
         Utility.setLegendStyles("strippedTypeValue", "Maroon", 1.2 * 6);
-
-        const nodeTextSelector = `.nodeText-${strippedTypeValue}`;
-        const selectedNodeText = d3.selectAll(nodeTextSelector);
-        //document.writeln(pie3SliceSelector);
-        selectedNodeText.style("font", "bold 16px Arial");
-        selectedNodeText.style("fill", "Maroon");
-
-        const nodeCircleSelector = `.nodeCircle-${strippedTypeValue}`;
-        const selectedCircle = d3.selectAll(nodeCircleSelector);
-        //document.writeln(nodeCircleSelector);
-        selectedCircle.style("fill", "Maroon");
-        selectedCircle.style("stroke", "Maroon");
-        selectedCircle.attr("r", 1.2 * nodeSize);
-
-        const focalNodeCircleSelector = ".focalNodeCircle";
-        const selectedFocalNodeCircle = d3.selectAll(focalNodeCircleSelector);
-        //document.writeln(focalNodeCircleSelector);
-        const focalNodeType = selectedFocalNodeCircle.attr("type_value");
-        if (typeValue === focalNodeType) {
-            selectedFocalNodeCircle.style("stroke", "Maroon");
-            selectedFocalNodeCircle.style("fill", "White");
-        }
-
-        const focalNodeTextSelector = ".focalNodeText";
-        const selectedFocalNodeText = d3.selectAll(focalNodeTextSelector);
-        const focalNodeTextType = selectedFocalNodeText.attr("type_value");
-        //document.writeln(pie3SliceSelector);
-        if (typeValue === focalNodeTextType) {
-            selectedFocalNodeText.style("fill", "Maroon");
-            selectedFocalNodeText.style("font", "bold 16px Arial");
-        }
-    };
+        Utility.setNodeStyles(strippedTypeValue, "Maroon", "bold", nodeSize, false);
+    }
 
     public static typeMouseOut(selector: string, nodeSize) {
         const thisObject = d3.select(selector);
@@ -472,35 +458,34 @@ export class Utility {
         const strippedTypeValue = typeValue.replace(/ /g, "_");
 
         Utility.setLegendStyles("strippedTypeValue", "colorValue", 6);
+        Utility.setNodeStyles(strippedTypeValue, "Blue", "normal", nodeSize, false);
+    }
 
+    private static setNodeStyles(strippedTypeValue: string, colorValue: string, fontWeight: string, nodeSize: number, focalNode: boolean) {
         const nodeTextSelector = `.nodeText-${strippedTypeValue}`;
         const selectedNodeText = d3.selectAll(nodeTextSelector);
-        //document.writeln(pie3SliceSelector);
-        selectedNodeText.style("font", "normal 16px Arial");
-        selectedNodeText.style("fill", "Blue");
+        selectedNodeText.style("font", `${fontWeight} 16px Arial`);
+        selectedNodeText.style("fill", colorValue);
 
         const nodeCircleSelector = `.nodeCircle-${strippedTypeValue}`;
         const selectedCircle = d3.selectAll(nodeCircleSelector);
-        //document.writeln(nodeCircleSelector);
-        selectedCircle.style("fill", "White");
+        selectedCircle.style("fill", colorValue);
         selectedCircle.style("stroke", colorValue);
-        selectedCircle.attr("r", nodeSize);
+        selectedCircle.attr("r", focalNode ? nodeSize : 1.2 * nodeSize);
 
-        const focalNodeCircleSelector = ".focalNodeCircle";
-        const selectedFocalNodeCircle = d3.selectAll(focalNodeCircleSelector);
-        //document.writeln(focalNodeCircleSelector);
-        const focalNodeType = selectedFocalNodeCircle.attr("type_value");
-        if (typeValue === focalNodeType) {
+        if (focalNode) {
+            const focalNodeCircleSelector = ".focalNodeCircle";
+            const selectedFocalNodeCircle = d3.selectAll(focalNodeCircleSelector);
             selectedFocalNodeCircle.style("stroke", colorValue);
             selectedFocalNodeCircle.style("fill", "White");
-        }
 
-        const focalNodeTextSelector = ".focalNodeText";
-        const selectedFocalNodeText = d3.selectAll(focalNodeTextSelector);
-        //document.writeln(pie3SliceSelector);
-        selectedFocalNodeText.style("fill", "Blue");
-        selectedFocalNodeText.style("font", "normal 14px Arial");
-    };
+            const focalNodeTextSelector = ".focalNodeText";
+            const selectedFocalNodeText = d3.selectAll(focalNodeTextSelector);
+            selectedFocalNodeText.style("fill", colorValue);
+            selectedFocalNodeText.style("font", `${fontWeight} 16px Arial`);
+        }
+    }
+
     private static setLegendStyles(strippedTypeValue: string, colorValue: string, radius: number) {
         const legendBulletSelector = `.legendBullet-${strippedTypeValue}`;
         const selectedBullet = d3.selectAll(legendBulletSelector);
@@ -512,6 +497,5 @@ export class Utility {
         selectedLegendText.style("font", colorValue === "Maroon" ? "bold 14px Arial" : "normal 14px Arial");
         selectedLegendText.style("fill", colorValue === "Maroon" ? "Maroon" : "Black");
     }
-
 
 }
