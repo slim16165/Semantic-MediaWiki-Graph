@@ -2,19 +2,24 @@ import d3 from "d3";
 import {ColorHelper} from "./ColorHelper";
 import {MyClass} from "./app";
 
-export class Utility
-{
+interface SourceTarget{
+    source: any,
+    target: any
+}
+
+export class Utility {
     public static width = $(".chart")[0].clientWidth;
     public static height = $(".chart")[0].clientHeight;
     public static centerNodeSize = 50;
     public static nodeSize = 10;
-    
+
     public static scale = 1;
 
     public static this1;
     private static svgCanvas: any;
 
-    public static drawCluster(drawingName: any, focalNode: any, nodeSetApp: any, linkSetApp: any, selectString: any, colors: any): void {
+    public static drawCluster(drawingName: any, focalNode: any, nodeSetApp: any, linkSetApp: any, selectString: any, colors: any): void
+    {
         // drawingName => A unique drawing identifier that has no spaces, no "." and no "#" characters.
         // focalNode => Primary Node of Context.
         // nodeSetApp => Set of nodes and their relevant data.
@@ -67,7 +72,7 @@ export class Utility
         });
 
         // Create a force layout and bind Nodes and Links
-        var force = d3.forceSimulation()
+        let force = d3.forceSimulation()
             .nodes(nodeSetApp)
             // .links(linkSetApp)
             .force("charge", d3.forceManyBody().strength(-1000))
@@ -78,7 +83,7 @@ export class Utility
             .force("center", d3.forceCenter(this.width / 2, this.height / 2))
             .on("tick", () => {
                 tick();
-            })
+            });
         // .start();
 
 
@@ -96,12 +101,13 @@ export class Utility
             .style("stroke", "#ccc")
             .style("stroke-width", "1.5px")
             .attr("marker-end", (d, i) => `url(#arrow_${i})`)
-            .attr("x1", (d: any) => d.source.x)
-            .attr("y1", (d: any) => d.source.y)
-            .attr("x2", (d: any) => d.target.x)
-            .attr("y2", (d: any) => d.target.y);
+            .attr("x1", (d: SourceTarget) => d.source.x)
+            .attr("y1", (d: SourceTarget) => d.source.y)
+            .attr("x2", (d: SourceTarget) => d.target.x)
+            .attr("y2", (d: SourceTarget) => d.target.y);
         let clickText = false;
         // Create Nodes
+
         const node = svgCanvas.selectAll(".node")
             .data(force.nodes())
             .enter().append("g")
@@ -167,19 +173,20 @@ export class Utility
             // .data(force.links())
             .append("text")
             .attr("font-family", "Arial, Helvetica, sans-serif")
-            .attr("x", (d: any) => d.target.x > d.source.x ? (d.source.x + (d.target.x - d.source.x) / 2) : (d.target.x + (d.source.x - d.target.x) / 2))
-            .attr("y", (d: any) => d.target.y > d.source.y ? (d.source.y + (d.target.y - d.source.y) / 2) : (d.target.y + (d.source.y - d.target.y) / 2))
+            .attr("x", (d: SourceTarget) => d.target.x > d.source.x ? (d.source.x + (d.target.x - d.source.x) / 2) : (d.target.x + (d.source.x - d.target.x) / 2))
+            .attr("y", (d: SourceTarget) => d.target.y > d.source.y ? (d.source.y + (d.target.y - d.source.y) / 2) : (d.target.y + (d.source.y - d.target.y) / 2))
             .attr("fill", "Black")
             .style("font", "normal 12px Arial")
             .attr("dy", ".35em")
             .text((d: any) => d.linkName);
 
 
-        const tick = function () {
-            link.attr("x1", (d: any) => d.source.x)
-                .attr("y1", (d: any) => d.source.y)
-                .attr("x2", (d: any) => d.target.x)
-                .attr("y2", (d: any) => d.target.y);
+        const tick = function ()
+        {
+            link.attr("x1", (d: SourceTarget) => d.source.x)
+                .attr("y1", (d: SourceTarget) => d.source.y)
+                .attr("x2", (d: SourceTarget) => d.target.x)
+                .attr("y2", (d: SourceTarget) => d.target.y);
 
             node.attr("cx", (d: any) => {
                 if (d.id === MyClass.focalNodeID) {
@@ -189,30 +196,27 @@ export class Utility
                     const s = 1 / this.scale;
                     return d.x = Math.max(20, Math.min(s * ($(".chart")[0].clientWidth - 20), d.x));
                 }
+            }).attr("cy", (d: any) => {
+                if (d.id === MyClass.focalNodeID
+                ) {
+                    const s = 1 / this.scale;
+                    return d.y = Math.max(60, Math.min(s * ($(".chart")[0].clientHeight - 60), d.y));
+                } else {
+                    const s = 1 / this.scale;
+                    return d.y = Math.max(20, Math.min(s * ($(".chart")[0].clientHeight - 20), d.y));
+                }
+            });
 
-
-            })
-                .attr("cy", (d: any) => {
-                    if (d.id === MyClass.focalNodeID
-                    ) {
-                        const s = 1 / this.scale;
-                        return d.y = Math.max(60, Math.min(s * ($(".chart")[0].clientHeight - 60), d.y));
-                    } else {
-                        const s = 1 / this.scale;
-                        return d.y = Math.max(20, Math.min(s * ($(".chart")[0].clientHeight - 20), d.y));
-                    }
-                });
-
-            link.attr("x1", (d: any) => d.source.x)
-                .attr("y1", (d: any) => d.source.y)
-                .attr("x2", (d: any) => d.target.x)
-                .attr("y2", (d: any) => d.target.y);
+            link.attr("x1", (d: SourceTarget) => d.source.x)
+                .attr("y1", (d: SourceTarget) => d.source.y)
+                .attr("x2", (d: SourceTarget) => d.target.x)
+                .attr("y2", (d: SourceTarget) => d.target.y);
 
             node.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
 
             linkText
-                .attr("x", (d: any) => d.target.x > d.source.x ? (d.source.x + (d.target.x - d.source.x) / 2) : (d.target.x + (d.source.x - d.target.x) / 2))
-                .attr("y", (d: any) => d.target.y > d.source.y ? (d.source.y + (d.target.y - d.source.y) / 2) : (d.target.y + (d.source.y - d.target.y) / 2));
+                .attr("x", (d: SourceTarget) => d.target.x > d.source.x ? (d.source.x + (d.target.x - d.source.x) / 2) : (d.target.x + (d.source.x - d.target.x) / 2))
+                .attr("y", (d: SourceTarget) => d.target.y > d.source.y ? (d.source.y + (d.target.y - d.source.y) / 2) : (d.target.y + (d.source.y - d.target.y) / 2));
         }
 
 
@@ -282,7 +286,6 @@ export class Utility
             .on("mouseout", this.typeMouseOut);
 
 
-
         d3.select(window).on('resize.updatesvg', this.updateWindow);
     }
 
@@ -294,7 +297,7 @@ export class Utility
         $('#svgCanvas').width(this.width + 90);
         $('#svgCanvas').height(this.height + 60);
     }
-    
+
 
     public static clickLegend() {
 
@@ -354,23 +357,81 @@ export class Utility
         });
     };
 
-    public static typeMouseOver (nodeSize) {
+
+
+    public static mouseClickNode(clickText) {
+        let selector = this.this1;
+        const thisObject = d3.select(selector);
+        const typeValue = thisObject.attr("type_value");
+
+        if (!clickText && typeValue === 'Internal Link') {
+            const n = thisObject[0][0].__data__.name;
+            if (!MyClass.done.includes(n)) {
+                MyClass.askNode(n);
+            }
+        }
+
+        clickText = false;
+    };
+
+    public static mouseClickNodeText(clickText) {
+        let selector = this.this1;
+        let win: any;
+        const thisObject = d3.select(selector);
+        const typeValue = thisObject.attr("type_value");
+
+        if (typeValue === 'Internal Link') {
+            //    var win = window.open("index.php/" + thisObject[0][0].__data__.hlink);
+            let win = window.open(thisObject[0][0].__data__.hlink);
+        } else if (typeValue === 'URI') {
+            let win = window.open(thisObject[0][0].__data__.hlink);
+        }
+
+        clickText = true;
+    };
+
+    public static nodeMouseOver() {
         let selector = this.this1;
         const thisObject = d3.select(selector);
         const typeValue = thisObject.attr("type_value");
         const strippedTypeValue = typeValue.replace(/ /g, "_");
 
-        const legendBulletSelector = `.legendBullet-${strippedTypeValue}`;
-        const selectedBullet = d3.selectAll(legendBulletSelector);
-        //document.writeln(legendBulletSelector);
-        selectedBullet.style("fill", "Maroon");
-        selectedBullet.attr("r", 1.2 * 6);
+        d3.select(selector).select("circle").transition()
+            .duration(250)
+            .attr("r", (d: any, i) => d.id === MyClass.focalNodeID ? 65 : 15);
+        d3.select(selector).select("text").transition()
+            .duration(250)
+            .style("font", "bold 20px Arial")
+            .attr("fill", "Blue");
 
-        const legendTextSelector = `.legendText-${strippedTypeValue}`;
-        const selectedLegendText = d3.selectAll(legendTextSelector);
-        //document.writeln(legendBulletSelector);
-        selectedLegendText.style("font", "bold 14px Arial");
-        selectedLegendText.style("fill", "Maroon");
+        Utility.setLegendStyles("strippedTypeValue", "Maroon", 1.2 * 6);
+    };
+
+    public static nodeMouseOut() {
+        let selector = this.this1;
+        const thisObject = d3.select(selector);
+        const typeValue = thisObject.attr("type_value");
+        const colorValue = thisObject.attr("color_value");
+        const strippedTypeValue = typeValue.replace(/ /g, "_");
+
+        d3.select(selector).select("circle").transition()
+            .duration(250)
+            .attr("r", (d: { id: string; }, i: any) => d.id === MyClass.focalNodeID ? this.centerNodeSize : this.nodeSize);
+        d3.select(selector).select("text").transition()
+            .duration(250)
+            .style("font", "normal 16px Arial")
+            .attr("fill", "Blue");
+
+        Utility.setLegendStyles("strippedTypeValue", "colorValue", 6);
+    };
+
+    public static typeMouseOver(nodeSize) {
+        let selector = this.this1;
+        const thisObject = d3.select(selector);
+        const typeValue = thisObject.attr("type_value");
+        const strippedTypeValue = typeValue.replace(/ /g, "_");
+
+        Utility.setLegendStyles("strippedTypeValue", "Maroon", 1.2 * 6);
 
         const nodeTextSelector = `.nodeText-${strippedTypeValue}`;
         const selectedNodeText = d3.selectAll(nodeTextSelector);
@@ -404,24 +465,13 @@ export class Utility
         }
     };
 
-    public static typeMouseOut(selector: string, nodeSize)
-    {
+    public static typeMouseOut(selector: string, nodeSize) {
         const thisObject = d3.select(selector);
         const typeValue = thisObject.attr("type_value");
         const colorValue = thisObject.attr("color_value");
         const strippedTypeValue = typeValue.replace(/ /g, "_");
 
-        const legendBulletSelector = `.legendBullet-${strippedTypeValue}`;
-        const selectedBullet = d3.selectAll(legendBulletSelector);
-        //document.writeln(legendBulletSelector);
-        selectedBullet.style("fill", colorValue);
-        selectedBullet.attr("r", 6);
-
-        const legendTextSelector = `.legendText-${strippedTypeValue}`;
-        const selectedLegendText = d3.selectAll(legendTextSelector);
-        //document.writeln(legendBulletSelector);
-        selectedLegendText.style("font", "normal 14px Arial");
-        selectedLegendText.style("fill", "Black");
+        Utility.setLegendStyles("strippedTypeValue", "colorValue", 6);
 
         const nodeTextSelector = `.nodeText-${strippedTypeValue}`;
         const selectedNodeText = d3.selectAll(nodeTextSelector);
@@ -451,93 +501,17 @@ export class Utility
         selectedFocalNodeText.style("fill", "Blue");
         selectedFocalNodeText.style("font", "normal 14px Arial");
     };
-
-    public static mouseClickNode (clickText) {
-        let selector = this.this1;
-        const thisObject = d3.select(selector);
-        const typeValue = thisObject.attr("type_value");
-
-        if (!clickText && typeValue === 'Internal Link') {
-            const n = thisObject[0][0].__data__.name;
-            if (!MyClass.done.includes(n)) {
-                MyClass.askNode(n);
-            }
-        }
-
-        clickText = false;
-    };
-
-    public static mouseClickNodeText(clickText)
-    {
-        let selector = this.this1;
-        let win: any;
-        const thisObject = d3.select(selector);
-        const typeValue = thisObject.attr("type_value");
-
-        if (typeValue === 'Internal Link') {
-            //    var win = window.open("index.php/" + thisObject[0][0].__data__.hlink);
-            let win = window.open(thisObject[0][0].__data__.hlink);
-        } else if (typeValue === 'URI') {
-            let win = window.open(thisObject[0][0].__data__.hlink);
-        }
-
-        clickText = true;
-    };
-
-
-    public static nodeMouseOver( ) {
-        let selector = this.this1;
-        const thisObject = d3.select(selector);
-        const typeValue = thisObject.attr("type_value");
-        const strippedTypeValue = typeValue.replace(/ /g, "_");
-
-        d3.select(selector).select("circle").transition()
-            .duration(250)
-            .attr("r", (d: any, i) => d.id === MyClass.focalNodeID ? 65 : 15);
-        d3.select(selector).select("text").transition()
-            .duration(250)
-            .style("font", "bold 20px Arial")
-            .attr("fill", "Blue");
-
+    private static setLegendStyles(strippedTypeValue: string, colorValue: string, radius: number) {
         const legendBulletSelector = `.legendBullet-${strippedTypeValue}`;
         const selectedBullet = d3.selectAll(legendBulletSelector);
-        //document.writeln(legendBulletSelector);
-        selectedBullet.style("fill", "Maroon");
-        selectedBullet.attr("r", 1.2 * 6);
-
-        const legendTextSelector = `.legendText-${strippedTypeValue}`;
-        const selectedLegendText = d3.selectAll(legendTextSelector);
-        //document.writeln(legendBulletSelector);
-        selectedLegendText.style("font", "bold 14px Arial");
-        selectedLegendText.style("fill", "Maroon");
-
-    };
-
-    public static nodeMouseOut () {
-        let selector = this.this1;
-        const thisObject = d3.select(selector);
-        const typeValue = thisObject.attr("type_value");
-        const colorValue = thisObject.attr("color_value");
-        const strippedTypeValue = typeValue.replace(/ /g, "_");
-
-        d3.select(selector).select("circle").transition()
-            .duration(250)
-            .attr("r", (d: { id: string; }, i: any) => d.id === MyClass.focalNodeID ? this.centerNodeSize : this.nodeSize);
-        d3.select(selector).select("text").transition()
-            .duration(250)
-            .style("font", "normal 16px Arial")
-            .attr("fill", "Blue");
-
-        const legendBulletSelector = `.legendBullet-${strippedTypeValue}`;
-        const selectedBullet = d3.selectAll(legendBulletSelector);
-        //document.writeln(legendBulletSelector);
         selectedBullet.style("fill", colorValue);
-        selectedBullet.attr("r", 6);
+        selectedBullet.attr("r", radius);
 
         const legendTextSelector = `.legendText-${strippedTypeValue}`;
         const selectedLegendText = d3.selectAll(legendTextSelector);
-        //document.writeln(legendBulletSelector);
-        selectedLegendText.style("font", "normal 14px Arial");
-        selectedLegendText.style("fill", "Black");
-    };
+        selectedLegendText.style("font", colorValue === "Maroon" ? "bold 14px Arial" : "normal 14px Arial");
+        selectedLegendText.style("fill", colorValue === "Maroon" ? "Maroon" : "Black");
+    }
+
+
 }
