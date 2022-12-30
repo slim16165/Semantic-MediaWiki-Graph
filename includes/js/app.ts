@@ -1,19 +1,34 @@
-// import $ from "jquery";
 // @ts-ignore
 import mw from "types-mediawiki/*";
 import {Utility} from "./utility";
 
-class Created
-{
+export class ILink {
+    public sourceId: any;
+    public linkName: any;
+    public targetId: any;
+
     constructor(sourceId: any, linkName: any, targetId: any) {
         this.sourceId = sourceId;
         this.linkName = linkName;
         this.targetId = targetId;
     }
+}
 
-    public sourceId: any;
-    public linkName: any;
-    public targetId: any;
+export interface IForce {
+    links: () => any;
+    nodes: () => any;
+    drag: any;
+    stop: () => void;
+}
+
+export interface INode {
+    id: any;
+    name: any;
+    type: string;
+    fixed?: boolean;
+    x?: number;
+    y?: number;
+    hlink?: any;
 }
 
 export class MyClass {
@@ -22,9 +37,9 @@ export class MyClass {
     static invisibleType: any[] = [];
     static done: any[] = [];
     static focalNodeID = '';
-    static nodeSet: { id: any; name: any; type: string; fixed?: boolean; x?: number; y?: number; hlink?: any; }[] = [];
-    static linkSet: Created[] = [];
-    static force: { links: () => any; nodes: () => any; drag: any; stop: () => void; };
+    static nodeSet: INode[] = [];
+    static linkSet: ILink[] = [];
+    static force: IForce;
 
     private static wikiArticleElement: JQuery;
 
@@ -52,8 +67,7 @@ export class MyClass {
 
 
     public static loadScript(name: string) {
-        $.getScript(`/extensions/SemanticMediaWikiGraph/includes/js/${name}`, (/** @type {any} */ data: any, /** @type {any} */ textStatus: any, /** @type {any} */ jqxhr: any) => {
-        });
+        $.getScript(`/extensions/SemanticMediaWikiGraph/includes/js/${name}`, (data: any, textStatus: any, jqxhr: any) => {});
     }
 
 
@@ -89,55 +103,9 @@ export class MyClass {
                     x: 10,
                     y: 0,
                     hlink: `./${data.query.subject.split("#")[0]}`
-                }) as any);
+                }) as INode);
                 MyClass.focalNodeID = data.query.subject;
-                for (const item of data.query.data) {
-                    if (!["_SKEY", "_MDAT", "_ASK"].includes(item.property)) {
-                        if (item.dataitem[0].item === data.query.subject) {
-                            item.dataitem[0].item = `${item.dataitem[0].item}_${item.property}`;
-                        }
-                        for (let j = 0; j < item.dataitem.length; j++) {
-                            const type = MyClass.getNodeTypeName(item.property, item.dataitem[j].type);
-                            if (type === 'Boolean') {
-                                item.dataitem[j].item = item.dataitem[j].item === 't' ? 'true' : 'false';
-                            }
-                            if (type === 'URI') {
-                                MyClass.nodeSet.push(
-                                    {
-                                        id: item.dataitem[j].item,
-                                        name: item.dataitem[j].item.split("#")[0].replace("_", " "),
-                                        hlink: item.dataitem[0].item,
-                                        type: null
-                                    });
-                            } else if (type === "Internal Link") {
-                                MyClass.nodeSet.push({
-                                    id: item.dataitem[j].item,
-                                    name: item.dataitem[j].item.split("#")[0].replace("_", " "),
-                                    type: null,
-                                    hlink: `./${item.dataitem[j].item.split("#")[0]}`
-                                });
-                            } else if (type === "Date") {
-                                MyClass.nodeSet.push({
-                                    id: item.dataitem[j].item,
-                                    name: item.dataitem[j].item.substring(2),
-                                    type: null,
-                                });
-                            } else {
-                                MyClass.nodeSet.push({
-                                    id: item.dataitem[j].item,
-                                    name: item.dataitem[j].item.split("#")[0].replace("_", " "),
-                                    type: null,
-                                    //hlink: "./" + item.dataitem[0].item
-                                });
-                            }
-                            MyClass.linkSet.push({
-                                sourceId: data.query.subject,
-                                linkName: MyClass.nicePropertyName(item.property),
-                                targetId: item.dataitem[j].item
-                            });
-                        }
-                    }
-                }
+                this.extracted1(data);
                 //backlinks(wikiArticle);
                 //und Ask wer hierhin zeigt?
                 $('#cluster_chart .chart').empty();
@@ -151,6 +119,7 @@ export class MyClass {
         }
 
     }
+
 
     public static getNodeTypeName(name: string, type: number) {
         switch (name) {
@@ -266,55 +235,7 @@ export class MyClass {
                             item.fixed = true;
                         }
                     });
-                    for (const item of data.query.data) {
-
-                        if (item.property.indexOf("_") !== 0) {
-                            if (item.dataitem[0].item === data.query.subject) {
-                                item.dataitem[0].item = `${item.dataitem[0].item}_${item.property}`;
-                            }
-                            for (let j = 0; j < item.dataitem.length; j++) {
-                                const type = MyClass.getNodeTypeName(item.property, item.dataitem[j].type);
-                                if (type === 'Boolean') {
-                                    item.dataitem[j].item = item.dataitem[j].item === 't' ? 'true' : 'false';
-                                }
-                                if (type === 'URI') {
-                                    MyClass.nodeSet.push({
-                                        id: item.dataitem[j].item,
-                                        name: item.dataitem[j].item.split("#")[0].replace("_", " "),
-                                        type: null,
-                                        hlink: item.dataitem[0].item
-                                    });
-                                } else if (type === "Internal Link") {
-                                    MyClass.nodeSet.push({
-                                        id: item.dataitem[j].item,
-                                        name: item.dataitem[j].item.split("#")[0].replace("_", " "),
-                                        type: null,
-                                        hlink: `./${item.dataitem[0].item}`
-                                    });
-                                } else if (type === "Date") {
-                                    MyClass.nodeSet.push({
-                                        id: item.dataitem[j].item,
-                                        name: item.dataitem[j].item.substring(2),
-                                        type: null,
-                                    });
-                                } else {
-                                    MyClass.nodeSet.push({
-                                        id: item.dataitem[j].item,
-                                        name: item.dataitem[j].item.split("#")[0].replace("_", " "),
-                                        type: null,
-                                        //hlink: "./" + item.dataitem[0].item
-                                    });
-                                }
-                                MyClass.linkSet.push({
-                                    sourceId: data.query.subject,
-                                    linkName: MyClass.nicePropertyName(item.property),
-                                    targetId: item.dataitem[j].item
-                                });
-                            }
-
-                        }
-
-                    }
+                    this.extracted2(data);
                     MyClass.force.stop();
                     //  backlinks(wikiArticle);
 
@@ -328,6 +249,57 @@ export class MyClass {
             }
         });
 
+    }
+
+    public static extractNodeData(subject: string, property: string, dataitem: { item: string, type: string }[]) {
+        const type = MyClass.getNodeTypeName(property, Number(dataitem[0].type));
+        let name, hlink;
+        let item = dataitem[0].item;
+        if (type === 'URI') {
+            name = item.split("#")[0].replace("_", " ");
+            hlink = subject;
+        } else if (type === "Internal Link") {
+            name = item.split("#")[0].replace("_", " ");
+            hlink = `./${item.split("#")[0]}`;
+        } else if (type === "Date") {
+            name = item.substring(2);
+        } else if (type === 'Boolean') {
+            name = item === 't' ? 'true' : 'false';
+        } else {
+            name = item.split("#")[0].replace("_", " ");
+        }
+        return {
+            id: item,
+            name,
+            type: null,
+            hlink,
+        };
+    }
+
+    public static extractLinkData(subject: string, property: string, dataitem: { item: string, type: string }[]) {
+        return {
+            sourceId: subject,
+            linkName: MyClass.nicePropertyName(property),
+            targetId: dataitem[0].item,
+        };
+    }
+
+    public static processData(data: { edit: { result: string }; error: any; query: { subject: string; data: any } }) {
+        const nodeSet = [];
+        const linkSet = [];
+        for (const item of data.query.data) {
+            if (!["_SKEY", "_MDAT", "_ASK"].includes(item.property)) {
+                if (item.dataitem[0].item === data.query.subject) {
+                    item.dataitem[0].item = `${item.dataitem[0].item}_${item.property}`;
+                }
+                for (let j = 0; j < item.dataitem.length; j++) {
+                    nodeSet.push(this.extractNodeData(data.query.subject, item.property, [item.dataitem[j]]));
+                    linkSet.push(MyClass.extractLinkData(data.query.subject, item.property, [item.dataitem[j]]));
+                }
+            }
+        }
+        MyClass.nodeSet = nodeSet;
+        MyClass.linkSet = linkSet;
     }
 
 
@@ -402,11 +374,11 @@ export class MyClass {
     }
 
 
-    public static cloneEdge(array: Created[]) {
+    public static cloneEdge(array: ILink[]) {
 
-        const newArr: Created[] = [];
-        array.forEach((item: Created) => {
-            newArr.push(new Created(item.sourceId, item.linkName, item.targetId));
+        const newArr: ILink[] = [];
+        array.forEach((item: ILink) => {
+            newArr.push(new ILink(item.sourceId, item.linkName, item.targetId));
         });
 
         return newArr;

@@ -1,20 +1,10 @@
-import d3, {SimulationNodeDatum} from "d3";
+import d3 from "d3";
 import {ColorHelper} from "./ColorHelper";
-import {MyClass} from "./app";
+import {INode, ILink, MyClass} from "./app";
 
 interface SourceTarget{
     source: any,
     target: any
-}
-
-interface BuildTheArrowsParams {
-    svgCanvas: Selection;
-}
-
-interface TickParams {
-    link: Selection;
-    node: Selection;
-    linkText: Selection;
 }
 
 export class Utility {
@@ -28,7 +18,8 @@ export class Utility {
     public static this1;
     private static svgCanvas: any;
 
-    public static drawCluster(drawingName: any, focalNode: any, nodeSetApp: any, linkSetApp: any, selectString: any, colors: any): void
+    public static drawCluster(drawingName: string, focalNode: string, nodeSetApp: INode[],
+                              linkSetApp: ILink[], selectString: string , colors: any): void
     {
         // drawingName => A unique drawing identifier that has no spaces, no "." and no "#" characters.
         // focalNode => Primary Node of Context.
@@ -82,6 +73,45 @@ export class Utility {
         });
 
         // Create a force layout and bind Nodes and Links
+        let force = this.CreateAForceLayoutAndBindNodesAndLinks(nodeSetApp);
+        force.on("tick", () => {
+            this.Tick(link, node as any, linkText as any);
+        });
+
+        // Draw lines for Links between Nodes
+        let link = this.DrawLinesForLinksBetweenNodes(svgCanvas);
+        let clickText = false;
+
+        // Create Nodes
+        const node = this.CreateNodes(svgCanvas, force);
+
+        // Append circles to Nodes
+        this.AppendCirclesToNodes(node);
+
+        // Append text to Nodes
+        this.AppendTextToNodes(node);
+
+        // Append text to Link edges
+        const linkText = this.AppendTextToLinkEdges(svgCanvas);
+
+
+        // Print Legend Title...
+        this.PrintLegendTitle(svgCanvas);
+
+        //Build the Arrows
+        this.BuildTheArrows({svgCanvas : svgCanvas});
+
+        // Plot the bullet circles...
+        this.PlotTheBulletCircles({svgCanvas : svgCanvas}, sortedColors);
+
+        // Create legend text that acts as label keys...
+        this.CreateLegendTextThatActsAsLabelKeys({svgCanvas : svgCanvas}, sortedColors);
+
+
+        d3.select(window).on('resize.updatesvg', this.updateWindow);
+    }
+
+    private static CreateAForceLayoutAndBindNodesAndLinks(nodeSetApp: INode[]) {
         let force = d3.forceSimulation()
             .nodes(nodeSetApp)
             // .links(linkSetApp)
@@ -91,14 +121,13 @@ export class Utility {
             // .force("link", d3.forceLink().id((d: any) => d.id).distance(100).strength(1)) => d.id).strength(9))
             // .force("link", d3.forceLink().id((d: any) => d.id).distance((d) => width < height ? width * 1 / 3 : height * 1 / 3))
             .force("center", d3.forceCenter(this.width / 2, this.height / 2))
-            .on("tick", () => {
-                this.Tick({link: link, node: node, linkText: linkText});
-            });
+
         // .start();
+        return force;
+    }
 
-
-        // Draw lines for Links between Nodes
-        const link = svgCanvas.selectAll(".gLink")
+    private static DrawLinesForLinksBetweenNodes(svgCanvas: any) {
+        let link: any = svgCanvas.selectAll(".gLink")
             // .data(force.links())
             .enter().append("g")
             .attr("class", "gLink")
@@ -115,9 +144,10 @@ export class Utility {
             .attr("y1", (d: SourceTarget) => d.source.y)
             .attr("x2", (d: SourceTarget) => d.target.x)
             .attr("y2", (d: SourceTarget) => d.target.y);
-        let clickText = false;
-        // Create Nodes
+        return link;
+    }
 
+    private static CreateNodes(svgCanvas: any, force: any) {
         const node = svgCanvas.selectAll(".node")
             .data(force.nodes())
             .enter().append("g")
@@ -132,8 +162,10 @@ export class Utility {
             .on("mouseout", this.nodeMouseOut)
             // .call(force.drag)
             .append("a");
+        return node;
+    }
 
-        // Append circles to Nodes
+    private static AppendCirclesToNodes(node: any) {
         node.append("circle")
             //.attr("x", function(d) { return d.x; })
             //.attr("y", function(d) { return d.y; })
@@ -154,8 +186,9 @@ export class Utility {
             .style("stroke-width", 5) // Give the node strokes some thickness
             .style("stroke", (d: any, i) => ColorHelper.color_hash[d.type]) // Node stroke colors
         // .call(force.drag);
+    }
 
-        // Append text to Nodes
+    private static AppendTextToNodes(node: any) {
         node.append("text")
             .attr("x", (d: any) => d.id === MyClass.focalNodeID ? 0 : 20)
             .attr("y", (d: any) => {
@@ -177,8 +210,10 @@ export class Utility {
             })
             .attr("dy", ".35em")
             .text((d: any) => d.name);
+    }
 
-        // Append text to Link edges
+    private static AppendTextToLinkEdges(svgCanvas: any)
+    {
         const linkText = svgCanvas.selectAll(".gLink")
             // .data(force.links())
             .append("text")
@@ -189,54 +224,46 @@ export class Utility {
             .style("font", "normal 12px Arial")
             .attr("dy", ".35em")
             .text((d: any) => d.linkName);
-
-
-        // Print Legend Title...
-        this.PrintLegendTitle(svgCanvas);
-
-        //Build the Arrows
-        this.BuildTheArrows({svgCanvas : svgCanvas});
-
-        // Plot the bullet circles...
-        this.PlotTheBulletCircles({svgCanvas : svgCanvas}, sortedColors);
-
-        // Create legend text that acts as label keys...
-        this.CreateLegendTextThatActsAsLabelKeys({svgCanvas : svgCanvas}, sortedColors);
-
-
-        d3.select(window).on('resize.updatesvg', this.updateWindow);
+        return linkText;
     }
 
-    private static Tick({link, node, linkText}: TickParams)
-    {
+    private static updateLinkPositions(link: any, data: SourceTarget) {
         link.attr("x1", (d: SourceTarget) => d.source.x)
             .attr("y1", (d: SourceTarget) => d.source.y)
             .attr("x2", (d: SourceTarget) => d.target.x)
             .attr("y2", (d: SourceTarget) => d.target.y);
+    }
 
+    private static updateNodePositions(node: any, clientWidth: number, clientHeight: number) {
         node.attr("cx", (d: any) => {
             if (d.id === MyClass.focalNodeID) {
                 const s = 1 / this.scale;
-                return d.x = Math.max(60, Math.min(s * ($(".chart")[0].clientWidth - 60), d.x));
+                return d.x = Math.max(60, Math.min(s * (clientWidth - 60), d.x));
             } else {
                 const s = 1 / this.scale;
-                return d.x = Math.max(20, Math.min(s * ($(".chart")[0].clientWidth - 20), d.x));
+                return d.x = Math.max(20, Math.min(s * (clientWidth - 20), d.x));
             }
         }).attr("cy", (d: any) => {
-            if (d.id === MyClass.focalNodeID
-            ) {
+            if (d.id === MyClass.focalNodeID) {
                 const s = 1 / this.scale;
-                return d.y = Math.max(60, Math.min(s * ($(".chart")[0].clientHeight - 60), d.y));
+                return d.y = Math.max(60, Math.min(s * (clientHeight - 60), d.y));
             } else {
                 const s = 1 / this.scale;
-                return d.y = Math.max(20, Math.min(s * ($(".chart")[0].clientHeight - 20), d.y));
+                return d.y = Math.max(20, Math.min(s * (clientHeight - 20), d.y));
             }
         });
+    }
 
-        link.attr("x1", (d: SourceTarget) => d.source.x)
-            .attr("y1", (d: SourceTarget) => d.source.y)
-            .attr("x2", (d: SourceTarget) => d.target.x)
-            .attr("y2", (d: SourceTarget) => d.target.y);
+    private static Tick(link: any, node: any, linkText: any)
+    {
+        let clientWidth = $(".chart")[0].clientWidth;
+        let clientHeight = $(".chart")[0].clientHeight;
+
+        Utility.updateLinkPositions(link, link.data());
+
+        Utility.updateNodePositions(node, clientWidth, clientHeight);
+
+        Utility.updateLinkPositions(link, link.data());
 
         node.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
 
@@ -245,7 +272,7 @@ export class Utility {
             .attr("y", (d: SourceTarget) => d.target.y > d.source.y ? (d.source.y + (d.target.y - d.source.y) / 2) : (d.target.y + (d.source.y - d.target.y) / 2));
     }
 
-    private static CreateLegendTextThatActsAsLabelKeys({svgCanvas}: BuildTheArrowsParams, sortedColors: any[]) {
+    private static CreateLegendTextThatActsAsLabelKeys(svgCanvas: any, sortedColors: any[]) {
         svgCanvas.selectAll("a.legend_link")
             .data(sortedColors) // Instruct to bind dataSet to text elements
             .enter().append("svg:a") // Append legend elements
@@ -257,7 +284,7 @@ export class Utility {
             .attr("dy", "4px") // Controls padding to place text in alignment with bullets
             .text((d: any) => d)
             .attr("color_value", (d: any, i) => ColorHelper.color_hash[d])
-            .attr("type_value", (d: any, i) => d)
+            .attr("type_value", (d, i) => d)
             .attr("index_value", (d: any, i) => `index-${i}`)
             .attr("class", (d: any) => {
                 const strippedString = d.replace(/ /g, "_");
@@ -269,7 +296,7 @@ export class Utility {
             .on("mouseout", this.typeMouseOut);
     }
 
-    private static PlotTheBulletCircles({svgCanvas}: BuildTheArrowsParams, sortedColors: any[]) {
+    private static PlotTheBulletCircles(svgCanvas, sortedColors: any[]) {
         svgCanvas.selectAll("focalNodeCanvas")
             .data(sortedColors).enter().append("svg:circle") // Append circle elements
             .attr("cx", 20)
@@ -289,7 +316,7 @@ export class Utility {
             .on('click', this.clickLegend);
     }
 
-    private static BuildTheArrows({svgCanvas}: BuildTheArrowsParams) {
+    private static BuildTheArrows(svgCanvas: any) {
         svgCanvas.selectAll(".gLink").append("marker")
             .attr("id", (d: any, i) => `arrow_${i}`)
             .attr("viewBox", "0 -5 10 10")
@@ -337,7 +364,9 @@ export class Utility {
         } else {
             invisibleType.push(typeValue);
         }
-        $(".node").each(function (index, el: CustomHTMLElement) {
+        $(".node").each(pincus1);
+
+        function pincus1(index, el: CustomHTMLElement) {
             if (el.__data__.type !== typeValue) {
                 return;
             }
@@ -349,9 +378,11 @@ export class Utility {
             }
             $(this).toggle();
 
-        });
+        }
 
-        $(".gLink").each(function (index, el: CustomHTMLElement) {
+        $(".gLink").each(pincus2);
+
+        function pincus2(index, el: CustomHTMLElement) {
             //      debugger;
             const valSource = el.__data__.sourceId;
             const valTarget = el.__data__.targetId;
@@ -371,7 +402,7 @@ export class Utility {
                 $(this).toggle();
                 MyClass.invisibleEdge.splice(indexEdge, 1);
             }
-        });
+        }
     };
 
     public static mouseClickNode(clickText) {
@@ -497,5 +528,4 @@ export class Utility {
         selectedLegendText.style("font", colorValue === "Maroon" ? "bold 14px Arial" : "normal 14px Arial");
         selectedLegendText.style("fill", colorValue === "Maroon" ? "Maroon" : "Black");
     }
-
 }
