@@ -1,3 +1,4 @@
+// @ts-ignore
 import d3 from "d3";
 
 export class ColorHelper
