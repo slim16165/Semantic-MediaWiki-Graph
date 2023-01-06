@@ -17,8 +17,8 @@
     ],
     "d3": [
       {
-        "name": "d3",
-        "module": "d3",
+				"name": "d3",
+				"module": "d3",
         "isDefault": true
       }
     ],
@@ -64,12 +64,12 @@
     ],
     "mw": [
       {
-        "name": "mw",
-        "module": "types-mediawiki/*",
-        "isDefault": true
-      }
-    ]
-  },
+				"name": "mw",
+				"module": "types-mediawiki/*",
+				"isDefault": true
+			}
+		]
+	},
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig to read more about this file */
 
@@ -188,8 +188,8 @@
     "noImplicitReturns": false,
     "newLine": "lf",
     "pretty": true,
-    "allowJs": true,
-    "checkJs": true,
-    "noEmit": false
+		"allowJs": true,
+		"checkJs": true,
+		"noEmit": false
   }
 }
