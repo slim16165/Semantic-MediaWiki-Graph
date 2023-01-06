@@ -2,3 +2,16 @@
 /package-lock.json
 /obj/Debug/
 *.vsidx
+/dist/main.js.map
+/includes/js/app.d.ts
+/includes/js/app.d.ts.map
+/includes/js/ColorHelper.d.ts
+/includes/js/ColorHelper.d.ts.map
+/includes/js/CustomHTMLElement.d.ts
+/includes/js/CustomHTMLElement.d.ts.map
+/includes/js/OtherTypes.d.ts
+/includes/js/OtherTypes.d.ts.map
+/includes/js/utility.d.ts
+/includes/js/utility.d.ts.map
+/src/index.ts
+/index.html
