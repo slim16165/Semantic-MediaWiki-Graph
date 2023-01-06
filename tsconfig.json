@@ -1,10 +1,74 @@
 {
-  "include": [
+    "include": [
     "includes/js/app.ts",
     "includes/js/utility.ts",
     "node_modules/types-mediawiki/mw/index.d.ts",
     "includes/js/CustomHTMLElement.ts"
   ],
+  "knownSymbols": {
+		"Utility": [
+			{
+				"name": "Utility",
+				"path": "/home/codespace/Semantic-MediaWiki-Graph/includes/js/utility.ts",
+				"type": "class",
+				"isDefault": false
+			}
+		],
+		"d3": [
+			{
+				"name": "d3",
+				"module": "d3",
+				"isDefault": true
+			}
+		],
+		"ColorHelper": [
+			{
+				"name": "ColorHelper",
+				"path": "/home/codespace/Semantic-MediaWiki-Graph/includes/js/ColorHelper.ts",
+				"type": "class",
+				"isDefault": false
+			}
+		],
+		"ILink": [
+			{
+				"name": "ILink",
+				"path": "/home/codespace/Semantic-MediaWiki-Graph/includes/js/app.ts",
+				"type": "class",
+				"isDefault": false
+			}
+		],
+		"IForce": [
+			{
+				"name": "IForce",
+				"path": "/home/codespace/Semantic-MediaWiki-Graph/includes/js/app.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"INode": [
+			{
+				"name": "INode",
+				"path": "/home/codespace/Semantic-MediaWiki-Graph/includes/js/app.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"MyClass": [
+			{
+				"name": "MyClass",
+				"path": "/home/codespace/Semantic-MediaWiki-Graph/includes/js/app.ts",
+				"type": "class",
+				"isDefault": false
+			}
+		],
+		"mw": [
+			{
+				"name": "mw",
+				"module": "types-mediawiki/*",
+				"isDefault": true
+			}
+		]
+	},
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig to read more about this file */
 
@@ -55,7 +119,7 @@
     // "emitDeclarationOnly": true,                      /* Only output d.ts files and not JavaScript files. */
     "sourceMap": true, /* Create source map files for emitted JavaScript files. */
     // "outFile": "./",                                  /* Specify a file that bundles all outputs into one JavaScript file. If 'declaration' is true, also designates a file that bundles all .d.ts output. */
-     "outDir": "./includes/",                                   /* Specify an output folder for all emitted files. */
+    // "outDir": "./includes/",                                   /* Specify an output folder for all emitted files. */
     // "removeComments": true,                           /* Disable emitting comments. */
     // "noEmit": true,                                   /* Disable emitting files from a compilation. */
     // "importHelpers": true,                            /* Allow importing helper functions from tslib once per project, instead of including them per-file. */
