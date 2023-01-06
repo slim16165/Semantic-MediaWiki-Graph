@@ -250,10 +250,10 @@ export class Utility {
     private static InitCanvas(selectString: string) {
         const svgCanvas = d3.select(selectString)
             .append("svg:svg")
-            .call(d3.zoom().on("zoom", () => {
-                this.scale = d3.event.transform.k;
-                svgCanvas.attr("transform", d3.event.transform);
-            }))
+            .call(d3.zoom().on("zoom", (event) => {
+                this.scale = event.transform.k;
+                svgCanvas.attr("transform", event.transform);
+                }))
             .attr("width", this.width)
             .attr("height", this.height)
             .attr("id", "svgCanvas")
