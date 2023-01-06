@@ -1,0 +1,2 @@
+C:\Users\g.salvi\Local Sites\mediawiki\app\public\extensions\SemanticMediaWikiGraph\obj\Debug\nodeconsoleproject1.esproj.SuggestedBindingRedirects.cache
+C:\Users\g.salvi\Local Sites\mediawiki\app\public\extensions\SemanticMediaWikiGraph\obj\Debug\nodeconsoleproject1.esproj.CoreCompileInputs.cache
