@@ -5,12 +5,8 @@
   "main": "webpack.config.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack --mode=production --node-env=production",
-    "clean": "tsc --build --clean",
-    "build:dev": "webpack --mode=development",
-    "build:prod": "webpack --mode=production --node-env=production",
-    "watch": "webpack --watch",
-    "serve": "webpack serve"
+    "build": "tsc --build",
+    "clean": "tsc --build --clean"
   },
   "keywords": [],
   "author": "",
@@ -18,7 +14,6 @@
   "dependencies": {
     "@types/d3": "^7.4.0",
     "@types/select2": "^4.0",
-    "clean-webpack-plugin": "^4.0.0",
     "d3": "7.8.0",
     "jquery": "^3.5.14",
     "select2": "^4.0",
@@ -31,8 +26,6 @@
     "@typescript-eslint/parser": "^5.47.1",
     "@webpack-cli/generators": "^3.0.1",
     "eslint": "^8.30.0",
-    "prettier": "^2.8.1",
-    "style-loader": "^3.3.1",
     "ts-loader": "^9.4.2",
     "typescript": "^4.9.4",
     "update-resourceloader-config-plugin": "^2.0.0",

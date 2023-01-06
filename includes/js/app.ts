@@ -1,55 +1,6 @@
-// @ts-ignore
-import mw from "types-mediawiki/*";
+import * as util from 'types-mediawiki/mw/'
 import {Utility} from "./utility";
-
-export class ILink {
-    public sourceId: any;
-    public linkName: any;
-    public targetId: any;
-    source: INode;
-    target: INode;
-    direction: string;
-
-    constructor(sourceId: any, linkName: any, targetId: any) {
-        this.sourceId = sourceId;
-        this.linkName = linkName;
-        this.targetId = targetId;
-    }
-}
-
-export interface IForce {
-    links: () => any;
-    nodes: () => any;
-    drag: any;
-    stop: () => void;
-}
-
-interface Article {
-    title: string;
-}
-
-export interface INode {
-    id: any;
-    name: any;
-    type: string;
-    fixed?: boolean;
-    x?: number;
-    y?: number;
-    hlink?: any;
-}
-
-
-interface SuccessParams {
-    data: { edit: { result: string }; error: any; query: { allpages: any } };
-}
-
-interface BacklinksCallbackParams {
-    data: { edit: { result: string }; error: any; query: { backlinks: any } };
-}
-
-interface ExtractedParams {
-    item: { property, dataitem: any[], subject};
-}
+import {Article, BacklinksCallbackParams, ExtractedParams, IForce, ILink, INode, SuccessParams} from "./OtherTypes";
 
 export class MyClass {
     static invisibleNode: any[] = [];
@@ -69,7 +20,7 @@ export class MyClass {
 
     static initialize(): void {
         MyClass.loadWikiArticlesAjax();
-        MyClass.loadScript('select2.full.min.js');
+        // MyClass.loadScript('select2.full.min.js');
 
         $(() => {
             $('#visualiseSite').click(() => {
@@ -490,4 +441,6 @@ export class MyClass {
     }
 
 }
+
+new MyClass();
 

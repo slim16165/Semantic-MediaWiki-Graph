@@ -1,6 +1,7 @@
 import d3 from "d3";
 import {ColorHelper} from "./ColorHelper";
-import {ILink, INode, MyClass} from "./app";
+import {MyClass} from "./app";
+import {ILink, INode} from "./OtherTypes";
 
 export class Utility {
     public static width = $(".chart")[0].clientWidth;
@@ -250,7 +251,7 @@ export class Utility {
     private static InitCanvas(selectString: string) {
         const svgCanvas = d3.select(selectString)
             .append("svg:svg")
-            .call(d3.zoom().on("zoom", (event) => {
+            .call(d3.zoom().on("zoom", (event: any) => {
                 this.scale = event.transform.k;
                 svgCanvas.attr("transform", event.transform);
                 }))

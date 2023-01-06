@@ -35,16 +35,18 @@ $wgSpecialPages['SemanticMediaWikiGraph'] = 'SpecialSemanticMediaWikiGraph';
 $wgResourceModules['ext.SemanticMediaWikiGraph.init'] = array(
     'scripts' => array(
 //        'includes/js/d3_v4.min.js',
-        'includes/js/app.js',
-        'includes/js/ColorHelper.js',
-        'includes/js/CustomHTMLElements.js',
-        'includes/js/utility.js',
-    ),
-    'dependency' => array(
-        "d3",
-        "jquery",
-        "select2"
-    ),
+//        'includes/js/app.js',
+//        'includes/js/ColorHelper.js',
+//        'includes/js/CustomHTMLElements.js',
+//        'includes/js/utility.js',
+    'dist/main.js',
+    )
+,
+//    'dependency' => array(
+//        "d3",
+//        "jquery",
+//        "select2"
+//    ),
     'styles' => array(
         'includes/css/select2.css',
         'includes/css/screen.css',

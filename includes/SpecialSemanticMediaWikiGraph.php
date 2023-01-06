@@ -14,13 +14,14 @@ class SpecialSemanticMediaWikiGraph extends SpecialPage
 
     function execute($par)
     {
+
         global $wgOut;
         global $wgScriptPath;
         $request = $this->getRequest();
         $this->setHeaders();
-//        $wgOut->addModules([ 'mediawiki', 'mediawiki.base', 'mw.util' ]);
+        $wgOut->addModules([ 'mediawiki', 'mediawiki.base', 'mw.util' ]);
         $wgOut->addModules([ 'ext.SemanticMediaWikiGraph.init' ]);
-        $wgOut->addScriptFile("{$wgScriptPath}/extensions/SemanticMediaWikiGraph/includes/js/d3_v4.min.js");
+        $wgOut->addScriptFile("{$wgScriptPath}/extensions/SemanticMediaWikiGraph/dist/main.js");
 
 
         $html = /** @lang HTML */
