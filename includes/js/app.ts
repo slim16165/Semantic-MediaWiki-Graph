@@ -1,6 +1,8 @@
 import * as util from 'types-mediawiki/mw/'
 import {Utility} from "./utility";
 import {Article, BacklinksCallbackParams, ExtractedParams, IForce, ILink, INode, SuccessParams} from "./OtherTypes";
+import "select2";
+
 
 export class MyClass {
     static invisibleNode: any[] = [];
@@ -80,7 +82,7 @@ export class MyClass {
                 }) as INode;
                 MyClass.nodeSet.push(node);
                 MyClass.focalNodeID = data.query.subject;
-                this.processData(data);
+                MyClass.getNodesAndLinks(data.query.subject, data.query.data);
                 //backlinks(wikiArticle);
                 //und Ask wer hierhin zeigt?
                 $('#cluster_chart .chart').empty();
@@ -227,7 +229,7 @@ export class MyClass {
         const nodeSet = [];
         const linkSet = [];
 
-        for (const {item} of data)
+        for (const item of data)
         {
             if (!["_SKEY", "_MDAT", "_ASK"].includes(item.property)) {
                 let dataitem = item.dataitem;
@@ -399,10 +401,12 @@ export class MyClass {
             $('#wikiArticle').append(`<option value="${article.title}">${article.title}</option>`);
         }
 
-        $("#wikiArticle").select2({
-            placeholder: "Select a Wiki Article",
-            allowClear: true
-        });
+        // require("select2");
+        //
+        // $("#wikiArticle").select2({
+        //     placeholder: "Select a Wiki Article",
+        //     allowClear: true
+        // });
     }
 
     public static hideElements() {

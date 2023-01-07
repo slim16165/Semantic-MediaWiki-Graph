@@ -3,8 +3,8 @@
 // and here: https://www.mediawiki.org/wiki/User:Jdlrobson/Developing_with_Webpack_and_ResourceLoader
 
 const { CleanWebpackPlugin } = require( 'clean-webpack-plugin' );
-
 const path = require("path");
+const webpack = require('webpack');
 
 const isProduction = process.env.NODE_ENV == "production";
 
@@ -27,7 +27,10 @@ const config = {
     // Delete the output directory on each build.
     new CleanWebpackPlugin( {
       cleanOnceBeforeBuildPatterns: [ '**/*', '!.eslintrc.json' ]
-    } )
+    } ),
+    new webpack.ProvidePlugin({
+      identifier: 'select2',
+    }),
   ],
     module: {
     rules: [

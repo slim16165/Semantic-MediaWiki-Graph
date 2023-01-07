@@ -46,5 +46,7 @@ export interface BacklinksCallbackParams {
 }
 
 export interface ExtractedParams {
-    item: { property, dataitem: any[], subject };
+    property;
+    dataitem: any[];
+    subject ;
 }

@@ -39,14 +39,14 @@ $wgResourceModules['ext.SemanticMediaWikiGraph.init'] = array(
 //        'includes/js/ColorHelper.js',
 //        'includes/js/CustomHTMLElements.js',
 //        'includes/js/utility.js',
-    'dist/main.js',
+        'dist/main.js',
     )
 ,
     'dependencies' => array(
 //        "d3",
 //        "jquery",
-//        "select2"
-          "mediawiki.util"
+//        "select2",
+        "mediawiki.util"
     ),
     'styles' => array(
         'includes/css/select2.css',
