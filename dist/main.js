@@ -454,15 +454,15 @@ class MyClass {
                 format: 'json'
             },
             type: 'GET',
-            success({ data }) {
+            success(data) {
                 if (!(!((data === null || data === void 0 ? void 0 : data.edit) && data.edit.result === 'Success') && !(data === null || data === void 0 ? void 0 : data.error))) {
                     return;
                 }
-                this.CreateWikiArticleUi(data.query.allpages);
+                MyClass.CreateWikiArticleUi(data.query.allpages);
             }
         });
     }
-    CreateWikiArticleUi(articles) {
+    static CreateWikiArticleUi(articles) {
         for (const article of articles) {
             $('#wikiArticle').append(`<option value="${article.title}">${article.title}</option>`);
         }

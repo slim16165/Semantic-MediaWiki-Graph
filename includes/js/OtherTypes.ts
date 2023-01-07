@@ -1,4 +1,3 @@
-
 export class ILink {
     public sourceId: any;
     public linkName: any;
@@ -37,7 +36,9 @@ export interface INode {
 
 
 export interface SuccessParams {
-    data: { edit: { result: string }; error: any; query: { allpages: any } };
+    edit: { result: string };
+    error: any;
+    query: { allpages: any }
 }
 
 export interface BacklinksCallbackParams {
@@ -45,5 +46,5 @@ export interface BacklinksCallbackParams {
 }
 
 export interface ExtractedParams {
-    item: { property, dataitem: any[], subject};
+    item: { property, dataitem: any[], subject };
 }

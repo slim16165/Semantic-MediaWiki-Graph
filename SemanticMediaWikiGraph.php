@@ -42,11 +42,12 @@ $wgResourceModules['ext.SemanticMediaWikiGraph.init'] = array(
     'dist/main.js',
     )
 ,
-//    'dependency' => array(
+    'dependencies' => array(
 //        "d3",
 //        "jquery",
 //        "select2"
-//    ),
+          "mediawiki.util"
+    ),
     'styles' => array(
         'includes/css/select2.css',
         'includes/css/screen.css',

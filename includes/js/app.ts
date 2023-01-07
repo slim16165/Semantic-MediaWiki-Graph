@@ -383,17 +383,17 @@ export class MyClass {
                 format: 'json'
             },
             type: 'GET',
-            success({data}: SuccessParams)
+            success(data: SuccessParams)
             {
                 if (!(!(data?.edit && data.edit.result === 'Success') && !(data?.error))) {
                     return;
                 }
-                this.CreateWikiArticleUi(data.query.allpages);
+                MyClass.CreateWikiArticleUi(data.query.allpages);
             }
         });
     }
 
-    private CreateWikiArticleUi(articles: Article[])
+    private static CreateWikiArticleUi(articles: Article[])
     {
         for (const article of articles) {
             $('#wikiArticle').append(`<option value="${article.title}">${article.title}</option>`);
