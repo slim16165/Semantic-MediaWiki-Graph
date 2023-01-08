@@ -1,7 +1,8 @@
-import d3 from "d3";
+import * as d3 from 'd3';
 import {ColorHelper} from "./ColorHelper";
 import {MyClass} from "./app";
 import {ILink, INode} from "./OtherTypes";
+import $ from "JQuery";
 
 export class Utility {
     public static width = $(".chart")[0].clientWidth;
@@ -42,6 +43,9 @@ export class Utility {
 
         this.InitialSetup(nodeSetApp, linkSetApp);
 
+        // Append text to Link edges
+        const linkText = this.AppendTextToLinkEdges(svgCanvas);
+
         // Create a force layout and bind Nodes and Links
         let force = this.CreateAForceLayoutAndBindNodesAndLinks(nodeSetApp)
             .on("tick", () => {
@@ -61,8 +65,7 @@ export class Utility {
         // Append text to Nodes
         this.AppendTextToNodes(node);
 
-        // Append text to Link edges
-        const linkText = this.AppendTextToLinkEdges(svgCanvas);
+
 
 
         // Print Legend Title...

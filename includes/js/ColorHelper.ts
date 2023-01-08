@@ -1,5 +1,5 @@
-// @ts-ignore
-import d3 from "d3";
+import d3 from "d3-scale-chromatic";
+import {INode} from "./OtherTypes";
 
 export class ColorHelper
 {
@@ -28,37 +28,35 @@ export class ColorHelper
 
     public static GetColor(colors: string)
     {
-        let colorScale: string[];
+        let  colorScale: readonly string[];
         switch (colors) {
-            case "colorScale10":
-                colorScale = d3.schemeCategory10;
-                break;
-            case "colorScale20":
-                colorScale = d3.schemeCategory20;
-                break;
-            case "colorScale20b":
-                colorScale = d3.schemeCategory20b;
-                break;
-            case "colorScale20c":
-                colorScale = d3.schemeCategory20c;
-                break;
+            // case "colorScale10":
+            //     colorScale = d3.schemeSet1;
+            //     break;
+            // case "colorScale20":
+            //     colorScale = d3.schemeSet2;
+            //     break;
+            // case "colorScale20b":
+            //     colorScale = d3.schemeSet3;
+            //     break;
             default:
-                colorScale = d3.schemeCategory20c;
+                colorScale = d3.schemeSet1;
         }
+        return colorScale;
     }
 
-    public static GetColors(colors: any, nodeSetApp: any) {
+    public static GetColors(colors: string, nodeSetApp: INode[]) {
         // Color Scale Handling...
-        ColorHelper.GetColor(colors);
+        //ColorHelper.GetColor(colors);
 
         // Create a hash that maps colors to types...
-        nodeSetApp.forEach((d: any, i: any) => {
+        nodeSetApp.forEach((d: INode) => {
             this.color_hash[d.type] = d.type;
         });
 
         const sortedColors = ColorHelper.keys(this.color_hash).sort();
 
-        sortedColors.forEach((d: string, i) => {
+        sortedColors.forEach((d: string) => {
             this.color_hash[d] = ColorHelper.colorScaleMW(d);
             //document.writeln(color_hash[d]);
         });
