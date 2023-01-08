@@ -145,9 +145,9 @@
     right: 1px;
     width: 20px; }
     .select2-container--default .select2-selection--single .select2-selection__arrow b {
-      border-color: #888 transparent transparent transparent;
+      border-color: #888 transparent transparent;
       border-style: solid;
-      border-width: 5px 4px 0 4px;
+      border-width: 5px 4px 0;
       height: 0;
       left: 50%;
       margin-left: -4px;
@@ -170,8 +170,8 @@
     display: none; }
 
 .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
-  border-color: transparent transparent #888 transparent;
-  border-width: 0 4px 5px 4px; }
+  border-color: transparent transparent #888;
+  border-width: 0 4px 5px; }
 
 .select2-container--default .select2-selection--multiple {
   background-color: white;
@@ -335,9 +335,9 @@
     background-repeat: repeat-x;
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#FFEEEEEE', endColorstr='#FFCCCCCC', GradientType=0); }
     .select2-container--classic .select2-selection--single .select2-selection__arrow b {
-      border-color: #888 transparent transparent transparent;
+      border-color: #888 transparent transparent;
       border-style: solid;
-      border-width: 5px 4px 0 4px;
+      border-width: 5px 4px 0;
       height: 0;
       left: 50%;
       margin-left: -4px;
@@ -364,8 +364,8 @@
     background: transparent;
     border: none; }
     .select2-container--classic.select2-container--open .select2-selection--single .select2-selection__arrow b {
-      border-color: transparent transparent #888 transparent;
-      border-width: 0 4px 5px 4px; }
+      border-color: transparent transparent #888;
+      border-width: 0 4px 5px; }
 
 .select2-container--classic.select2-container--open.select2-container--above .select2-selection--single {
   border-top: none;
