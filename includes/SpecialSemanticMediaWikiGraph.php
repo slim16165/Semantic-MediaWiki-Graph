@@ -1,18 +1,18 @@
 <?php
 
-class SpecialSemanticMediaWikiGraph extends SpecialPage
+public class SpecialSemanticMediaWikiGraph extends SpecialPage
 {
-    function __construct()
+    public function __construct()
     {
         parent::__construct('SemanticMediaWikiGraph');
     }
 
-    function getGroupName(): string
+    public function getGroupName(): string
     {
         return 'smw_group';
     }
 
-    function execute($par)
+    public function execute($par)
     {
 
         global $wgOut;
@@ -41,7 +41,7 @@ class SpecialSemanticMediaWikiGraph extends SpecialPage
 </head>
 <title>Title in the Browser</title>
 <body>
-<div class='wrapper' style='dispay:none'>
+<div class='wrapper' style='display: none'>
 
     <section>
         <article>
@@ -79,5 +79,4 @@ TAG;
 
         $wgOut->addHTML($html);
     }
-
 }
