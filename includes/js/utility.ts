@@ -2,7 +2,7 @@ import * as d3 from 'd3';
 import {ColorHelper} from "./ColorHelper";
 import {MyClass} from "./app";
 import {ILink, INode} from "./OtherTypes";
-import $ from "JQuery";
+// import $ from "JQuery";
 
 export class Utility {
     public static width = $(".chart")[0].clientWidth;
@@ -12,7 +12,7 @@ export class Utility {
 
     public static scale = 1;
 
-    public static this1;
+    public static this1: typeof Utility;
     private static svgCanvas: any;
 
     public static drawCluster(drawingName: string, focalNode: string, nodeSetApp: INode[],
@@ -54,7 +54,7 @@ export class Utility {
 
         // Draw lines for Links between Nodes
         let link = this.DrawLinesForLinksBetweenNodes(svgCanvas);
-        let clickText = false;
+        // let clickText = false;
 
         // Create Nodes
         const node = this.CreateNodes(svgCanvas, force);
@@ -85,10 +85,9 @@ export class Utility {
     }
 
     private static InitialSetup(nodeSetApp: INode[], linkSetApp: ILink[]) {
-        const node_hash: INode[] = [];
-        const type_hash: string[] = [];
+        const node_hash: { [key: string]: INode } = {};
+        const type_hash: { [key: string]: string } = {};
 
-        // Create a hash that allows access to each node by its id
         nodeSetApp.forEach((node1: INode) => {
             node_hash[node1.id] = node1;
             type_hash[node1.type] = node1.type;
@@ -113,135 +112,135 @@ export class Utility {
 
     public static clickLegend() {
 
-        let selector = this.this1;
-        const thisObject = d3.select(selector);
-        const typeValue: string = thisObject.attr("type_value");
-
-        let invisibleType = [];
-        const invIndexType = invisibleType.indexOf(typeValue);
-        if (invIndexType > -1) {
-            invisibleType.splice(Number(typeValue), 1);
-        } else {
-            invisibleType.push(typeValue);
-        }
-        $(".node").each(MakeInvisible);
-
-        function MakeInvisible(index, el: CustomHTMLElement) {
-            if (el.__data__.type !== typeValue) {
-                return;
-            }
-            const invIndex = MyClass.invisibleNode.indexOf(el.__data__.id);
-            if (invIndex > -1) {
-                MyClass.invisibleNode.splice(invIndex, 1);
-            } else {
-                MyClass.invisibleNode.push(el.__data__.id);
-            }
-            $(this).toggle();
-
-        }
-
-        $(".gLink").each(MakeInvisible2);
-
-        function MakeInvisible2(index, el: CustomHTMLElement) {
-            //      debugger;
-            const valSource = el.__data__.sourceId;
-            const valTarget = el.__data__.targetId;
-            //if beide
-            const indexSource = MyClass.invisibleNode.indexOf(valSource);
-            const indexTarget = MyClass.invisibleNode.indexOf(valTarget);
-            const indexEdge = MyClass.invisibleEdge.indexOf(`${valSource}_${valTarget}_${el.__data__.linkName}`);
-
-            if ((indexSource > -1 || indexTarget > -1) && indexEdge === -1) {
-                //Einer der beiden Knoten ist unsichtbar, aber Kante noch nicht
-                $(this).toggle();
-                MyClass.invisibleEdge.push(`${valSource}_${valTarget}_${el.__data__.linkName}`);
-            } else if (indexSource === -1 && indexTarget === -1 && indexEdge === -1) {
-                //Beide Knoten sind nicht unsichtbar und Kante ist nicht unsichtbar
-            } else if (indexSource === -1 && indexTarget === -1 && indexEdge > -1) {
-                //Knoten sind nicht unsichtbar, aber Kante ist es
-                $(this).toggle();
-                MyClass.invisibleEdge.splice(indexEdge, 1);
-            }
-        }
+        // let selector = this.this1;
+        // const thisObject = Array.isArray(selector) ? d3.select(selector[0]) : d3.select(selector /*vuole una stringa*/);
+        // const typeValue: string = thisObject.attr("type_value");
+        //
+        // let invisibleType: string[] = [];
+        // const invIndexType = invisibleType.indexOf(typeValue);
+        // if (invIndexType > -1) {
+        //     invisibleType.splice(Number(typeValue), 1);
+        // } else {
+        //     invisibleType.push(typeValue);
+        // }
+        // $(".node").each(MakeInvisible(undefined, undefined));
+        //
+        // function MakeInvisible(index: any, el: CustomHTMLElement) {
+        //     if (el.__data__.type !== typeValue) {
+        //         return;
+        //     }
+        //     const invIndex = MyClass.invisibleNode.indexOf(el.__data__.id);
+        //     if (invIndex > -1) {
+        //         MyClass.invisibleNode.splice(invIndex, 1);
+        //     } else {
+        //         MyClass.invisibleNode.push(el.__data__.id);
+        //     }
+        //     $(this).toggle();
+        //
+        // }
+        //
+        // $(".gLink").each(MakeInvisible2);
+        //
+        // function MakeInvisible2(index, el: CustomHTMLElement) {
+        //     //      debugger;
+        //     const valSource = el.__data__.sourceId;
+        //     const valTarget = el.__data__.targetId;
+        //     //if beide
+        //     const indexSource = MyClass.invisibleNode.indexOf(valSource);
+        //     const indexTarget = MyClass.invisibleNode.indexOf(valTarget);
+        //     const indexEdge = MyClass.invisibleEdge.indexOf(`${valSource}_${valTarget}_${el.__data__.linkName}`);
+        //
+        //     if ((indexSource > -1 || indexTarget > -1) && indexEdge === -1) {
+        //         //Einer der beiden Knoten ist unsichtbar, aber Kante noch nicht
+        //         $(this).toggle();
+        //         MyClass.invisibleEdge.push(`${valSource}_${valTarget}_${el.__data__.linkName}`);
+        //     } else if (indexSource === -1 && indexTarget === -1 && indexEdge === -1) {
+        //         //Beide Knoten sind nicht unsichtbar und Kante ist nicht unsichtbar
+        //     } else if (indexSource === -1 && indexTarget === -1 && indexEdge > -1) {
+        //         //Knoten sind nicht unsichtbar, aber Kante ist es
+        //         $(this).toggle();
+        //         MyClass.invisibleEdge.splice(indexEdge, 1);
+        //     }
+        // }
     };
 
-    public static mouseClickNode(clickText) {
-        let selector = this.this1;
-        const thisObject = d3.select(selector);
-        const typeValue = thisObject.attr("type_value");
-
-        if (!clickText && typeValue === 'Internal Link') {
-            const n = thisObject[0][0].__data__.name;
-            if (!MyClass.done.includes(n)) {
-                MyClass.askNode(n);
-            }
-        }
+    public static mouseClickNode(clickText: boolean) {
+        // let selector = this.this1;
+        // const thisObject : Selection<any, any, HTMLElement, any> = d3.select(selector);
+        // const typeValue = thisObject.attr("type_value");
+        //
+        // if (!clickText && typeValue === 'Internal Link') {
+        //     const n = thisObject[0][0].__data__.name;
+        //     if (!MyClass.done.includes(n)) {
+        //         MyClass.askNode(n);
+        //     }
+        // }
 
         clickText = false;
     };
 
-    public static mouseClickNodeText(clickText) {
-        let selector = this.this1;
-        let win: any;
-        const thisObject = d3.select(selector);
-        const typeValue = thisObject.attr("type_value");
-
-        if (typeValue === 'Internal Link') {
-            //    var win = window.open("index.php/" + thisObject[0][0].__data__.hlink);
-            let win = window.open(thisObject[0][0].__data__.hlink);
-        } else if (typeValue === 'URI') {
-            let win = window.open(thisObject[0][0].__data__.hlink);
-        }
+    public static mouseClickNodeText(clickText: boolean) {
+        // let selector = this.this1;
+        // // let win: any;
+        // const thisObject = d3.select(selector);
+        // const typeValue = thisObject.attr("type_value");
+        //
+        // if (typeValue === 'Internal Link') {
+        //     //    var win = window.open("index.php/" + thisObject[0][0].__data__.hlink);
+        //     let win = window.open(thisObject[0][0].__data__.hlink);
+        // } else if (typeValue === 'URI') {
+        //     let win = window.open(thisObject[0][0].__data__.hlink);
+        // }
 
         clickText = true;
     };
 
     public static nodeMouseOver() {
         let selector = this.this1;
-        const thisObject = d3.select(selector);
-        const typeValue = thisObject.attr("type_value");
-        const strippedTypeValue = typeValue.replace(/ /g, "_");
-
-        d3.select(selector).select("circle").transition()
-            .duration(250)
-            .attr("r", (d: any, i) => d.id === MyClass.focalNodeID ? 65 : 15);
-        d3.select(selector).select("text").transition()
-            .duration(250)
-            .style("font", "bold 20px Arial")
-            .attr("fill", "Blue");
+        // const thisObject = d3.select(selector);
+        // const typeValue = thisObject.attr("type_value");
+        // const strippedTypeValue = typeValue.replace(/ /g, "_");
+        //
+        // d3.select(selector).select("circle").transition()
+        //     .duration(250)
+        //     .attr("r", (d: any, i) => d.id === MyClass.focalNodeID ? 65 : 15);
+        // d3.select(selector).select("text").transition()
+        //     .duration(250)
+        //     .style("font", "bold 20px Arial")
+        //     .attr("fill", "Blue");
 
         Utility.setLegendStyles("strippedTypeValue", "Maroon", 1.2 * 6);
     };
 
     public static nodeMouseOut() {
         let selector = this.this1;
-        const thisObject = d3.select(selector);
-        const typeValue = thisObject.attr("type_value");
-        const colorValue = thisObject.attr("color_value");
-        const strippedTypeValue = typeValue.replace(/ /g, "_");
+        // const thisObject = d3.select(selector);
+        // const typeValue = thisObject.attr("type_value");
+        // const colorValue = thisObject.attr("color_value");
+        // const strippedTypeValue = typeValue.replace(/ /g, "_");
 
-        d3.select(selector).select("circle").transition()
-            .duration(250)
-            .attr("r", (d: { id: string; }, i: any) => d.id === MyClass.focalNodeID ? this.centerNodeSize : this.nodeSize);
-        d3.select(selector).select("text").transition()
-            .duration(250)
-            .style("font", "normal 16px Arial")
-            .attr("fill", "Blue");
+        // d3.select(selector).select("circle").transition()
+        //     .duration(250)
+        //     .attr("r", (d: { id: string }) => d.id === MyClass.focalNodeID ? MyClass.centerNodeSize : MyClass.nodeSize);
+        // d3.select(selector).select("text").transition()
+        //     .duration(250)
+        //     .style("font", "normal 16px Arial")
+        //     .attr("fill", "Blue");
 
         Utility.setLegendStyles("strippedTypeValue", "colorValue", 6);
     };
 
-    public static typeMouseOver(nodeSize) {
-        let selector = this.this1;
-        const thisObject = d3.select(selector);
-        const typeValue = thisObject.attr("type_value");
-        const strippedTypeValue = typeValue.replace(/ /g, "_");
-
-        Utility.setLegendStyles("strippedTypeValue", "Maroon", 1.2 * 6);
-        Utility.setNodeStyles(strippedTypeValue, "Maroon", "bold", nodeSize, false);
+    public static typeMouseOver(nodeSize: number) {
+        // let selector = this.this1;
+        // const thisObject = d3.select(selector);
+        // const typeValue = thisObject.attr("type_value");
+        // const strippedTypeValue = typeValue.replace(/ /g, "_");
+        //
+        // Utility.setLegendStyles("strippedTypeValue", "Maroon", 1.2 * 6);
+        // Utility.setNodeStyles(strippedTypeValue, "Maroon", "bold", nodeSize, false);
     }
 
-    public static typeMouseOut(selector: string, nodeSize) {
+    public static typeMouseOut(selector: string, nodeSize: number) {
         const thisObject = d3.select(selector);
         const typeValue = thisObject.attr("type_value");
         const colorValue = thisObject.attr("color_value");
@@ -252,18 +251,18 @@ export class Utility {
     }
 
     private static InitCanvas(selectString: string) {
-        const svgCanvas = d3.select(selectString)
-            .append("svg:svg")
-            .call(d3.zoom().on("zoom", (event: any) => {
-                this.scale = event.transform.k;
-                svgCanvas.attr("transform", event.transform);
-                }))
-            .attr("width", this.width)
-            .attr("height", this.height)
-            .attr("id", "svgCanvas")
-            .append("svg:g")
-            .attr("class", "focalNodeCanvas");
-        return svgCanvas;
+        // const svgCanvas = d3.select(selectString)
+        //     .append("svg:svg")
+        //     .call(d3.zoom().on("zoom", (event: any) => {
+        //         this.scale = event.transform.k;
+        //         svgCanvas.attr("transform", event.transform);
+        //         }))
+        //     .attr("width", this.width)
+        //     .attr("height", this.height)
+        //     .attr("id", "svgCanvas")
+        //     .append("svg:g")
+        //     .attr("class", "focalNodeCanvas");
+        // return svgCanvas;
     }
 
     private static CreateAForceLayoutAndBindNodesAndLinks(nodeSetApp: INode[]) {
@@ -287,14 +286,14 @@ export class Utility {
             .enter().append("g")
             .attr("class", "gLink")
             //    .attr("class", "link")
-            .attr("endNode", (d: CustomDto, i) => d.targetId)
-            .attr("startNode", (d: CustomDto, i) => d.sourceId)
-            .attr("targetType", (d: any, i) => d.target.type)
-            .attr("sourceType", (d: any, i) => d.source.type)
+            .attr("endNode", (d: CustomDto) => d.targetId)
+            .attr("startNode", (d: CustomDto) => d.sourceId)
+            .attr("targetType", (d: any) => d.target.type)
+            .attr("sourceType", (d: any) => d.source.type)
             .append("line")
             .style("stroke", "#ccc")
             .style("stroke-width", "1.5px")
-            .attr("marker-end", (d, i) => `url(#arrow_${i})`)
+            .attr("marker-end", (d: any, i: any) => `url(#arrow_${i})`)
             .attr("x1", (l: ILink) => l.source.x)
             .attr("y1", (l: ILink) => l.source.y)
             .attr("x2", (l: ILink) => l.target.x)
@@ -308,8 +307,8 @@ export class Utility {
             .enter().append("g")
             .attr("class", "node")
             .attr("id", (d: any) => d.id)
-            .attr("type_value", (d: any, i) => d.type)
-            .attr("color_value", (d: any, i) => ColorHelper.color_hash[d.type])
+            .attr("type_value", (d: any) => d.type)
+            .attr("color_value", (d: any) => ColorHelper.color_hash[d.type])
             .attr("xlink:href", (d: any) => d.hlink)
             //.attr("fixed", function(d) { if (d.id==focalNodeID) { return true; } else { return false; } } )
             .on("mouseover", this.nodeMouseOver)
@@ -327,19 +326,19 @@ export class Utility {
             .attr("r", (d: any) => d.id === MyClass.focalNodeID ? this.centerNodeSize : this.nodeSize)
             .style("fill", "White") // Make the nodes hollow looking
             //.style("fill", "transparent")
-            .attr("type_value", (d: any, i) => d.type)
-            .attr("color_value", (d: any, i) => ColorHelper.color_hash[d.type])
+            .attr("type_value", (d: any) => d.type)
+            .attr("color_value", (d: any) => ColorHelper.color_hash[d.type])
             //.attr("fixed", function(d) { if (d.id==focalNodeID) { return true; } else { return false; } } )
             //.attr("x", function(d) { if (d.id==focalNodeID) { return width/2; } else { return d.x; } })
             //.attr("y", function(d) { if (d.id==focalNodeID) { return height/2; } else { return d.y; } })
-            .attr("class", (d: any, i) => {
+            .attr("class", (d: any) => {
                 const str = d.type;
                 const strippedString = str.replace(/ /g, "_");
                 //return "nodeCircle-" + strippedString; })
                 return d.id === MyClass.focalNodeID ? "focalNodeCircle" : `nodeCircle-${strippedString}`;
             })
             .style("stroke-width", 5) // Give the node strokes some thickness
-            .style("stroke", (d: any, i) => ColorHelper.color_hash[d.type]) // Node stroke colors
+            .style("stroke", (d: any) => ColorHelper.color_hash[d.type]) // Node stroke colors
         // .call(force.drag);
     }
 
@@ -354,10 +353,10 @@ export class Utility {
             .attr("font-family", "Arial, Helvetica, sans-serif")
             .style("font", "normal 16px Arial")
             .attr("fill", "Blue")
-            .style("fill", (d: any, i) => ColorHelper.color_hash[d])
-            .attr("type_value", (d: any, i) => d.type)
-            .attr("color_value", (d: any, i) => ColorHelper.color_hash[d.type])
-            .attr("class", (d: any, i) => {
+            .style("fill", (d: any) => ColorHelper.color_hash[d])
+            .attr("type_value", (d: any) => d.type)
+            .attr("color_value", (d: any) => ColorHelper.color_hash[d.type])
+            .attr("class", (d: any) => {
                 const str = d.type;
                 const strippedString = str.replace(/ /g, "_");
                 //return "nodeText-" + strippedString; })
@@ -372,13 +371,21 @@ export class Utility {
             // .data(force.links())
             .append("text")
             .attr("font-family", "Arial, Helvetica, sans-serif")
-            .attr("x", (d: ILink) => d.target.x > d.source.x ? (d.source.x + (d.target.x - d.source.x) / 2) : (d.target.x + (d.source.x - d.target.x) / 2))
-            .attr("y", (d: ILink) => d.target.y > d.source.y ? (d.source.y + (d.target.y - d.source.y) / 2) : (d.target.y + (d.source.y - d.target.y) / 2))
+            .attr("x", (d: ILink) => this.getNumber2(d))
+            .attr("y", (d: ILink) => this.getNumber2(d))
             .attr("fill", "Black")
             .style("font", "normal 12px Arial")
             .attr("dy", ".35em")
             .text((d: any) => d.linkName);
         return linkText;
+    }
+
+    private static getNumber2(d: ILink) {
+        return d.target.y > d.source.y ? (d.source.y + (d.target.y - d.source.y) / 2) : (d.target.y + (d.source.y - d.target.y) / 2);
+    }
+
+    private static getNumber(d: ILink) {
+        return d.target.x > d.source.x ? (d.source.x + (d.target.x - d.source.x) / 2) : (d.target.x + (d.source.x - d.target.x) / 2);
     }
 
     private static updateLinkPositions(link: any, data: ILink, source: INode, target: INode) {
@@ -432,13 +439,13 @@ export class Utility {
             .append("text")
             .attr("text-anchor", "center")
             .attr("x", 40)
-            .attr("y", (d: any, i) => (45 + (i * 20)))
+            .attr("y", (d: any, i: number) => (45 + (i * 20)))
             .attr("dx", 0)
             .attr("dy", "4px") // Controls padding to place text in alignment with bullets
             .text((d: any) => d)
-            .attr("color_value", (d: any, i) => ColorHelper.color_hash[d])
-            .attr("type_value", (d, i) => d)
-            .attr("index_value", (d: any, i) => `index-${i}`)
+            .attr("color_value", (d: any) => ColorHelper.color_hash[d])
+            .attr("type_value", (d : string) => d)
+            .attr("index_value", (d: any, i : number) => `index-${i}`)
             .attr("class", (d: any) => {
                 const strippedString = d.replace(/ /g, "_");
                 return `legendText-${strippedString}`;
@@ -449,17 +456,17 @@ export class Utility {
             .on("mouseout", this.typeMouseOut);
     }
 
-    private static PlotTheBulletCircles(svgCanvas, sortedColors: any[]) {
+    private static PlotTheBulletCircles(svgCanvas: { svgCanvas?: void; selectAll?: any; }, sortedColors: any[]) {
         svgCanvas.selectAll("focalNodeCanvas")
             .data(sortedColors).enter().append("svg:circle") // Append circle elements
             .attr("cx", 20)
-            .attr("cy", (d: any, i) => (45 + (i * 20)))
+            .attr("cy", (d: any, i: number) => (45 + (i * 20)))
             .attr("stroke-width", ".5")
-            .style("fill", (d: any, i) => ColorHelper.color_hash[d])
+            .style("fill", (d: number) => ColorHelper.color_hash[d])
             .attr("r", 6)
-            .attr("color_value", (d: any, i) => ColorHelper.color_hash[d])
-            .attr("type_value", (d: any, i) => d)
-            .attr("index_value", (d: any, i) => `index-${i}`)
+            .attr("color_value", (d: any) => ColorHelper.color_hash[d])
+            .attr("type_value", (d: any) => d)
+            .attr("index_value", (d: any, i: number) => `index-${i}`)
             .attr("class", (d: any) => {
                 const strippedString = d.replace(/ /g, "_");
                 return `legendBullet-${strippedString}`;
@@ -471,9 +478,9 @@ export class Utility {
 
     private static BuildTheArrows(svgCanvas: any) {
         svgCanvas.selectAll(".gLink").append("marker")
-            .attr("id", (d: any, i) => `arrow_${i}`)
+            .attr("id", (d: any, i: number) => `arrow_${i}`)
             .attr("viewBox", "0 -5 10 10")
-            .attr("refX", (d: any, i) =>
+            .attr("refX", (d: any) =>
                 d.targetId === MyClass.focalNodeID ? 55 : 20
             )
             .attr("refY", 0)

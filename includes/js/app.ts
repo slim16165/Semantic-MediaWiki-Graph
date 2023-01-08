@@ -1,4 +1,3 @@
-import * as util from 'types-mediawiki/mw/'
 import {Utility} from "./utility";
 import {Article, BacklinksCallbackParams, ExtractedParams, IForce, ILink, INode, SuccessParams} from "./OtherTypes";
 import "select2";
@@ -9,7 +8,7 @@ export class MyClass {
     static invisibleEdge: string[] = [];
     static invisibleType: any[] = [];
     static done: any[] = [];
-    static focalNodeID = '';
+    static focalNodeID: string = '';
     static nodeSet: INode[] = [];
     static linkSet: ILink[] = [];
     static force: IForce;
@@ -41,7 +40,8 @@ export class MyClass {
 
 
     public static loadScript(name: string) {
-        $.getScript(`/extensions/SemanticMediaWikiGraph/includes/js/${name}`, (data: any, textStatus: any, jqxhr: any) => { });
+        $.getScript(`/extensions/SemanticMediaWikiGraph/includes/js/${name}`, (data: any, textStatus: any, jqxhr: any) => {
+        });
     }
 
 
@@ -65,13 +65,11 @@ export class MyClass {
             } else if (data?.error) {
                 alert(data);
                 // debugger;
-            }
-            else
-            {
+            } else {
                 MyClass.nodeSet = [];
                 MyClass.linkSet = [];
                 MyClass.done.push(wikiArticle);
-                let node : INode = ({
+                let node: INode = ({
                     id: data.query.subject,
                     name: data.query.subject.split("#")[0].replace("_", " "),
                     type: "Internal Link",
@@ -225,12 +223,11 @@ export class MyClass {
 
     }
 
-    public static getNodesAndLinks(subject: string, data: ExtractedParams[] ) {
+    public static getNodesAndLinks(subject: string, data: ExtractedParams[]) {
         const nodeSet = [];
         const linkSet = [];
 
-        for (const item of data)
-        {
+        for (const item of data) {
             if (!["_SKEY", "_MDAT", "_ASK"].includes(item.property)) {
                 let dataitem = item.dataitem;
 
@@ -247,8 +244,7 @@ export class MyClass {
         MyClass.linkSet = linkSet;
     }
 
-    public static extractNodeData(subject: string, property: string, dataitem: { item: string, type: string }[]) : INode
-    {
+    public static extractNodeData(subject: string, property: string, dataitem: { item: string, type: string }[]): INode {
         const type = MyClass.getNodeTypeName(property, Number(dataitem[0].type));
 
         let name, hlink;
@@ -266,12 +262,7 @@ export class MyClass {
         } else {
             name = item.split("#")[0].replace("_", " ");
         }
-        return {
-            id: item,
-            name,
-            type: null,
-            hlink,
-        } as INode;
+        return new INode(item, name, "null", 0, 0);
     }
 
     public static extractLinkData(subject: string, property: string, dataitem: { item: string, type: string }[]):
@@ -282,7 +273,6 @@ export class MyClass {
             targetId: dataitem[0].item,
         };
     }
-
 
 
     public static backlinksAjax(wikiArticle: string) {
@@ -296,13 +286,111 @@ export class MyClass {
             },
             type: 'GET',
 
-            success({data}: BacklinksCallbackParams)
-            {
-                this.BacklinksCallback({data : data});
+            success({data}: BacklinksCallbackParams) {
+                this.BacklinksCallback({data: data});
             }
         });
     }
 
+    public static cloneNode(array: INode[]) {
+        const newArr: INode[] = [];
+
+        array.forEach((node: INode) => {
+            let node1 = new INode(node.id, node.name,node.type, node.x, node.y);
+
+            if (typeof node.hlink !== 'undefined') {
+                node1.hlink = node.hlink;
+            }
+
+            newArr.push(node1);
+
+        });
+
+        return newArr;
+    }
+
+    public static cloneEdge(array: ILink[]) {
+
+        const newArr: ILink[] = [];
+        array.forEach((item: ILink) => {
+            newArr.push(new ILink(item.sourceId, item.linkName, item.targetId, item.source, item.target, item.direction));
+        });
+
+        return newArr;
+    }
+
+    public static loadWikiArticlesAjax() {
+        $.ajax({
+            url: mw.util.wikiScript('api') as string,
+            data: {
+                action: 'query',
+                list: 'allpages',
+                aplimit: 1000,
+                format: 'json'
+            },
+            type: 'GET',
+            success(data: SuccessParams) {
+                if (!(!(data?.edit && data.edit.result === 'Success') && !(data?.error))) {
+                    return;
+                }
+                MyClass.CreateWikiArticleUi(data.query.allpages);
+            }
+        });
+    }
+
+    public static hideElements() {
+        $(".node").each(HideEach);
+
+        function HideEach(index: number, element: HTMLElement) {
+            let el = element as CustomHTMLElement;
+            const invIndex = MyClass.invisibleType.indexOf(el.__data__.type);
+            if (!(invIndex > -1)) {
+                return;
+            }
+            $(el).toggle();
+            const invIndexNode = MyClass.invisibleNode.indexOf(el.__data__.id);
+            if (invIndexNode === -1) {
+                MyClass.invisibleNode.push(el.__data__.id);
+            }
+        }
+
+        $(".gLink").each((index, element) => MyClass.getFunсtion32432(index, element as CustomHTMLElement));
+    }
+
+    private static CreateWikiArticleUi(articles: Article[]) {
+        for (const article of articles) {
+            $('#wikiArticle').append(`<option value="${article.title}">${article.title}</option>`);
+        }
+
+        // require("select2");
+        //
+        // $("#wikiArticle").select2({
+        //     placeholder: "Select a Wiki Article",
+        //     allowClear: true
+        // });
+    }
+
+    private static getFunсtion32432(index: number, el: CustomHTMLElement) {
+        //(this: el: CustomHTMLElement)
+        //      debugger;
+        const valSource = el.__data__.sourceId;
+        const valTarget = el.__data__.targetId;
+        let indexEdge: number;
+
+        const indexSource = MyClass.invisibleNode.indexOf(valSource);
+        const indexTarget = MyClass.invisibleNode.indexOf(valTarget);
+        indexEdge = MyClass.invisibleEdge.indexOf(`${valSource}_${valTarget}_${el.__data__.linkName}`);
+
+        if (indexEdge > -1) {
+            //Einer der beiden Knoten ist unsichtbar, aber Kante noch nicht
+            $(this).toggle();
+            //    invisibleEdge.push(valSource + "_" + valTarget + "_" + el.__data__.linkName);
+        } else if ((indexSource > -1 || indexTarget > -1)) {
+            //Knoten sind nicht unsichtbar, aber Kante ist es
+            $(this).toggle();
+            MyClass.invisibleEdge.push(`${valSource}_${valTarget}_${el.__data__.linkName}`);
+        }
+    };
 
     private BacklinksCallback({data}: BacklinksCallbackParams) {
         if (data?.edit && data.edit.result === 'Success') {
@@ -322,10 +410,10 @@ export class MyClass {
         MyClass.hideElements();
     }
 
-    private InitNodeAndLinks(backlinks: Article[])
-    {
+    private InitNodeAndLinks(backlinks: Article[]) {
         for (let article of backlinks) {
             MyClass.nodeSet.push({
+                x: 0, y: 0,
                 id: article.title,
                 name: article.title,
                 type: 'Unknown',
@@ -340,109 +428,7 @@ export class MyClass {
         }
     }
 
-    public static cloneNode(array: INode[]) {
-        const newArr: INode[] = [];
-
-        array.forEach((node: INode) => {
-            if (node.hlink !== 'undefined') {
-                newArr.push({
-                    id: node.id,
-                    name: node.name,
-                    type: node.type,
-                    hlink: node.hlink
-                });
-            } else {
-                newArr.push({
-                    id: node.id,
-                    name: node.name,
-                    type: node.type
-                });
-            }
-
-        });
-
-        return newArr;
-    }
-    public static cloneEdge(array: ILink[]) {
-
-        const newArr: ILink[] = [];
-        array.forEach((item: ILink) => {
-            newArr.push(new ILink(item.sourceId, item.linkName, item.targetId));
-        });
-
-        return newArr;
-    }
-
-
-    public static loadWikiArticlesAjax()
-    {
-        $.ajax({
-            url: mw.util.wikiScript('api') as string,
-            data: {
-                action: 'query',
-                list: 'allpages',
-                aplimit: 1000,
-                format: 'json'
-            },
-            type: 'GET',
-            success(data: SuccessParams)
-            {
-                if (!(!(data?.edit && data.edit.result === 'Success') && !(data?.error))) {
-                    return;
-                }
-                MyClass.CreateWikiArticleUi(data.query.allpages);
-            }
-        });
-    }
-
-    private static CreateWikiArticleUi(articles: Article[])
-    {
-        for (const article of articles) {
-            $('#wikiArticle').append(`<option value="${article.title}">${article.title}</option>`);
-        }
-
-        // require("select2");
-        //
-        // $("#wikiArticle").select2({
-        //     placeholder: "Select a Wiki Article",
-        //     allowClear: true
-        // });
-    }
-
-    public static hideElements() {
-        $(".node").each(function (index, el: CustomHTMLElement) {
-            const invIndex = MyClass.invisibleType.indexOf(el.__data__.type);
-            if (!(invIndex > -1)) {
-                return;
-            }
-            $(this).toggle();
-            const invIndexNode = MyClass.invisibleNode.indexOf(el.__data__.id);
-            if (invIndexNode === -1) {
-                MyClass.invisibleNode.push(el.__data__.id);
-            }
-        });
-
-        $(".gLink").each(function (index, el: CustomHTMLElement) {
-            //      debugger;
-            const valSource = el.__data__.sourceId;
-            const valTarget = el.__data__.targetId;
-            let indexEdge: number;
-
-            const indexSource = MyClass.invisibleNode.indexOf(valSource);
-            const indexTarget = MyClass.invisibleNode.indexOf(valTarget);
-            indexEdge = MyClass.invisibleEdge.indexOf(`${valSource}_${valTarget}_${el.__data__.linkName}`);
-
-            if (indexEdge > -1) {
-                //Einer der beiden Knoten ist unsichtbar, aber Kante noch nicht
-                $(this).toggle();
-                //    invisibleEdge.push(valSource + "_" + valTarget + "_" + el.__data__.linkName);
-            } else if ((indexSource > -1 || indexTarget > -1)) {
-                //Knoten sind nicht unsichtbar, aber Kante ist es
-                $(this).toggle();
-                MyClass.invisibleEdge.push(`${valSource}_${valTarget}_${el.__data__.linkName}`);
-            }
-        });
-    }
+    //should be function (this: TElement, index: number, element: TElement) => void | false
 
 }
 

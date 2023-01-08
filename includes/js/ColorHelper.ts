@@ -3,28 +3,30 @@ import {INode} from "./OtherTypes";
 
 export class ColorHelper
 {
-    static color = {
-        InternalLink: '#1f77b4',
-        Category: '#071f55',
-        URI: '#17a8cf',
-        Telephone: '#13d1e3',
-        Email: '#75d3dd',
-        Number: '#2ca02c',
-        Quantity: '#114911',
-        Temperature: '#b6e75a',
-        MonolingualText: '#f2cd0c',
-        Text: '#ff7f0e',
-        Code: '#b37845',
-        Boolean: '#d62728',
-        Date: '#d62790',
-        Record: '#8927d6'
+    private static color = {
+        "InternalLink": '#1f77b4',
+        "Category": '#071f55',
+        "URI": '#17a8cf',
+        "Telephone": '#13d1e3',
+        "Email": '#75d3dd',
+        "Number": '#2ca02c',
+        "Quantity": '#114911',
+        "Temperature": '#b6e75a',
+        "MonolingualText": '#f2cd0c',
+        "Text": '#ff7f0e',
+        "Code": '#b37845',
+        "Boolean": '#d62728',
+        "Date": '#d62790',
+        "Record": '#8927d6'
     };
 
-    public static colorScaleMW(type: string) {
-        return this.color[type];
+    public static colorScaleMW(type: string) : string {
+        const colorArray = Object.entries(this.color).map(([name, color]) => ({ name, color }));
+        const colorObject = colorArray.find(c => c.name === type);
+        return colorObject ? colorObject.color : "undefined";
     }
 
-    public static color_hash = [];
+    public static color_hash: { [key: string]: string } = {};
 
     public static GetColor(colors: string)
     {
