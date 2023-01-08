@@ -28332,7 +28332,7 @@ class Utility {
         });
         // Draw lines for Links between Nodes
         let link = this.DrawLinesForLinksBetweenNodes(svgCanvas);
-        let clickText = false;
+        // let clickText = false;
         // Create Nodes
         const node = this.CreateNodes(svgCanvas, force);
         // Append circles to Nodes
@@ -28437,7 +28437,7 @@ class Utility {
     ;
     static mouseClickNodeText(clickText) {
         let selector = this.this1;
-        let win;
+        // let win: any;
         const thisObject = d3.select(selector);
         const typeValue = thisObject.attr("type_value");
         if (typeValue === 'Internal Link') {
