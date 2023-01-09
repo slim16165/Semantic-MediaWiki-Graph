@@ -6,7 +6,7 @@ import {Canvas} from "./Canvas";
 import {LegendManager} from "./legendManager";
 import {NodeManager} from "./nodeManager";
 import {INode} from "../INode";
-import {NodeStore} from "./nodeStore";
+import {NodeStore} from "../nodeStore";
 
 interface Point {
     x: number
@@ -28,18 +28,23 @@ export class Utility {
      *
      * @param {string} drawingName - A unique drawing identifier that has no spaces, no "." and no "#" characters.
      * @param {string} focalNode - Primary Node of Context.
-     * @param {INode[]} nodeSetApp - Set of nodes and their relevant data.
-     * @param {Link[]} linkSetApp - Set of links and their relevant data.
-     * @param {any} colors - String to set color scale.  Values can be "colorScale10", "colorScale20", "colorScale20b", "colorScale20c"
+     *
      *              0 = No Sort.  Maintain original order.
      *              1 = Sort by arc value size.
      */
-    public static drawCluster(drawingName: string, focalNode: string, nodeSetApp: INode[],
-                              linkSetApp: Link[], colors: any): void {
+    public static drawCluster(drawingName: string, focalNode: string): void {
         let canvas = new Canvas();
         this.svgCanvas = Canvas.svgCanvas;
 
-        this.InitialSetup(nodeSetApp, linkSetApp);
+        // Create Nodes
+        this.nodes = NodeManager.CreateNodes();
+
+        // Append circles to Nodes
+        NodeManager.AppendCirclesToNodes(this.nodes);
+
+        // Append text to Nodes
+        NodeManager.AppendTextToNodes(this.nodes);
+
 
         // Append text to Link edges
         this.linkText = this.AppendTextToLinkEdges();
@@ -49,48 +54,34 @@ export class Utility {
         // let clickText = false;
 
         // Create a force layout and bind Nodes and Links
-        this.force = this.CreateAForceLayoutAndBindNodesAndLinks(nodeSetApp)
-            .on("tick", () => {
-                this.Tick();
-            });
+        // this.force = this.CreateAForceLayoutAndBindNodesAndLinks()
+        //     .on("tick", () => {
+        //         this.Tick();
+        //     });
 
-        // Create Nodes
-        this.nodes = NodeManager.CreateNodes(this.svgCanvas, this.force);
 
-        // Append circles to Nodes
-        NodeManager.AppendCirclesToNodes(this.nodes);
-
-        // Append text to Nodes
-        NodeManager.AppendTextToNodes(this.nodes);
 
         //Build the Arrows
         this.buildArrows();
 
-        LegendManager.DrawLegend(colors, nodeSetApp, this.svgCanvas);
+        LegendManager.DrawLegend();
 
         d3.select(window).on('resize.updatesvg', Canvas.updateWindow);
     }
 
-    private static InitialSetup(nodeSetApp: INode[], linkSetApp: Link[]) {
-        const nodeStore = new NodeStore(nodeSetApp, linkSetApp);
-
-        // Append the source Node and the target Node to each Link
-        linkSetApp.forEach((link1: Link) => {
-            NodeStore.LinkInit(link1);
-        });
-    }
 
 
 
-    private static CreateAForceLayoutAndBindNodesAndLinks(nodeSetApp: INode[]) {
+
+    private static CreateAForceLayoutAndBindNodesAndLinks() {
         let force = d3.forceSimulation()
-            .nodes(nodeSetApp)
-            // .links(linkSetApp)
+            .nodes(NodeStore.nodeList)
+            .force("link", d3.forceLink(NodeStore.linkList))
             .force("charge", d3.forceManyBody().strength(-1000))
             .force("gravity", d3.forceManyBody().strength(.01))
             .force("friction", d3.forceManyBody().strength(.2))
-            // .force("link", d3.forceLink().id((d: any) => d.id).distance(100).strength(1)) => d.id).strength(9))
-            // .force("link", d3.forceLink().id((d: any) => d.id).distance((d) => width < height ? width * 1 / 3 : height * 1 / 3))
+            .force("link", d3.forceLink().id((d: any) => d.id).distance(100).strength(1)) //=> d.id).strength(9))
+            //.force("link", d3.forceLink().id((d: any) => d.id).distance(d => width < height ? width * 1 / 3 : height * 1 / 3))
             .force("center", d3.forceCenter(Canvas.width / 2, Canvas.heigth / 2))
 
         // .start();
@@ -120,26 +111,26 @@ export class Utility {
 
     private static AppendTextToLinkEdges() {
 
-        const linkText = this.svgCanvas.selectAll(".gLink")
-            // .data(force.links())
+        let linkText = this.svgCanvas.selectAll(".gLink")
+            .data(NodeStore.linkList)
             .append("text")
             .attr("font-family", "Arial, Helvetica, sans-serif")
             // .call(this.setLinkTextInMiddle, ink)
             .attr("fill", "Black")
             .style("font", "normal 12px Arial")
             .attr("dy", ".35em")
-            .text((d: any) => d.linkName);
+            .text((link: Link) => link.linkName);
 
-        // this.setLinkTextInMiddle(linkText, link);
+        this.setLinkTextInMiddle(linkText);
 
         return linkText;
     }
 
     private static updateLinkPositions(linkText: Selection<SVGGElement, Link, SVGGElement, Link>) {
-        linkText.attr("x1", (link: Link) =>link.Source.x)
-            .attr("y1", (link: Link) => link.Source.y)
-            .attr("x2", (link: Link) => link.Target.x)
-            .attr("y2", (link: Link) => link.Target.y);
+        linkText.attr("x1", (link: Link) =>link.source.x)
+            .attr("y1", (link: Link) => link.source.y)
+            .attr("x2", (link: Link) => link.target.x)
+            .attr("y2", (link: Link) => link.target.y);
     }
 
 

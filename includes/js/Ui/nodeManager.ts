@@ -4,20 +4,22 @@ import {MyClass} from "../app";
 import {LegendManager} from "./legendManager";
 import {ColorHelper} from "../ColorHelper";
 import {Utility} from "./utility";
+import {Canvas} from "./Canvas";
+import { NodeStore } from "../nodeStore";
+import { INode } from "../INode";
 
 const TRANSACTION_DURATION : number = 250;
 
 export class NodeManager {
 
     public static mouseClickNode(selector: string, clickText: boolean) {
-        // let selector = this.this1;
         const thisObject: Selection<any, any, HTMLElement, any> = d3.select(selector);
         const typeValue = thisObject.attr("type_value");
 
         if (!clickText && typeValue === 'Internal Link') {
-            const n = thisObject.node().__data__.name;
-            if (!MyClass.done.includes(n)) {
-                MyClass.askNode(n);
+            const nodeName = thisObject.node().__data__.name;
+            if (!MyClass.downloadedArticles.includes(nodeName)) {
+                MyClass.askNode(nodeName);
             }
         }
 
@@ -88,19 +90,19 @@ export class NodeManager {
         LegendManager.setLegendStyles("strippedTypeValue", "colorValue", 6);
     };
 
-    static CreateNodes(svgCanvas: any, force: any) {
-        const node = svgCanvas.selectAll(".node")
-            .data(force.nodes())
+    static CreateNodes() {
+        const node = Canvas.svgCanvas.selectAll(".node")
+            .data(NodeStore.nodeList)
             .enter().append("g")
             .attr("class", "node")
-            .attr("id", (d: any) => d.id)
-            .attr("type_value", (d: any) => d.type)
-            .attr("color_value", (d: any) => ColorHelper.color_hash[d.type])
-            .attr("xlink:href", (d: any) => d.hlink)
-            //.attr("fixed", function(d) { if (d.id==focalNodeID) { return true; } else { return false; } } )
-            .on("mouseover", this.nodeMouseOver)
-            .on("click", this.mouseClickNode)
-            .on("mouseout", this.nodeMouseOut)
+            .attr("id", (node: INode) => node.id)
+            .attr("type_value", (d: INode) => d.type)
+            .attr("color_value", (d: INode) => ColorHelper.color_hash[d.type])
+            .attr("xlink:href", (d: INode) => d.hlink)
+            .attr("fixed", function(d) { return d.id == MyClass.focalNodeID; } )
+            .on("mouseover", (d)=> this.nodeMouseOver)
+            .on("click", () => this.mouseClickNode)
+            .on("mouseout", () => this.nodeMouseOut)
             // .call(force.drag)
             .append("a");
         return node;
@@ -131,7 +133,7 @@ export class NodeManager {
         }
     }
 
-    static updateNodePositions(node: any, clientWidth: number, clientHeight: number, scale: number) {
+    static updateNodePositions(node: Selection<SVGGElement, INode, any, any>, clientWidth: number, clientHeight: number, scale: number) {
         node.attr("cx", (d: any) => {
             if (d.id === MyClass.focalNodeID) {
                 const s = 1 / scale;
@@ -151,14 +153,14 @@ export class NodeManager {
         });
     }
 
-    static AppendTextToNodes(node: any) {
+    static AppendTextToNodes(node: Selection<SVGGElement, INode, any, any>) {
         node.append("text")
             .attr("x", (d: any) => d.id === MyClass.focalNodeID ? 0 : 20)
             .attr("y", (d: any) => {
                 return d.id === MyClass.focalNodeID ? 0 : -10;
             })
             .attr("text-anchor", (d: any) => d.id === MyClass.focalNodeID ? "middle" : "start")
-            .on("click", this.mouseClickNodeText)
+            // .on("click", this.mouseClickNodeText)
             .attr("font-family", "Arial, Helvetica, sans-serif")
             .style("font", "normal 16px Arial")
             .attr("fill", "Blue")
@@ -175,13 +177,13 @@ export class NodeManager {
             .text((d: any) => d.name);
     }
 
-    static AppendCirclesToNodes(node: any) {
+    static AppendCirclesToNodes(node: Selection<SVGGElement, INode, any, any>) {
         node.append("circle")
-            //.attr("x", function(d) { return d.x; })
-            //.attr("y", function(d) { return d.y; })
+            .attr("x", function(d) { return d.x; })
+            .attr("y", function(d) { return d.y; })
             .attr("r", (d: any) => d.id === MyClass.focalNodeID ? Utility.centerNodeSize : Utility.nodeSize)
             .style("fill", "White") // Make the nodes hollow looking
-            //.style("fill", "transparent")
+            .style("fill", "transparent")
             .attr("type_value", (d: any) => d.type)
             .attr("color_value", (d: any) => ColorHelper.color_hash[d.type])
             //.attr("fixed", function(d) { if (d.id==focalNodeID) { return true; } else { return false; } } )

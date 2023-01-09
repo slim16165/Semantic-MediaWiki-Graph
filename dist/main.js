@@ -16863,8 +16863,8 @@ class Link {
         this.linkName = linkName;
         this.targetId = targetId;
         this.direction = direction;
-        this.Source = source;
-        this.Target = target;
+        this.source = source;
+        this.target = target;
     }
     /**
 
@@ -16873,8 +16873,8 @@ class Link {
      @return {number} The x-coordinate for the midpoint of the link.
      */
     CalculateMidpoint() {
-        let source = this.Source;
-        let target = this.Target;
+        let source = this.source;
+        let target = this.target;
         let x = this.CalcMiddlePoint(source.x, target.x);
         let y = this.CalcMiddlePoint(source.y, target.y);
         return { x, y };
@@ -17176,6 +17176,8 @@ const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
 const legendManager_1 = __webpack_require__(/*! ./legendManager */ "./includes/js/Ui/legendManager.ts");
 const ColorHelper_1 = __webpack_require__(/*! ../ColorHelper */ "./includes/js/ColorHelper.ts");
 const utility_1 = __webpack_require__(/*! ./utility */ "./includes/js/Ui/utility.ts");
+const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts");
+const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
 const TRANSACTION_DURATION = 250;
 class NodeManager {
     static mouseClickNode(selector, clickText) {
@@ -17246,19 +17248,19 @@ class NodeManager {
         legendManager_1.LegendManager.setLegendStyles("strippedTypeValue", "colorValue", 6);
     }
     ;
-    static CreateNodes(svgCanvas, force) {
-        const node = svgCanvas.selectAll(".node")
-            .data(force.nodes())
+    static CreateNodes() {
+        const node = Canvas_1.Canvas.svgCanvas.selectAll(".node")
+            .data(nodeStore_1.NodeStore.nodeList)
             .enter().append("g")
             .attr("class", "node")
-            .attr("id", (d) => d.id)
+            .attr("id", (node) => node.id)
             .attr("type_value", (d) => d.type)
             .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
             .attr("xlink:href", (d) => d.hlink)
-            //.attr("fixed", function(d) { if (d.id==focalNodeID) { return true; } else { return false; } } )
-            .on("mouseover", this.nodeMouseOver)
-            .on("click", this.mouseClickNode)
-            .on("mouseout", this.nodeMouseOut)
+            .attr("fixed", function (d) { return d.id == app_1.MyClass.focalNodeID; })
+            .on("mouseover", (d) => this.nodeMouseOver)
+            .on("click", () => this.mouseClickNode)
+            .on("mouseout", () => this.nodeMouseOut)
             // .call(force.drag)
             .append("a");
         return node;
@@ -17312,7 +17314,7 @@ class NodeManager {
             return d.id === app_1.MyClass.focalNodeID ? 0 : -10;
         })
             .attr("text-anchor", (d) => d.id === app_1.MyClass.focalNodeID ? "middle" : "start")
-            .on("click", this.mouseClickNodeText)
+            // .on("click", this.mouseClickNodeText)
             .attr("font-family", "Arial, Helvetica, sans-serif")
             .style("font", "normal 16px Arial")
             .attr("fill", "Blue")
@@ -17330,11 +17332,11 @@ class NodeManager {
     }
     static AppendCirclesToNodes(node) {
         node.append("circle")
-            //.attr("x", function(d) { return d.x; })
-            //.attr("y", function(d) { return d.y; })
+            .attr("x", function (d) { return d.x; })
+            .attr("y", function (d) { return d.y; })
             .attr("r", (d) => d.id === app_1.MyClass.focalNodeID ? utility_1.Utility.centerNodeSize : utility_1.Utility.nodeSize)
             .style("fill", "White") // Make the nodes hollow looking
-            //.style("fill", "transparent")
+            .style("fill", "transparent")
             .attr("type_value", (d) => d.type)
             .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
             //.attr("fixed", function(d) { if (d.id==focalNodeID) { return true; } else { return false; } } )
@@ -17352,38 +17354,6 @@ class NodeManager {
     }
 }
 exports.NodeManager = NodeManager;
-
-
-/***/ }),
-
-/***/ "./includes/js/Ui/nodeStore.ts":
-/*!*************************************!*\
-  !*** ./includes/js/Ui/nodeStore.ts ***!
-  \*************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.NodeStore = void 0;
-const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
-class NodeStore {
-    constructor(nodeList, linkList) {
-        NodeStore.nodeList = nodeList;
-        NodeStore.linkList = linkList;
-    }
-    static LinkInit(link1) {
-        link1.Source = NodeStore.getNodeById(link1.sourceId);
-        link1.Target = NodeStore.getNodeById(link1.targetId);
-        link1.direction = link1.sourceId === app_1.MyClass.focalNodeID ? "OUT" : "IN";
-    }
-    static getNodeById(sourceId) {
-        return NodeStore.nodeList[sourceId];
-    }
-}
-exports.NodeStore = NodeStore;
-NodeStore.nodeList = [];
-NodeStore.linkList = [];
 
 
 /***/ }),
@@ -17426,7 +17396,7 @@ const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
 const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts");
 const legendManager_1 = __webpack_require__(/*! ./legendManager */ "./includes/js/Ui/legendManager.ts");
 const nodeManager_1 = __webpack_require__(/*! ./nodeManager */ "./includes/js/Ui/nodeManager.ts");
-const nodeStore_1 = __webpack_require__(/*! ./nodeStore */ "./includes/js/Ui/nodeStore.ts");
+const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
 class Utility {
     /**
      * Draws a cluster using the provided data.
@@ -17442,44 +17412,37 @@ class Utility {
     static drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, colors) {
         let canvas = new Canvas_1.Canvas();
         this.svgCanvas = Canvas_1.Canvas.svgCanvas;
-        this.InitialSetup(nodeSetApp, linkSetApp);
+        nodeStore_1.NodeStore.InitialSetup(nodeSetApp, linkSetApp);
+        // Create Nodes
+        this.nodes = nodeManager_1.NodeManager.CreateNodes();
+        // Append circles to Nodes
+        nodeManager_1.NodeManager.AppendCirclesToNodes(this.nodes);
+        // Append text to Nodes
+        nodeManager_1.NodeManager.AppendTextToNodes(this.nodes);
         // Append text to Link edges
         this.linkText = this.AppendTextToLinkEdges();
         // Draw lines for Links between Nodes
         // this.link = this.DrawLinesForLinksBetweenNodes();
         // let clickText = false;
         // Create a force layout and bind Nodes and Links
-        this.force = this.CreateAForceLayoutAndBindNodesAndLinks(nodeSetApp)
-            .on("tick", () => {
-            this.Tick();
-        });
-        // Create Nodes
-        this.nodes = nodeManager_1.NodeManager.CreateNodes(this.svgCanvas, this.force);
-        // Append circles to Nodes
-        nodeManager_1.NodeManager.AppendCirclesToNodes(this.nodes);
-        // Append text to Nodes
-        nodeManager_1.NodeManager.AppendTextToNodes(this.nodes);
+        // this.force = this.CreateAForceLayoutAndBindNodesAndLinks()
+        //     .on("tick", () => {
+        //         this.Tick();
+        //     });
         //Build the Arrows
         this.buildArrows();
         legendManager_1.LegendManager.DrawLegend(colors, nodeSetApp, this.svgCanvas);
         d3.select(window).on('resize.updatesvg', Canvas_1.Canvas.updateWindow);
     }
-    static InitialSetup(nodeSetApp, linkSetApp) {
-        const nodeStore = new nodeStore_1.NodeStore(nodeSetApp, linkSetApp);
-        // Append the source Node and the target Node to each Link
-        linkSetApp.forEach((link1) => {
-            nodeStore_1.NodeStore.LinkInit(link1);
-        });
-    }
-    static CreateAForceLayoutAndBindNodesAndLinks(nodeSetApp) {
+    static CreateAForceLayoutAndBindNodesAndLinks() {
         let force = d3.forceSimulation()
-            .nodes(nodeSetApp)
-            // .links(linkSetApp)
+            .nodes(nodeStore_1.NodeStore.nodeList)
+            .force("link", d3.forceLink(nodeStore_1.NodeStore.linkList))
             .force("charge", d3.forceManyBody().strength(-1000))
             .force("gravity", d3.forceManyBody().strength(.01))
             .force("friction", d3.forceManyBody().strength(.2))
-            // .force("link", d3.forceLink().id((d: any) => d.id).distance(100).strength(1)) => d.id).strength(9))
-            // .force("link", d3.forceLink().id((d: any) => d.id).distance((d) => width < height ? width * 1 / 3 : height * 1 / 3))
+            .force("link", d3.forceLink().id((d) => d.id).distance(100).strength(1)) //=> d.id).strength(9))
+            //.force("link", d3.forceLink().id((d: any) => d.id).distance(d => width < height ? width * 1 / 3 : height * 1 / 3))
             .force("center", d3.forceCenter(Canvas_1.Canvas.width / 2, Canvas_1.Canvas.heigth / 2));
         // .start();
         return force;
@@ -17505,23 +17468,23 @@ class Utility {
         return link;
     }
     static AppendTextToLinkEdges() {
-        const linkText = this.svgCanvas.selectAll(".gLink")
-            // .data(force.links())
+        let linkText = this.svgCanvas.selectAll(".gLink")
+            .data(nodeStore_1.NodeStore.linkList)
             .append("text")
             .attr("font-family", "Arial, Helvetica, sans-serif")
             // .call(this.setLinkTextInMiddle, ink)
             .attr("fill", "Black")
             .style("font", "normal 12px Arial")
             .attr("dy", ".35em")
-            .text((d) => d.linkName);
-        // this.setLinkTextInMiddle(linkText, link);
+            .text((link) => link.linkName);
+        this.setLinkTextInMiddle(linkText);
         return linkText;
     }
     static updateLinkPositions(linkText) {
-        linkText.attr("x1", (link) => link.Source.x)
-            .attr("y1", (link) => link.Source.y)
-            .attr("x2", (link) => link.Target.x)
-            .attr("y2", (link) => link.Target.y);
+        linkText.attr("x1", (link) => link.source.x)
+            .attr("y1", (link) => link.source.y)
+            .attr("x2", (link) => link.target.x)
+            .attr("y2", (link) => link.target.y);
     }
     static Tick() {
         let clientWidth = $(".chart")[0].clientWidth;
@@ -17867,7 +17830,7 @@ class MyClass {
     static cloneEdge(array) {
         const newArr = [];
         array.forEach((item) => {
-            newArr.push(new Link_1.Link(item.sourceId, item.linkName, item.targetId, item.Source, item.Target, item.direction));
+            newArr.push(new Link_1.Link(item.sourceId, item.linkName, item.targetId, item.source, item.target, item.direction));
         });
         return newArr;
     }
@@ -17982,6 +17945,45 @@ MyClass.nodeSet = [];
 MyClass.linkSet = [];
 MyClass.wikiArticleElement = $('#wikiArticle');
 new MyClass();
+
+
+/***/ }),
+
+/***/ "./includes/js/nodeStore.ts":
+/*!**********************************!*\
+  !*** ./includes/js/nodeStore.ts ***!
+  \**********************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.NodeStore = void 0;
+const app_1 = __webpack_require__(/*! ./app */ "./includes/js/app.ts");
+class NodeStore {
+    static InitialSetup(nodeSetApp, linkSetApp) {
+        const nodeStore = new NodeStore(nodeSetApp, linkSetApp);
+        // Append the source Node and the target Node to each Link
+        linkSetApp.forEach((link1) => {
+            NodeStore.LinkInit(link1);
+        });
+    }
+    constructor(nodeList, linkList) {
+        NodeStore.nodeList = nodeList;
+        NodeStore.linkList = linkList;
+    }
+    static LinkInit(link1) {
+        link1.source = NodeStore.getNodeById(link1.sourceId);
+        link1.target = NodeStore.getNodeById(link1.targetId);
+        link1.direction = link1.sourceId === app_1.MyClass.focalNodeID ? "OUT" : "IN";
+    }
+    static getNodeById(sourceId) {
+        return NodeStore.nodeList[sourceId];
+    }
+}
+exports.NodeStore = NodeStore;
+NodeStore.nodeList = [];
+NodeStore.linkList = [];
 
 
 /***/ }),

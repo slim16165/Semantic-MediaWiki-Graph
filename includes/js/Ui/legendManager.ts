@@ -4,20 +4,22 @@ import {ColorHelper} from "../ColorHelper";
 import {MyClass} from "../app";
 import {NodeManager} from "./nodeManager";
 import {INode} from "../INode";
+import { NodeStore } from "../nodeStore";
+import { Canvas } from "./Canvas";
 
 export class LegendManager {
 
-    public static DrawLegend(colors: any, nodeSetApp: INode[], svgCanvas1: Selection<any, any, any, any>) {
-        const sortedColors = ColorHelper.GetColors(colors, nodeSetApp);
+    public static DrawLegend() {
+        const sortedColors = ColorHelper.GetColors('colorScale20', NodeStore.nodeList);
         // Plot the bullet circles...
 
         // Print Legend Title...
-        LegendManager.PrintLegendTitle(svgCanvas1);
+        LegendManager.PrintLegendTitle(Canvas.svgCanvas);
 
-        LegendManager.PlotTheBulletCircles(svgCanvas1, sortedColors);
+        LegendManager.PlotTheBulletCircles(Canvas.svgCanvas, sortedColors);
 
         // Create legend text that acts as label keys...
-        LegendManager.CreateLegendTextThatActsAsLabelKeys(svgCanvas1, sortedColors);
+        LegendManager.CreateLegendTextThatActsAsLabelKeys(Canvas.svgCanvas, sortedColors);
     }
 
     private static CreateLegendTextThatActsAsLabelKeys(svgCanvas: Selection<any, any, any, any>, sortedColors: any[]) {

@@ -1,439 +1,377 @@
-import {Utility} from "./Ui/utility";
-import {Article, BacklinksCallbackParams, ExtractedParams, Link, SuccessParams} from "./Link";
+import { Utility } from "./Ui/utility";
+import { Article, BacklinksCallbackParams, ExtractedParams, Link, SuccessParams } from "./Link";
 import "select2";
-import {INode} from "./INode";
-import {IForce} from "./IForce";
+import { INode } from "./INode";
+import { IForce } from "./IForce";
+import { NodeStore } from "./nodeStore";
 
 
 export class MyClass {
-    static invisibleNode: any[] = [];
-    static invisibleEdge: string[] = [];
-    static invisibleType: any[] = [];
-    static done: any[] = [];
-    static focalNodeID: string = ''; // Esempio  di valore reale: 'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
-    static nodeSet: INode[] = [];
-    static linkSet: Link[] = [];
-    static force: IForce;
+  static invisibleNode: any[] = [];
+  static invisibleEdge: string[] = [];
+  static invisibleType: any[] = [];
+  static downloadedArticles: any[] = [];
+  static focalNodeID: string = ""; // Esempio  di valore reale: 'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
+  static nodeSet: INode[] = [];
+  static linkSet: Link[] = [];
+  static force: IForce;
 
-    private static wikiArticleElement: JQuery = $('#wikiArticle');
+  private static wikiArticleElement: JQuery = $("#wikiArticle");
 
-    constructor() {
-        MyClass.initialize();
-    }
+  constructor() {
+    MyClass.initialize();
+  }
 
-    static initialize(): void {
-        MyClass.loadWikiArticlesAjax();
-        // MyClass.loadScript('select2.full.min.js');
+  static initialize(): void {
+    SemanticWikiApi.loadWikiArticlesAjax();
+    // MyClass.loadScript('select2.full.min.js');
 
-        $(() => {
-            $('#visualiseSite').click(() => {
-                let wikiArticle = MyClass.wikiArticleElement.val();
+    $(() => {
+      $("#visualiseSite").click(() => {
+        let wikiArticle = MyClass.wikiArticleElement.val();
 
-                if (wikiArticle === '') {
-                    // Error Message
-                    $('#error_msg').show();
-                } else {
-                    $('#error_msg').hide();
-                    MyClass.exec(wikiArticle);
-                }
-            });
-        });
-    }
-
-
-    public static loadScript(name: string) {
-        $.getScript(`/extensions/SemanticMediaWikiGraph/includes/js/${name}`, (data: any, textStatus: any, jqxhr: any) => {
-        });
-    }
-
-
-    public static exec(wikiArticle: any) {
-        MyClass.done = [];
-        $.ajax({
-            url: mw.util.wikiScript('api'),
-            data: {
-                action: 'browsebysubject',
-                subject: wikiArticle,
-                format: 'json'
-            },
-            type: 'GET',
-            success: execSuccessCallback
-        });
-
-
-        function execSuccessCallback(data: { edit: { result: string; }; error: any; query: { subject: string; data: any; }; }) {
-            if (data?.edit && data.edit.result === 'Success') {
-                // debugger;
-            } else if (data?.error) {
-                alert(data);
-                // debugger;
-            } else {
-                MyClass.nodeSet = [];
-                MyClass.linkSet = [];
-                MyClass.done.push(wikiArticle);
-                let node: INode = ({
-                    id: data.query.subject,
-                    name: data.query.subject.split("#")[0].replace("_", " "),
-                    type: "Internal Link",
-                    fixed: true,
-                    x: 10,
-                    y: 0,
-                    hlink: `./${data.query.subject.split("#")[0]}`
-                }) as INode;
-                MyClass.nodeSet.push(node);
-                MyClass.focalNodeID = data.query.subject;
-                MyClass.getNodesAndLinks(data.query.subject, data.query.data);
-                //backlinks(wikiArticle);
-                //und Ask wer hierhin zeigt?
-                $('#cluster_chart .chart').empty();
-                Utility.drawCluster('Drawing1', MyClass.focalNodeID, MyClass.nodeSet, MyClass.linkSet, 'colorScale20');
-
-                // const elem: JQuery<HTMLElement> = $(`[id=${MyClass.focalNodeID}] a`);
-                // // @ts-ignore
-                // elem[0].__data__.px = $(".chart")[0].clientWidth / 2;
-                // // @ts-ignore
-                // elem[0].__data__.py = $(".chart")[0].clientHeight / 2;
-            }
-        }
-
-    }
-
-
-    public static getNodeTypeName(name: string, type: number) {
-        switch (name) {
-            case "_boo":
-                return "Boolean";
-            case "_cod":
-                return "Code";
-            case "_dat":
-                return "Date";
-            case "_ema":
-                return "Email";
-            case "_num":
-                return "Number"; //oder Email //oder Telefon
-            case "_qty":
-                return "Quantity";
-            case "_rec":
-                return "Record";
-            case "_tem":
-                return "Temperature";
-            case "_uri":
-                return "URI";
-            case "_wpg":
-                return "Internal Link";
-            case "Monolingual":
-                return "Monolingual Text";
-            case "Telephone":
-                return "Telephone";
-            case "_TEXT":
-                return "Text";
-            case "_INST":
-                return "Category";
-            default:
-                switch (type) {
-                    case 1:
-                        return "Number";
-                    case 2:
-                        return "Text";
-                    case 4:
-                        return "Boolean";
-                    case 5:
-                        return "URI"; //oder Email //oder Telefon
-                    case 6:
-                        return "Date";
-                    case 9:
-                        return "Internal Link";
-                    default:
-                        return "Unknown Type";
-                }
-        }
-    }
-
-
-    public static nicePropertyName(name: string): string {
-        switch (name) {
-            case "_boo":
-                return "Boolean";
-            case "_cod":
-                return "Code";
-            case "_dat":
-                return "Date";
-            case "_ema":
-                return "Email";
-            case "_num":
-                return "Number"; //oder Email //oder Telefon
-            case "_qty":
-                return "Quantity";
-            case "_rec":
-                return "Record";
-            case "_tem":
-                return "Temperature";
-            case "_uri":
-                return "URI";
-            case "_wpg":
-                return "Internal Link";
-            case "Monolingual":
-                return "Monolingual Text";
-            case "Telephone":
-                return "Telephone";
-            case "_TEXT":
-                return "Text";
-            case "_INST":
-                return "isA";
-            default:
-                return name.replace("_", " ");
-        }
-    }
-
-
-    public static askNode(wikiArticle: any) {
-        $.ajax({
-            url: mw.util.wikiScript('api'),
-            data: {
-                action: 'browsebysubject',
-                subject: wikiArticle,
-                format: 'json'
-            },
-            type: 'GET',
-
-            success(data) {
-                if (data?.edit && data.edit.result === 'Success') {
-                    // debugger;
-                } else if (data?.error) {
-                    alert(data);
-                    // debugger;
-                } else {
-                    MyClass.done.push(wikiArticle);
-                    MyClass.focalNodeID = data.query.subject;
-                    MyClass.nodeSet.forEach((item) => {
-                        if (item.id === MyClass.focalNodeID) {
-                            item.fixed = true;
-                        }
-                    });
-                    this.getNodesAndLinks(data.subject, data.data);
-                    MyClass.force.stop();
-                    //  backlinks(wikiArticle);
-
-                    $('#cluster_chart .chart').empty();
-                    //  var k = cloneNode(nodeSet);
-                    //  var m = cloneEdge(linkSet);
-                    Utility.drawCluster('Drawing1', MyClass.focalNodeID, MyClass.nodeSet, MyClass.linkSet, 'colorScale20');
-                    //drawCluster.update();
-                    MyClass.hideElements();
-                }
-            }
-        });
-
-    }
-
-    public static getNodesAndLinks(subject: string, data: ExtractedParams[]) {
-        const nodeSet = [];
-        const linkSet = [];
-
-        for (const item of data) {
-            if (!["_SKEY", "_MDAT", "_ASK"].includes(item.property)) {
-                let dataitem = item.dataitem;
-
-                if (dataitem[0].item === subject) {
-                    dataitem[0].item = `${dataitem[0].item}_${item.property}`;
-                }
-                for (let arrayElement of dataitem) {
-                    nodeSet.push(this.extractNodeData(subject, item.property, [arrayElement]));
-                    linkSet.push(this.extractLinkData(subject, item.property, [arrayElement]));
-                }
-            }
-        }
-        MyClass.nodeSet = nodeSet;
-        MyClass.linkSet = linkSet;
-    }
-
-    public static extractNodeData(subject: string, property: string, dataitem: { item: string, type: string }[]): INode {
-        const type = MyClass.getNodeTypeName(property, Number(dataitem[0].type));
-
-        let name, hlink;
-        let item = dataitem[0].item;
-        if (type === 'URI') {
-            name = item.split("#")[0].replace("_", " ");
-            hlink = subject;
-        } else if (type === "Internal Link") {
-            name = item.split("#")[0].replace("_", " ");
-            hlink = `./${item.split("#")[0]}`;
-        } else if (type === "Date") {
-            name = item.substring(2);
-        } else if (type === 'Boolean') {
-            name = item === 't' ? 'true' : 'false';
+        if (wikiArticle === "") {
+          // Error Message
+          $("#error_msg").show();
         } else {
-            name = item.split("#")[0].replace("_", " ");
+          $("#error_msg").hide();
+          SemanticWikiApi.exec(wikiArticle);
         }
-        return new INode(item, name, "null", 0, 0);
+      });
+    });
+  }
+
+
+
+
+  public static getNodesAndLinks(url: string, data: ExtractedParams[]) {
+    const nodeSet: any[] = [];
+    const linkSet: any[] = [];
+
+    for (const semanticNode of data)
+    {
+      if (["_SKEY", "_MDAT", "_ASK"].includes(semanticNode.property)) {
+        continue;
+      }
+
+      let dataitem = semanticNode.dataitem;
+      let dataitemElement = dataitem[0];
+      let item = dataitemElement.item;
+
+      if (item === url) {
+        dataitemElement.item = `${item}_${semanticNode.property}`;
+      }
+      for (let arrayElement of dataitem)
+      {
+        let {node, link} = this.InitializeNodesAndLinks(url, semanticNode, dataitemElement, arrayElement);
+        nodeSet.push(node);
+        linkSet.push(link);
+      }
+    }
+    MyClass.nodeSet = nodeSet;
+    MyClass.linkSet = linkSet;
+  }
+
+  private static InitializeNodesAndLinks(url: string, semanticNode: ExtractedParams, dataitemElement: { item: any; type: any; }, arrayElement: any)
+  {
+    let propertyName = semanticNode.property;
+    let nameToParse = dataitemElement.item;
+    let numerictype = dataitemElement.type;
+    const type = INode.getNodeType(propertyName, numerictype);
+    let { name, hlink } = this.parseNodeName(nameToParse, type, url);
+    let node = new INode(nameToParse, name, "null", 0, 0, hlink);
+    let link = new Link(url, NameHelper.nicePropertyName(propertyName), [arrayElement][0].item, null, null, "");
+
+    return {node, link};
+  }
+
+  private static parseNodeName(nameToParse: string, type: any, url: string) {
+    function parseNodeName() {
+      return nameToParse.split("#")[0].replace("_", " ");
     }
 
-    public static extractLinkData(subject: string, property: string, dataitem: { item: string, type: string }[]):
-        Link {
-        return <Link>{
-            sourceId: subject,
-            linkName: MyClass.nicePropertyName(property),
-            targetId: dataitem[0].item,
-        };
+    let name, hlink = "";
+
+    switch (type) {
+      case "URI":
+        name = parseNodeName();
+        hlink = url;
+        break;
+      case "Internal Link":
+        name = parseNodeName();
+        hlink = `./${nameToParse.split("#")[0]}`;
+        break;
+      case "Date":
+        name = nameToParse.substring(2);
+        break;
+      case "Boolean":
+        name = nameToParse === "t" ? "true" : "false";
+        break;
+      default:
+        name = parseNodeName();
+        break;
+    }
+    return { name, hlink };
+  }
+
+  public static hideElements() {
+    $(".node").each(HideEach);
+
+    function HideEach(index: number, element: HTMLElement) {
+      let el = element as CustomHTMLElement;
+      const invIndex = MyClass.invisibleType.indexOf(el.__data__.type);
+      if (!(invIndex > -1)) {
+        return;
+      }
+      $(el).toggle();
+      const invIndexNode = MyClass.invisibleNode.indexOf(el.__data__.id);
+      if (invIndexNode === -1) {
+        MyClass.invisibleNode.push(el.__data__.id);
+      }
     }
 
+    $(".gLink").each((index, element) => MyClass.SomethingRelatedToNodeVisibility(index, element as CustomHTMLElement));
+  }
 
-    public static backlinksAjax(wikiArticle: string) {
-        $.ajax({
-            url: mw.util.wikiScript('api'),
-            data: {
-                action: 'query',
-                list: 'backlinks',
-                bltitle: wikiArticle,
-                format: 'json'
-            },
-            type: 'GET',
+  static InitWikiArticle(wikiArticle: any, data: { edit: { result: string }; error: any; query: { subject: string; data: any } }) {
+    MyClass.nodeSet = [];
+    MyClass.linkSet = [];
+    MyClass.downloadedArticles.push(wikiArticle);
 
-            success({data}: BacklinksCallbackParams) {
-                this.BacklinksCallback({data: data});
-            }
-        });
+    let id = data.query.subject;
+    let name = id.split("#")[0].replace("_", " ");
+
+    let node: INode = new INode(id, name, "Internal Link", 10, 0, `./${id.split("#")[0]}`);
+    node.fixed = true;
+
+    MyClass.nodeSet.push(node);
+
+    MyClass.focalNodeID = id;
+    MyClass.getNodesAndLinks(id, data.query.data);
+    SemanticWikiApi.backlinksAjax(wikiArticle);
+    //und Ask wer hierhin zeigt?
+    $("#cluster_chart .chart").empty();
+    Utility.drawCluster("Drawing1", MyClass.focalNodeID);
+
+    // const elem: JQuery<HTMLElement> = $(`[id=${MyClass.focalNodeID}] a`);
+    // // @ts-ignore
+    // elem[0].__data__.px = $(".chart")[0].clientWidth / 2;
+    // // @ts-ignore
+    // elem[0].__data__.py = $(".chart")[0].clientHeight / 2;
+  }
+
+  static extracted(wikiArticle: any, data: any) {
+    MyClass.downloadedArticles.push(wikiArticle);
+    MyClass.focalNodeID = data.query.subject;
+    MyClass.nodeSet.forEach((item) => {
+      if (item.id === MyClass.focalNodeID) {
+        item.fixed = true;
+      }
+    });
+    MyClass.getNodesAndLinks(data.subject, data.data);
+    MyClass.force.stop();
+    SemanticWikiApi.backlinksAjax(wikiArticle);
+
+    $("#cluster_chart .chart").empty();
+    //  var k = cloneNode(nodeSet);
+    //  var m = cloneEdge(linkSet);
+    Utility.drawCluster("Drawing1", MyClass.focalNodeID);
+    //drawCluster.update();
+    MyClass.hideElements();
+  }
+
+  static CreateWikiArticleUi(articles: Article[]) {
+    for (const article of articles) {
+      $("#wikiArticle").append(`<option value="${article.title}">${article.title}</option>`);
     }
 
-    public static cloneNode(array: INode[]) {
-        const newArr: INode[] = [];
+    require("select2");
 
-        array.forEach((node: INode) => {
-            let node1 = new INode(node.id, node.name,node.type, node.x, node.y);
+    $("#wikiArticle").select2({
+        placeholder: "Select a Wiki Article",
+        allowClear: true
+    });
+  }
 
-            if (typeof node.hlink !== 'undefined') {
-                node1.hlink = node.hlink;
-            }
+  private static SomethingRelatedToNodeVisibility(index: number, el: CustomHTMLElement) {
+    //(this: el: CustomHTMLElement)
+    //      debugger;
+    const valSource = el.__data__.sourceId;
+    const valTarget = el.__data__.targetId;
+    let indexEdge: number;
 
-            newArr.push(node1);
+    const indexSource = MyClass.invisibleNode.indexOf(valSource);
+    const indexTarget = MyClass.invisibleNode.indexOf(valTarget);
+    indexEdge = MyClass.invisibleEdge.indexOf(`${valSource}_${valTarget}_${el.__data__.linkName}`);
 
-        });
+    if (indexEdge > -1) {
+      //Einer der beiden Knoten ist unsichtbar, aber Kante noch nicht
+      $(this).toggle();
+      //    invisibleEdge.push(valSource + "_" + valTarget + "_" + el.__data__.linkName);
+    } else if ((indexSource > -1 || indexTarget > -1)) {
+      //Knoten sind nicht unsichtbar, aber Kante ist es
+      $(this).toggle();
+      MyClass.invisibleEdge.push(`${valSource}_${valTarget}_${el.__data__.linkName}`);
+    }
+  };
 
-        return newArr;
+  private static BacklinksCallback({ data }: BacklinksCallbackParams) {
+    if (data?.edit && data.edit.result === "Success") {
+      // debugger;
+    } else if (data?.error) {
+      alert((data) as any);
+      // debugger;
+    } else {
+      MyClass.InitNodeAndLinks(data.query.backlinks);
     }
 
-    public static cloneEdge(array: Link[]) {
+    $("#cluster_chart .chart").empty();
+    //  var k = cloneNode(nodeSet);
+    //  var m = cloneEdge(linkSet);
 
-        const newArr: Link[] = [];
-        array.forEach((item: Link) => {
-            newArr.push(new Link(item.sourceId, item.linkName, item.targetId, item.Source, item.Target, item.direction));
-        });
+    NodeStore.InitialSetup(MyClass.nodeSet, MyClass.linkSet);
 
-        return newArr;
+    Utility.drawCluster("Drawing1", MyClass.focalNodeID);
+    //drawCluster.update();
+    MyClass.hideElements();
+  }
+
+  private static InitNodeAndLinks(backlinks: Article[]) {
+    for (let article of backlinks) {
+      let node = new INode(article.title, article.title, "Unknown", 0, 0, article.title);
+
+      MyClass.nodeSet.push(node);
+
+      MyClass.linkSet.push({ sourceId: article.title, linkName: "Unknown", targetId: MyClass.focalNodeID } as Link);
     }
-
-    public static loadWikiArticlesAjax() {
-        $.ajax({
-            url: mw.util.wikiScript('api') as string,
-            data: {
-                action: 'query',
-                list: 'allpages',
-                aplimit: 1000,
-                format: 'json'
-            },
-            type: 'GET',
-            success(data: SuccessParams) {
-                if (!(!(data?.edit && data.edit.result === 'Success') && !(data?.error))) {
-                    return;
-                }
-                MyClass.CreateWikiArticleUi(data.query.allpages);
-            }
-        });
-    }
-
-    public static hideElements() {
-        $(".node").each(HideEach);
-
-        function HideEach(index: number, element: HTMLElement) {
-            let el = element as CustomHTMLElement;
-            const invIndex = MyClass.invisibleType.indexOf(el.__data__.type);
-            if (!(invIndex > -1)) {
-                return;
-            }
-            $(el).toggle();
-            const invIndexNode = MyClass.invisibleNode.indexOf(el.__data__.id);
-            if (invIndexNode === -1) {
-                MyClass.invisibleNode.push(el.__data__.id);
-            }
-        }
-
-        $(".gLink").each((index, element) => MyClass.getFunсtion32432(index, element as CustomHTMLElement));
-    }
-
-    private static CreateWikiArticleUi(articles: Article[]) {
-        for (const article of articles) {
-            $('#wikiArticle').append(`<option value="${article.title}">${article.title}</option>`);
-        }
-
-        // require("select2");
-        //
-        // $("#wikiArticle").select2({
-        //     placeholder: "Select a Wiki Article",
-        //     allowClear: true
-        // });
-    }
-
-    private static getFunсtion32432(index: number, el: CustomHTMLElement) {
-        //(this: el: CustomHTMLElement)
-        //      debugger;
-        const valSource = el.__data__.sourceId;
-        const valTarget = el.__data__.targetId;
-        let indexEdge: number;
-
-        const indexSource = MyClass.invisibleNode.indexOf(valSource);
-        const indexTarget = MyClass.invisibleNode.indexOf(valTarget);
-        indexEdge = MyClass.invisibleEdge.indexOf(`${valSource}_${valTarget}_${el.__data__.linkName}`);
-
-        if (indexEdge > -1) {
-            //Einer der beiden Knoten ist unsichtbar, aber Kante noch nicht
-            $(this).toggle();
-            //    invisibleEdge.push(valSource + "_" + valTarget + "_" + el.__data__.linkName);
-        } else if ((indexSource > -1 || indexTarget > -1)) {
-            //Knoten sind nicht unsichtbar, aber Kante ist es
-            $(this).toggle();
-            MyClass.invisibleEdge.push(`${valSource}_${valTarget}_${el.__data__.linkName}`);
-        }
-    };
-
-    private BacklinksCallback({data}: BacklinksCallbackParams) {
-        if (data?.edit && data.edit.result === 'Success') {
-            // debugger;
-        } else if (data?.error) {
-            alert((data) as any);
-            // debugger;
-        } else {
-            this.InitNodeAndLinks(data.query.backlinks);
-        }
-
-        $('#cluster_chart .chart').empty();
-        //  var k = cloneNode(nodeSet);
-        //  var m = cloneEdge(linkSet);
-        Utility.drawCluster('Drawing1', MyClass.focalNodeID, MyClass.nodeSet, MyClass.linkSet, 'colorScale20');
-        //drawCluster.update();
-        MyClass.hideElements();
-    }
-
-    private InitNodeAndLinks(backlinks: Article[]) {
-        for (let article of backlinks) {
-            MyClass.nodeSet.push({
-                x: 0, y: 0,
-                id: article.title,
-                name: article.title,
-                type: 'Unknown',
-                hlink: article.title
-            });
-
-            MyClass.linkSet.push(<Link>{
-                sourceId: article.title,
-                linkName: 'Unknown',
-                targetId: MyClass.focalNodeID
-            });
-        }
-    }
-
-    //should be function (this: TElement, index: number, element: TElement) => void | false
-
+  }
 }
 
 new MyClass();
 
+export class SemanticWikiApi{
+  public static askNode(wikiArticle: any) {
+    $.ajax({
+      url: mw.util.wikiScript("api"),
+      data: {
+        action: "browsebysubject",
+        subject: wikiArticle,
+        format: "json"
+      },
+      type: "GET",
+
+      success(data) {
+        if (data?.edit && data.edit.result === "Success") {
+          // debugger;
+        } else if (data?.error) {
+          alert(data);
+          // debugger;
+        } else {
+          MyClass.extracted(wikiArticle, data);
+        }
+      }
+    });
+
+  }
+
+  public static backlinksAjax(wikiArticle: string) {
+    $.ajax({
+      url: mw.util.wikiScript("api"),
+      data: {
+        action: "query",
+        list: "backlinks",
+        bltitle: wikiArticle,
+        format: "json"
+      },
+      type: "GET",
+
+      success({ data }: BacklinksCallbackParams) {
+        this.BacklinksCallback({ data: data });
+      }
+    });
+  }
+  public static exec(wikiArticle: any) {
+    MyClass.downloadedArticles = [];
+    $.ajax({
+      url: mw.util.wikiScript("api"),
+      data: {
+        action: "browsebysubject",
+        subject: wikiArticle,
+        format: "json"
+      },
+      type: "GET",
+      success: execSuccessCallback
+    });
+
+
+    function execSuccessCallback(data: { edit: { result: string; }; error: any; query: { subject: string; data: any; }; }) {
+      if (data?.edit && data.edit.result === "Success") {
+        // debugger;
+      } else if (data?.error) {
+        alert(data);
+        // debugger;
+      } else {
+        MyClass.InitWikiArticle(wikiArticle, data);
+      }
+    }
+
+  }
+
+  public static loadWikiArticlesAjax() {
+    $.ajax({
+      url: mw.util.wikiScript("api") as string,
+      data: {
+        action: "query",
+        list: "allpages",
+        aplimit: 1000,
+        format: "json"
+      },
+      type: "GET",
+      success(data: SuccessParams) {
+        if (!(!(data?.edit && data.edit.result === "Success") && !(data?.error))) {
+          return;
+        }
+        MyClass.CreateWikiArticleUi(data.query.allpages);
+      }
+    });
+  }
+}
+
+export class NameHelper{
+
+
+  public static nicePropertyName(name: string): string {
+    switch (name) {
+      case "_boo":
+        return "Boolean";
+      case "_cod":
+        return "Code";
+      case "_dat":
+        return "Date";
+      case "_ema":
+        return "Email";
+      case "_num":
+        return "Number"; //oder Email //oder Telefon
+      case "_qty":
+        return "Quantity";
+      case "_rec":
+        return "Record";
+      case "_tem":
+        return "Temperature";
+      case "_uri":
+        return "URI";
+      case "_wpg":
+        return "Internal Link";
+      case "Monolingual":
+        return "Monolingual Text";
+      case "Telephone":
+        return "Telephone";
+      case "_TEXT":
+        return "Text";
+      case "_INST":
+        return "isA";
+      default:
+        return name.replace("_", " ");
+    }
+  }
+}
