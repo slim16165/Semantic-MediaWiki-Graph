@@ -1,16 +1,16 @@
 {
   "files": [
     "includes/js/app.ts",
-    "includes/js/utility.ts",
-    "node_modules/types-mediawiki/mw/index.d.ts",
+    "includes/js/Ui/utility.ts",
+    "includes/js/Ui/Canvas.ts",
     "includes/js/CustomHTMLElement.ts",
-    "includes/js/OtherTypes.ts"
+    "node_modules/types-mediawiki/mw/index.d.ts"
   ],
   "knownSymbols": {
     "Utility": [
       {
         "name": "Utility",
-        "path": "./includes/js/utility.ts",
+        "path": "./includes/js/Ui/utility.ts",
         "type": "class",
         "isDefault": false
       }

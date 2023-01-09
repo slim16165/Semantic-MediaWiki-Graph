@@ -16825,27 +16825,16 @@ ColorHelper.color_hash = {};
 
 /***/ }),
 
-/***/ "./includes/js/OtherTypes.ts":
-/*!***********************************!*\
-  !*** ./includes/js/OtherTypes.ts ***!
-  \***********************************/
+/***/ "./includes/js/INode.ts":
+/*!******************************!*\
+  !*** ./includes/js/INode.ts ***!
+  \******************************/
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.INode = exports.ILink = void 0;
-class ILink {
-    constructor(sourceId, linkName, targetId, source, target, direction) {
-        this.sourceId = sourceId;
-        this.linkName = linkName;
-        this.targetId = targetId;
-        this.direction = direction;
-        this.source = source;
-        this.target = target;
-    }
-}
-exports.ILink = ILink;
+exports.INode = void 0;
 class INode {
     constructor(id, name, type, x, y) {
         this.x = 0;
@@ -16854,6 +16843,741 @@ class INode {
     }
 }
 exports.INode = INode;
+
+
+/***/ }),
+
+/***/ "./includes/js/Link.ts":
+/*!*****************************!*\
+  !*** ./includes/js/Link.ts ***!
+  \*****************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Link = void 0;
+class Link {
+    constructor(sourceId, linkName, targetId, source, target, direction) {
+        this.sourceId = sourceId;
+        this.linkName = linkName;
+        this.targetId = targetId;
+        this.direction = direction;
+        this.Source = source;
+        this.Target = target;
+    }
+    /**
+
+     Calculates the x-coordinate for the midpoint of a link.
+     @param {ILink} link - The link whose midpoint x-coordinate we want to calculate.
+     @return {number} The x-coordinate for the midpoint of the link.
+     */
+    CalculateMidpoint() {
+        let source = this.Source;
+        let target = this.Target;
+        let x = this.CalcMiddlePoint(source.x, target.x);
+        let y = this.CalcMiddlePoint(source.y, target.y);
+        return { x, y };
+    }
+    CalcMiddlePoint(x, y) {
+        return Math.min(x, y) + Math.abs(y - x) / 2;
+    }
+}
+exports.Link = Link;
+
+
+/***/ }),
+
+/***/ "./includes/js/Ui/Canvas.ts":
+/*!**********************************!*\
+  !*** ./includes/js/Ui/Canvas.ts ***!
+  \**********************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Canvas = void 0;
+const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
+const utility_1 = __webpack_require__(/*! ./utility */ "./includes/js/Ui/utility.ts");
+class Canvas {
+    constructor() {
+        Canvas.svgCanvas = Canvas.InitCanvas('#cluster_chart .chart');
+    }
+    static InitCanvas(selectString) {
+        const svgCanvas = d3.select(selectString)
+            .append("svg:svg")
+            .call((selection, ...args) => {
+            d3.zoom().on("zoom", (event) => {
+                utility_1.Utility.scale = event.transform.k;
+                selection.attr("transform", event.transform);
+            })(selection, ...args);
+        })
+            .attr("width", this.width)
+            .attr("height", this.heigth)
+            .attr("id", "svgCanvas")
+            .append("svg:g")
+            .attr("class", "focalNodeCanvas");
+        return svgCanvas;
+    }
+    static updateWindow() {
+        Canvas.width = $(".chart")[0].clientWidth - 60;
+        Canvas.heigth = $(".chart")[0].clientHeight - 60;
+        Canvas.svgCanvas.attr("width", Canvas.width).attr("height", Canvas.heigth);
+        $('#svgCanvas').width(Canvas.width + 90);
+        $('#svgCanvas').height(Canvas.heigth + 60);
+    }
+}
+exports.Canvas = Canvas;
+Canvas.width = $(".chart")[0].clientWidth;
+Canvas.heigth = $(".chart")[0].clientHeight;
+
+
+/***/ }),
+
+/***/ "./includes/js/Ui/legendManager.ts":
+/*!*****************************************!*\
+  !*** ./includes/js/Ui/legendManager.ts ***!
+  \*****************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.LegendManager = void 0;
+const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
+const ColorHelper_1 = __webpack_require__(/*! ../ColorHelper */ "./includes/js/ColorHelper.ts");
+const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
+const nodeManager_1 = __webpack_require__(/*! ./nodeManager */ "./includes/js/Ui/nodeManager.ts");
+class LegendManager {
+    static DrawLegend(colors, nodeSetApp, svgCanvas1) {
+        const sortedColors = ColorHelper_1.ColorHelper.GetColors(colors, nodeSetApp);
+        // Plot the bullet circles...
+        // Print Legend Title...
+        LegendManager.PrintLegendTitle(svgCanvas1);
+        LegendManager.PlotTheBulletCircles(svgCanvas1, sortedColors);
+        // Create legend text that acts as label keys...
+        LegendManager.CreateLegendTextThatActsAsLabelKeys(svgCanvas1, sortedColors);
+    }
+    static CreateLegendTextThatActsAsLabelKeys(svgCanvas, sortedColors) {
+        svgCanvas.selectAll("a.legend_link")
+            .data(sortedColors) // Instruct to bind dataSet to text elements
+            .enter().append("svg:a") // Append legend elements
+            .append("text")
+            .attr("text-anchor", "center")
+            .attr("x", 40)
+            .attr("y", (d, i) => (45 + (i * 20)))
+            .attr("dx", 0)
+            .attr("dy", "4px") // Controls padding to place text in alignment with bullets
+            .text((d) => d)
+            .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d])
+            .attr("type_value", (d) => d)
+            .attr("index_value", (d, i) => `index-${i}`)
+            .attr("class", (d) => {
+            const strippedString = d.replace(/ /g, "_");
+            return `legendText-${strippedString}`;
+        })
+            .style("fill", "Black")
+            .style("font", "normal 14px Arial")
+            .on('mouseover', LegendManager.typeMouseOver)
+            .on("mouseout", LegendManager.typeMouseOut);
+    }
+    static PrintLegendTitle(svgCanvas) {
+        svgCanvas.append("text").attr("class", "region")
+            .text("Color Keys for Data Types...")
+            .attr("x", 15)
+            .attr("y", 25)
+            .style("fill", "Black")
+            .style("font", "bold 16px Arial")
+            .attr("text-anchor", "start");
+    }
+    static clickLegend(selector) {
+        // let selector = this.this1;
+        const thisObject = Array.isArray(selector) ? d3.select(selector[0]) : d3.select(selector /*vuole una stringa*/);
+        const typeValue = thisObject.attr("type_value");
+        let invisibleType = [];
+        const invIndexType = invisibleType.indexOf(typeValue);
+        if (invIndexType > -1) {
+            invisibleType.splice(Number(typeValue), 1);
+        }
+        else {
+            invisibleType.push(typeValue);
+        }
+        $(".node").each((index, el) => this.MakeInvisible(index, el, typeValue));
+        $(".gLink").each((index, el) => this.MakeInvisible2(index, el));
+    }
+    ;
+    static setLegendStyles(strippedTypeValue, colorValue, radius) {
+        const legendBulletSelector = `.legendBullet-${strippedTypeValue}`;
+        const selectedBullet = d3.selectAll(legendBulletSelector);
+        selectedBullet.style("fill", colorValue);
+        selectedBullet.attr("r", radius);
+        const legendTextSelector = `.legendText-${strippedTypeValue}`;
+        const selectedLegendText = d3.selectAll(legendTextSelector);
+        selectedLegendText.style("font", colorValue === "Maroon" ? "bold 14px Arial" : "normal 14px Arial");
+        selectedLegendText.style("fill", colorValue === "Maroon" ? "Maroon" : "Black");
+    }
+    static MakeInvisible(index, el, typeValue) {
+        if (el.__data__.type !== typeValue) {
+            return;
+        }
+        const invIndex = app_1.MyClass.invisibleNode.indexOf(el.__data__.id);
+        if (invIndex > -1) {
+            app_1.MyClass.invisibleNode.splice(invIndex, 1);
+        }
+        else {
+            app_1.MyClass.invisibleNode.push(el.__data__.id);
+        }
+        $(this).toggle();
+    }
+    static MakeInvisible2(index, el) {
+        //      debugger;
+        const valSource = el.__data__.sourceId;
+        const valTarget = el.__data__.targetId;
+        //if beide
+        const indexSource = app_1.MyClass.invisibleNode.indexOf(valSource);
+        const indexTarget = app_1.MyClass.invisibleNode.indexOf(valTarget);
+        const indexEdge = app_1.MyClass.invisibleEdge.indexOf(`${valSource}_${valTarget}_${el.__data__.linkName}`);
+        if ((indexSource > -1 || indexTarget > -1) && indexEdge === -1) {
+            //Einer der beiden Knoten ist unsichtbar, aber Kante noch nicht
+            $(this).toggle();
+            app_1.MyClass.invisibleEdge.push(`${valSource}_${valTarget}_${el.__data__.linkName}`);
+        }
+        else if (indexSource === -1 && indexTarget === -1 && indexEdge === -1) {
+            //Beide Knoten sind nicht unsichtbar und Kante ist nicht unsichtbar
+        }
+        else if (indexSource === -1 && indexTarget === -1 && indexEdge > -1) {
+            //Knoten sind nicht unsichtbar, aber Kante ist es
+            $(this).toggle();
+            app_1.MyClass.invisibleEdge.splice(indexEdge, 1);
+        }
+    }
+    static PlotTheBulletCircles(svgCanvas, sortedColors) {
+        svgCanvas.selectAll("focalNodeCanvas")
+            .data(sortedColors).enter().append("svg:circle") // Append circle elements
+            .attr("cx", 20)
+            .attr("cy", (d, i) => (45 + (i * 20)))
+            .attr("stroke-width", ".5")
+            .style("fill", (d) => ColorHelper_1.ColorHelper.color_hash[d])
+            .attr("r", 6)
+            .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d])
+            .attr("type_value", (d) => d)
+            .attr("index_value", (d, i) => `index-${i}`)
+            .attr("class", (d) => {
+            const strippedString = d.replace(/ /g, "_");
+            return `legendBullet-${strippedString}`;
+        })
+            .on('mouseover', LegendManager.typeMouseOver)
+            .on("mouseout", LegendManager.typeMouseOut)
+            .on('click', LegendManager.clickLegend);
+    }
+    static typeMouseOver(selector, nodeSize) {
+        const thisObject = d3.select(selector);
+        const typeValue = thisObject.attr("type_value");
+        const strippedTypeValue = typeValue.replace(/ /g, "_");
+        LegendManager.setLegendStyles("strippedTypeValue", "Maroon", 1.2 * 6);
+        nodeManager_1.NodeManager.setNodeStyles(strippedTypeValue, "Maroon", "bold", nodeSize, false);
+    }
+    static typeMouseOut(selector, nodeSize) {
+        const thisObject = d3.select(selector);
+        const typeValue = thisObject.attr("type_value");
+        const colorValue = thisObject.attr("color_value");
+        const strippedTypeValue = typeValue.replace(/ /g, "_");
+        LegendManager.setLegendStyles("strippedTypeValue", "colorValue", 6);
+        nodeManager_1.NodeManager.setNodeStyles(strippedTypeValue, "Blue", "normal", nodeSize, false);
+    }
+}
+exports.LegendManager = LegendManager;
+
+
+/***/ }),
+
+/***/ "./includes/js/Ui/nodeManager.ts":
+/*!***************************************!*\
+  !*** ./includes/js/Ui/nodeManager.ts ***!
+  \***************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.NodeManager = void 0;
+const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
+const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
+const legendManager_1 = __webpack_require__(/*! ./legendManager */ "./includes/js/Ui/legendManager.ts");
+const ColorHelper_1 = __webpack_require__(/*! ../ColorHelper */ "./includes/js/ColorHelper.ts");
+const utility_1 = __webpack_require__(/*! ./utility */ "./includes/js/Ui/utility.ts");
+const TRANSACTION_DURATION = 250;
+class NodeManager {
+    static mouseClickNode(selector, clickText) {
+        // let selector = this.this1;
+        const thisObject = d3.select(selector);
+        const typeValue = thisObject.attr("type_value");
+        if (!clickText && typeValue === 'Internal Link') {
+            const n = thisObject.node().__data__.name;
+            if (!app_1.MyClass.done.includes(n)) {
+                app_1.MyClass.askNode(n);
+            }
+        }
+        clickText = false;
+    }
+    ;
+    static mouseClickNodeText(selector, clickText) {
+        // let selector = this.this1;
+        // let win: any;
+        const thisObject = d3.select(selector);
+        const typeValue = thisObject.attr("type_value");
+        let node = thisObject.node();
+        if (typeValue === 'Internal Link') {
+            if (node) {
+                let win = window.open(node.__data__.hlink);
+            }
+        }
+        else if (typeValue === 'URI') {
+            if (node) {
+                let win = window.open(node.__data__.hlink);
+            }
+        }
+        clickText = true;
+    }
+    ;
+    static nodeMouseOver(selector) {
+        // let selector = this.this1;
+        const thisObject = d3.select(selector);
+        const typeValue = thisObject.attr("type_value");
+        const strippedTypeValue = typeValue.replace(/ /g, "_");
+        d3.select(selector).select("circle").transition()
+            .duration(TRANSACTION_DURATION)
+            .attr("r", (d, i) => d.id === app_1.MyClass.focalNodeID ? 65 : 15);
+        d3.select(selector).select("text").transition()
+            .duration(TRANSACTION_DURATION)
+            .style("font", "bold 20px Arial")
+            .attr("fill", "Blue");
+        legendManager_1.LegendManager.setLegendStyles("strippedTypeValue", "Maroon", 1.2 * 6);
+    }
+    ;
+    static nodeMouseOut(selector) {
+        // let selector = this.this1;
+        const thisObject = d3.select(selector);
+        const typeValue = thisObject.attr("type_value");
+        const colorValue = thisObject.attr("color_value");
+        const strippedTypeValue = typeValue.replace(/ /g, "_");
+        function getValue(d) {
+            return d.id === app_1.MyClass.focalNodeID ? utility_1.Utility.centerNodeSize : utility_1.Utility.nodeSize;
+        }
+        d3.select(selector).select("circle")
+            .transition()
+            .duration(TRANSACTION_DURATION)
+            .attr("r", (d) => getValue(d));
+        d3.select(selector).select("text")
+            .transition()
+            .duration(TRANSACTION_DURATION)
+            .style("font", "normal 16px Arial")
+            .attr("fill", "Blue");
+        legendManager_1.LegendManager.setLegendStyles("strippedTypeValue", "colorValue", 6);
+    }
+    ;
+    static CreateNodes(svgCanvas, force) {
+        const node = svgCanvas.selectAll(".node")
+            .data(force.nodes())
+            .enter().append("g")
+            .attr("class", "node")
+            .attr("id", (d) => d.id)
+            .attr("type_value", (d) => d.type)
+            .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
+            .attr("xlink:href", (d) => d.hlink)
+            //.attr("fixed", function(d) { if (d.id==focalNodeID) { return true; } else { return false; } } )
+            .on("mouseover", this.nodeMouseOver)
+            .on("click", this.mouseClickNode)
+            .on("mouseout", this.nodeMouseOut)
+            // .call(force.drag)
+            .append("a");
+        return node;
+    }
+    static setNodeStyles(strippedTypeValue, colorValue, fontWeight, nodeSize, focalNode) {
+        const nodeTextSelector = `.nodeText-${strippedTypeValue}`;
+        const selectedNodeText = d3.selectAll(nodeTextSelector);
+        selectedNodeText.style("font", `${fontWeight} 16px Arial`);
+        selectedNodeText.style("fill", colorValue);
+        const nodeCircleSelector = `.nodeCircle-${strippedTypeValue}`;
+        const selectedCircle = d3.selectAll(nodeCircleSelector);
+        selectedCircle.style("fill", colorValue);
+        selectedCircle.style("stroke", colorValue);
+        selectedCircle.attr("r", focalNode ? nodeSize : 1.2 * nodeSize);
+        if (focalNode) {
+            const focalNodeCircleSelector = ".focalNodeCircle";
+            const selectedFocalNodeCircle = d3.selectAll(focalNodeCircleSelector);
+            selectedFocalNodeCircle.style("stroke", colorValue);
+            selectedFocalNodeCircle.style("fill", "White");
+            const focalNodeTextSelector = ".focalNodeText";
+            const selectedFocalNodeText = d3.selectAll(focalNodeTextSelector);
+            selectedFocalNodeText.style("fill", colorValue);
+            selectedFocalNodeText.style("font", `${fontWeight} 16px Arial`);
+        }
+    }
+    static updateNodePositions(node, clientWidth, clientHeight, scale) {
+        node.attr("cx", (d) => {
+            if (d.id === app_1.MyClass.focalNodeID) {
+                const s = 1 / scale;
+                return d.x = Math.max(60, Math.min(s * (clientWidth - 60), d.x));
+            }
+            else {
+                const s = 1 / scale;
+                return d.x = Math.max(20, Math.min(s * (clientWidth - 20), d.x));
+            }
+        }).attr("cy", (d) => {
+            if (d.id === app_1.MyClass.focalNodeID) {
+                const s = 1 / scale;
+                return d.y = Math.max(60, Math.min(s * (clientHeight - 60), d.y));
+            }
+            else {
+                const s = 1 / scale;
+                return d.y = Math.max(20, Math.min(s * (clientHeight - 20), d.y));
+            }
+        });
+    }
+    static AppendTextToNodes(node) {
+        node.append("text")
+            .attr("x", (d) => d.id === app_1.MyClass.focalNodeID ? 0 : 20)
+            .attr("y", (d) => {
+            return d.id === app_1.MyClass.focalNodeID ? 0 : -10;
+        })
+            .attr("text-anchor", (d) => d.id === app_1.MyClass.focalNodeID ? "middle" : "start")
+            .on("click", this.mouseClickNodeText)
+            .attr("font-family", "Arial, Helvetica, sans-serif")
+            .style("font", "normal 16px Arial")
+            .attr("fill", "Blue")
+            .style("fill", (d) => ColorHelper_1.ColorHelper.color_hash[d])
+            .attr("type_value", (d) => d.type)
+            .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
+            .attr("class", (d) => {
+            const str = d.type;
+            const strippedString = str.replace(/ /g, "_");
+            //return "nodeText-" + strippedString; })
+            return d.id === app_1.MyClass.focalNodeID ? "focalNodeText" : `nodeText-${strippedString}`;
+        })
+            .attr("dy", ".35em")
+            .text((d) => d.name);
+    }
+    static AppendCirclesToNodes(node) {
+        node.append("circle")
+            //.attr("x", function(d) { return d.x; })
+            //.attr("y", function(d) { return d.y; })
+            .attr("r", (d) => d.id === app_1.MyClass.focalNodeID ? utility_1.Utility.centerNodeSize : utility_1.Utility.nodeSize)
+            .style("fill", "White") // Make the nodes hollow looking
+            //.style("fill", "transparent")
+            .attr("type_value", (d) => d.type)
+            .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
+            //.attr("fixed", function(d) { if (d.id==focalNodeID) { return true; } else { return false; } } )
+            //.attr("x", function(d) { if (d.id==focalNodeID) { return width/2; } else { return d.x; } })
+            //.attr("y", function(d) { if (d.id==focalNodeID) { return height/2; } else { return d.y; } })
+            .attr("class", (d) => {
+            const str = d.type;
+            const strippedString = str.replace(/ /g, "_");
+            //return "nodeCircle-" + strippedString; })
+            return d.id === app_1.MyClass.focalNodeID ? "focalNodeCircle" : `nodeCircle-${strippedString}`;
+        })
+            .style("stroke-width", 5) // Give the node strokes some thickness
+            .style("stroke", (d) => ColorHelper_1.ColorHelper.color_hash[d.type]); // Node stroke colors
+        // .call(force.drag);
+    }
+}
+exports.NodeManager = NodeManager;
+
+
+/***/ }),
+
+/***/ "./includes/js/Ui/nodeStore.ts":
+/*!*************************************!*\
+  !*** ./includes/js/Ui/nodeStore.ts ***!
+  \*************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.NodeStore = void 0;
+const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
+class NodeStore {
+    constructor(nodeList, linkList) {
+        NodeStore.nodeList = nodeList;
+        NodeStore.linkList = linkList;
+    }
+    static LinkInit(link1) {
+        link1.Source = NodeStore.getNodeById(link1.sourceId);
+        link1.Target = NodeStore.getNodeById(link1.targetId);
+        link1.direction = link1.sourceId === app_1.MyClass.focalNodeID ? "OUT" : "IN";
+    }
+    static getNodeById(sourceId) {
+        return NodeStore.nodeList[sourceId];
+    }
+}
+exports.NodeStore = NodeStore;
+NodeStore.nodeList = [];
+NodeStore.linkList = [];
+
+
+/***/ }),
+
+/***/ "./includes/js/Ui/utility.ts":
+/*!***********************************!*\
+  !*** ./includes/js/Ui/utility.ts ***!
+  \***********************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Utility = void 0;
+const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
+const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
+const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts");
+const legendManager_1 = __webpack_require__(/*! ./legendManager */ "./includes/js/Ui/legendManager.ts");
+const nodeManager_1 = __webpack_require__(/*! ./nodeManager */ "./includes/js/Ui/nodeManager.ts");
+const nodeStore_1 = __webpack_require__(/*! ./nodeStore */ "./includes/js/Ui/nodeStore.ts");
+class Utility {
+    /**
+     * Draws a cluster using the provided data.
+     *
+     * @param {string} drawingName - A unique drawing identifier that has no spaces, no "." and no "#" characters.
+     * @param {string} focalNode - Primary Node of Context.
+     * @param {INode[]} nodeSetApp - Set of nodes and their relevant data.
+     * @param {Link[]} linkSetApp - Set of links and their relevant data.
+     * @param {any} colors - String to set color scale.  Values can be "colorScale10", "colorScale20", "colorScale20b", "colorScale20c"
+     *              0 = No Sort.  Maintain original order.
+     *              1 = Sort by arc value size.
+     */
+    static drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, colors) {
+        let canvas = new Canvas_1.Canvas();
+        this.svgCanvas = Canvas_1.Canvas.svgCanvas;
+        this.InitialSetup(nodeSetApp, linkSetApp);
+        // Append text to Link edges
+        this.linkText = this.AppendTextToLinkEdges();
+        // Draw lines for Links between Nodes
+        // this.link = this.DrawLinesForLinksBetweenNodes();
+        // let clickText = false;
+        // Create a force layout and bind Nodes and Links
+        this.force = this.CreateAForceLayoutAndBindNodesAndLinks(nodeSetApp)
+            .on("tick", () => {
+            this.Tick();
+        });
+        // Create Nodes
+        this.nodes = nodeManager_1.NodeManager.CreateNodes(this.svgCanvas, this.force);
+        // Append circles to Nodes
+        nodeManager_1.NodeManager.AppendCirclesToNodes(this.nodes);
+        // Append text to Nodes
+        nodeManager_1.NodeManager.AppendTextToNodes(this.nodes);
+        //Build the Arrows
+        this.buildArrows();
+        legendManager_1.LegendManager.DrawLegend(colors, nodeSetApp, this.svgCanvas);
+        d3.select(window).on('resize.updatesvg', Canvas_1.Canvas.updateWindow);
+    }
+    static InitialSetup(nodeSetApp, linkSetApp) {
+        const nodeStore = new nodeStore_1.NodeStore(nodeSetApp, linkSetApp);
+        // Append the source Node and the target Node to each Link
+        linkSetApp.forEach((link1) => {
+            nodeStore_1.NodeStore.LinkInit(link1);
+        });
+    }
+    static CreateAForceLayoutAndBindNodesAndLinks(nodeSetApp) {
+        let force = d3.forceSimulation()
+            .nodes(nodeSetApp)
+            // .links(linkSetApp)
+            .force("charge", d3.forceManyBody().strength(-1000))
+            .force("gravity", d3.forceManyBody().strength(.01))
+            .force("friction", d3.forceManyBody().strength(.2))
+            // .force("link", d3.forceLink().id((d: any) => d.id).distance(100).strength(1)) => d.id).strength(9))
+            // .force("link", d3.forceLink().id((d: any) => d.id).distance((d) => width < height ? width * 1 / 3 : height * 1 / 3))
+            .force("center", d3.forceCenter(Canvas_1.Canvas.width / 2, Canvas_1.Canvas.heigth / 2));
+        // .start();
+        return force;
+    }
+    static DrawLinesForLinksBetweenNodes() {
+        let link = this.svgCanvas.selectAll(".gLink")
+            // .data(force.links())
+            .enter().append("g")
+            .attr("class", "gLink");
+        //    .attr("class", "link")
+        // .attr("endNode", (d: Link) => d.targetId)
+        // .attr("startNode", (d: Link) => d.sourceId)
+        // .attr("targetType", (d: any) => d.target.type)
+        // .attr("sourceType", (d: any) => d.source.type)
+        // .append("line")
+        // .style("stroke", "#ccc")
+        // .style("stroke-width", "1.5px")
+        // .attr("marker-end", (d: any, i: any) => `url(#arrow_${i})`)
+        // .attr("x1", (l: Link) => l.Source.x)
+        // .attr("y1", (l: Link) => l.Source.y)
+        // .attr("x2", (l: Link) => l.Target.x)
+        // .attr("y2", (l: Link) => l.Target.y);
+        return link;
+    }
+    static AppendTextToLinkEdges() {
+        const linkText = this.svgCanvas.selectAll(".gLink")
+            // .data(force.links())
+            .append("text")
+            .attr("font-family", "Arial, Helvetica, sans-serif")
+            // .call(this.setLinkTextInMiddle, ink)
+            .attr("fill", "Black")
+            .style("font", "normal 12px Arial")
+            .attr("dy", ".35em")
+            .text((d) => d.linkName);
+        // this.setLinkTextInMiddle(linkText, link);
+        return linkText;
+    }
+    static updateLinkPositions(linkText) {
+        linkText.attr("x1", (link) => link.Source.x)
+            .attr("y1", (link) => link.Source.y)
+            .attr("x2", (link) => link.Target.x)
+            .attr("y2", (link) => link.Target.y);
+    }
+    static Tick() {
+        let clientWidth = $(".chart")[0].clientWidth;
+        let clientHeight = $(".chart")[0].clientHeight;
+        Utility.updateLinkPositions(this.link);
+        nodeManager_1.NodeManager.updateNodePositions(this.nodes, clientWidth, clientHeight, this.scale);
+        Utility.updateLinkPositions(this.link);
+        this.nodes.attr("transform", (d) => `translate(${d.x},${d.y})`);
+        // Questo pezzo di codice si occupa di aggiungere del testo ai link e di posizionarlo nella parte centrale del link stesso.
+        // Il testo viene posizionato in modo che sia metà strada tra il nodo di partenza e quello di destinazione. Se il nodo di destinazione ha una coordinata x maggiore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y). Se invece il nodo di destinazione ha una coordinata x minore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y).
+        this.setLinkTextInMiddle(Utility.linkText);
+    }
+    /**
+
+     Calculates and sets the position of the text element for the given link.
+     @param linkText
+     @param {Link} link - The link for which to set the text position.
+     @returns {void}
+     */
+    static setLinkTextInMiddle(linkText) {
+        let center = linkText.datum().CalculateMidpoint();
+        linkText.attr("x", center.x)
+            .attr("y", center.y);
+        return linkText;
+    }
+    /**
+     * Builds the arrows for the specified SVG canvas.
+     *
+     *      @param {Selection<any, any, any, any>} svgElement - The SVG element to append the marker to.
+     *      @param {number} index - The index of the marker element.
+     *      @param {number} focalNodeId - The ID of the focal node.
+     *      @returns {Selection<any, any, any, any>} The marker element.
+     */
+    static buildArrows() {
+        /*
+        * Il tipo marker è un tipo di elemento SVG (Scalable Vector Graphics). Viene utilizzato per definire un segno o un simbolo da inserire in un altro elemento SVG, ad esempio una linea o un percorso. In questo caso, il codice sta creando un marker che verrà inserito come "punta di freccia" in tutti gli elementi di classe gLink.
+        Il marker viene creato con l'elemento marker di SVG, che ha un insieme di attributi che ne definiscono l'aspetto e il comportamento. Gli attributi id, viewBox, refX, refY, markerWidth e markerHeight sono tutti attributi standard del tag marker di SVG, mentre l'attributo orient è un attributo non standard che viene utilizzato per specificare l'orientamento del simbolo all'interno del marker.
+        L'attributo id viene utilizzato per assegnare un identificatore univoco al marker, che può essere utilizzato per fare riferimento al marker in altri punti del codice o nei fogli di stile CSS. L'attributo viewBox definisce l'area di visualizzazione del marker e il suo contenuto. L'attributo refX e refY vengono utilizzati per specificare le coordinate del punto di riferimento del marker, ovvero il punto del marker che verrà ancorato al percorso o all'elemento che lo utilizza. Gli attributi markerWidth e markerHeight definiscono la dimensione del marker.
+        Una volta creato il marker, viene aggiunto un elemento path che definisce la forma del simbolo all'interno del marker. In questo caso, la forma del simbolo è una freccia, definita dal valore "M0,-5L10,0L0,5" dell'attributo d dell'elemento path.*/
+        let selection = this.svgCanvas.selectAll('.gLink');
+        selection.append('marker')
+            .attr('id', (d, i) => `arrow_${i}`)
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', (d) => d.targetId === app_1.MyClass.focalNodeID ? 55 : 20)
+            .attr('refY', 0)
+            .attr('markerWidth', 8)
+            .attr('markerHeight', 8)
+            .attr('orient', 'auto')
+            .append('svg:path')
+            .attr('d', 'M0,-5L10,0L0,5');
+    }
+}
+exports.Utility = Utility;
+Utility.centerNodeSize = 50;
+Utility.nodeSize = 10;
+Utility.scale = 1;
 
 
 /***/ }),
@@ -16868,9 +17592,10 @@ exports.INode = INode;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.MyClass = void 0;
-const utility_1 = __webpack_require__(/*! ./utility */ "./includes/js/utility.ts");
-const OtherTypes_1 = __webpack_require__(/*! ./OtherTypes */ "./includes/js/OtherTypes.ts");
+const utility_1 = __webpack_require__(/*! ./Ui/utility */ "./includes/js/Ui/utility.ts");
+const Link_1 = __webpack_require__(/*! ./Link */ "./includes/js/Link.ts");
 __webpack_require__(/*! select2 */ "./node_modules/select2/dist/js/select2.js");
+const INode_1 = __webpack_require__(/*! ./INode */ "./includes/js/INode.ts");
 class MyClass {
     constructor() {
         MyClass.initialize();
@@ -16935,12 +17660,12 @@ class MyClass {
                 //backlinks(wikiArticle);
                 //und Ask wer hierhin zeigt?
                 $('#cluster_chart .chart').empty();
-                utility_1.Utility.drawCluster('Drawing1', MyClass.focalNodeID, MyClass.nodeSet, MyClass.linkSet, '#cluster_chart .chart', 'colorScale20');
-                const elem = $(`[id=${MyClass.focalNodeID}] a`);
-                // @ts-ignore
-                elem[0].__data__.px = $(".chart")[0].clientWidth / 2;
-                // @ts-ignore
-                elem[0].__data__.py = $(".chart")[0].clientHeight / 2;
+                utility_1.Utility.drawCluster('Drawing1', MyClass.focalNodeID, MyClass.nodeSet, MyClass.linkSet, 'colorScale20');
+                // const elem: JQuery<HTMLElement> = $(`[id=${MyClass.focalNodeID}] a`);
+                // // @ts-ignore
+                // elem[0].__data__.px = $(".chart")[0].clientWidth / 2;
+                // // @ts-ignore
+                // elem[0].__data__.py = $(".chart")[0].clientHeight / 2;
             }
         }
     }
@@ -17058,7 +17783,7 @@ class MyClass {
                     $('#cluster_chart .chart').empty();
                     //  var k = cloneNode(nodeSet);
                     //  var m = cloneEdge(linkSet);
-                    utility_1.Utility.drawCluster('Drawing1', MyClass.focalNodeID, MyClass.nodeSet, MyClass.linkSet, '#cluster_chart .chart', 'colorScale20');
+                    utility_1.Utility.drawCluster('Drawing1', MyClass.focalNodeID, MyClass.nodeSet, MyClass.linkSet, 'colorScale20');
                     //drawCluster.update();
                     MyClass.hideElements();
                 }
@@ -17104,7 +17829,7 @@ class MyClass {
         else {
             name = item.split("#")[0].replace("_", " ");
         }
-        return new OtherTypes_1.INode(item, name, "null", 0, 0);
+        return new INode_1.INode(item, name, "null", 0, 0);
     }
     static extractLinkData(subject, property, dataitem) {
         return {
@@ -17131,7 +17856,7 @@ class MyClass {
     static cloneNode(array) {
         const newArr = [];
         array.forEach((node) => {
-            let node1 = new OtherTypes_1.INode(node.id, node.name, node.type, node.x, node.y);
+            let node1 = new INode_1.INode(node.id, node.name, node.type, node.x, node.y);
             if (typeof node.hlink !== 'undefined') {
                 node1.hlink = node.hlink;
             }
@@ -17142,7 +17867,7 @@ class MyClass {
     static cloneEdge(array) {
         const newArr = [];
         array.forEach((item) => {
-            newArr.push(new OtherTypes_1.ILink(item.sourceId, item.linkName, item.targetId, item.source, item.target, item.direction));
+            newArr.push(new Link_1.Link(item.sourceId, item.linkName, item.targetId, item.Source, item.Target, item.direction));
         });
         return newArr;
     }
@@ -17226,7 +17951,7 @@ class MyClass {
         $('#cluster_chart .chart').empty();
         //  var k = cloneNode(nodeSet);
         //  var m = cloneEdge(linkSet);
-        utility_1.Utility.drawCluster('Drawing1', MyClass.focalNodeID, MyClass.nodeSet, MyClass.linkSet, '#cluster_chart .chart', 'colorScale20');
+        utility_1.Utility.drawCluster('Drawing1', MyClass.focalNodeID, MyClass.nodeSet, MyClass.linkSet, 'colorScale20');
         //drawCluster.update();
         MyClass.hideElements();
     }
@@ -17252,520 +17977,11 @@ MyClass.invisibleNode = [];
 MyClass.invisibleEdge = [];
 MyClass.invisibleType = [];
 MyClass.done = [];
-MyClass.focalNodeID = '';
+MyClass.focalNodeID = ''; // Esempio  di valore reale: 'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
 MyClass.nodeSet = [];
 MyClass.linkSet = [];
 MyClass.wikiArticleElement = $('#wikiArticle');
 new MyClass();
-
-
-/***/ }),
-
-/***/ "./includes/js/utility.ts":
-/*!********************************!*\
-  !*** ./includes/js/utility.ts ***!
-  \********************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Utility = void 0;
-const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
-const ColorHelper_1 = __webpack_require__(/*! ./ColorHelper */ "./includes/js/ColorHelper.ts");
-const app_1 = __webpack_require__(/*! ./app */ "./includes/js/app.ts");
-// import $ from "JQuery";
-class Utility {
-    static drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectString, colors) {
-        // drawingName => A unique drawing identifier that has no spaces, no "." and no "#" characters.
-        // focalNode => Primary Node of Context.
-        // nodeSetApp => Set of nodes and their relevant data.
-        // linkSetApp => Set of links and their relevant data.
-        // selectString => String that allows you to pass in
-        //           a D3 select string.
-        // colors => String to set color scale.  Values can be...
-        //           => "colorScale10"
-        //           => "colorScale20"
-        //           => "colorScale20b"
-        //           => "colorScale20c"
-        // margin => Integer margin offset value.
-        // outerRadius => Integer outer radius value.
-        // innerRadius => Integer inner radius value.
-        // sortArcs => Controls sorting of Arcs by value.
-        //              0 = No Sort.  Maintain original order.
-        //              1 = Sort by arc value size.
-        this.this1 = this;
-        const sortedColors = ColorHelper_1.ColorHelper.GetColors(colors, nodeSetApp);
-        const svgCanvas = this.InitCanvas(selectString);
-        this.InitialSetup(nodeSetApp, linkSetApp);
-        // Append text to Link edges
-        const linkText = this.AppendTextToLinkEdges(svgCanvas);
-        // Create a force layout and bind Nodes and Links
-        let force = this.CreateAForceLayoutAndBindNodesAndLinks(nodeSetApp)
-            .on("tick", () => {
-            this.Tick(link, node, linkText);
-        });
-        // Draw lines for Links between Nodes
-        let link = this.DrawLinesForLinksBetweenNodes(svgCanvas);
-        // let clickText = false;
-        // Create Nodes
-        const node = this.CreateNodes(svgCanvas, force);
-        // Append circles to Nodes
-        this.AppendCirclesToNodes(node);
-        // Append text to Nodes
-        this.AppendTextToNodes(node);
-        // Print Legend Title...
-        this.PrintLegendTitle(svgCanvas);
-        //Build the Arrows
-        this.BuildTheArrows({ svgCanvas: svgCanvas });
-        // Plot the bullet circles...
-        this.PlotTheBulletCircles({ svgCanvas: svgCanvas }, sortedColors);
-        // Create legend text that acts as label keys...
-        this.CreateLegendTextThatActsAsLabelKeys({ svgCanvas: svgCanvas }, sortedColors);
-        d3.select(window).on('resize.updatesvg', this.updateWindow);
-    }
-    static InitialSetup(nodeSetApp, linkSetApp) {
-        const node_hash = {};
-        const type_hash = {};
-        nodeSetApp.forEach((node1) => {
-            node_hash[node1.id] = node1;
-            type_hash[node1.type] = node1.type;
-        });
-        // Append the source Node and the target Node to each Link
-        linkSetApp.forEach((link1) => {
-            link1.source = node_hash[link1.sourceId];
-            link1.target = node_hash[link1.targetId];
-            link1.direction = link1.sourceId === app_1.MyClass.focalNodeID ? "OUT" : "IN";
-        });
-    }
-    static updateWindow() {
-        this.width = $(".chart")[0].clientWidth - 60;
-        this.height = $(".chart")[0].clientHeight - 60;
-        this.svgCanvas.attr("width", this.width).attr("height", this.height);
-        $('#svgCanvas').width(this.width + 90);
-        $('#svgCanvas').height(this.height + 60);
-    }
-    static clickLegend() {
-        // let selector = this.this1;
-        // const thisObject = Array.isArray(selector) ? d3.select(selector[0]) : d3.select(selector /*vuole una stringa*/);
-        // const typeValue: string = thisObject.attr("type_value");
-        //
-        // let invisibleType: string[] = [];
-        // const invIndexType = invisibleType.indexOf(typeValue);
-        // if (invIndexType > -1) {
-        //     invisibleType.splice(Number(typeValue), 1);
-        // } else {
-        //     invisibleType.push(typeValue);
-        // }
-        // $(".node").each(MakeInvisible(undefined, undefined));
-        //
-        // function MakeInvisible(index: any, el: CustomHTMLElement) {
-        //     if (el.__data__.type !== typeValue) {
-        //         return;
-        //     }
-        //     const invIndex = MyClass.invisibleNode.indexOf(el.__data__.id);
-        //     if (invIndex > -1) {
-        //         MyClass.invisibleNode.splice(invIndex, 1);
-        //     } else {
-        //         MyClass.invisibleNode.push(el.__data__.id);
-        //     }
-        //     $(this).toggle();
-        //
-        // }
-        //
-        // $(".gLink").each(MakeInvisible2);
-        //
-        // function MakeInvisible2(index, el: CustomHTMLElement) {
-        //     //      debugger;
-        //     const valSource = el.__data__.sourceId;
-        //     const valTarget = el.__data__.targetId;
-        //     //if beide
-        //     const indexSource = MyClass.invisibleNode.indexOf(valSource);
-        //     const indexTarget = MyClass.invisibleNode.indexOf(valTarget);
-        //     const indexEdge = MyClass.invisibleEdge.indexOf(`${valSource}_${valTarget}_${el.__data__.linkName}`);
-        //
-        //     if ((indexSource > -1 || indexTarget > -1) && indexEdge === -1) {
-        //         //Einer der beiden Knoten ist unsichtbar, aber Kante noch nicht
-        //         $(this).toggle();
-        //         MyClass.invisibleEdge.push(`${valSource}_${valTarget}_${el.__data__.linkName}`);
-        //     } else if (indexSource === -1 && indexTarget === -1 && indexEdge === -1) {
-        //         //Beide Knoten sind nicht unsichtbar und Kante ist nicht unsichtbar
-        //     } else if (indexSource === -1 && indexTarget === -1 && indexEdge > -1) {
-        //         //Knoten sind nicht unsichtbar, aber Kante ist es
-        //         $(this).toggle();
-        //         MyClass.invisibleEdge.splice(indexEdge, 1);
-        //     }
-        // }
-    }
-    ;
-    static mouseClickNode(clickText) {
-        // let selector = this.this1;
-        // const thisObject : Selection<any, any, HTMLElement, any> = d3.select(selector);
-        // const typeValue = thisObject.attr("type_value");
-        //
-        // if (!clickText && typeValue === 'Internal Link') {
-        //     const n = thisObject[0][0].__data__.name;
-        //     if (!MyClass.done.includes(n)) {
-        //         MyClass.askNode(n);
-        //     }
-        // }
-        clickText = false;
-    }
-    ;
-    static mouseClickNodeText(clickText) {
-        // let selector = this.this1;
-        // // let win: any;
-        // const thisObject = d3.select(selector);
-        // const typeValue = thisObject.attr("type_value");
-        //
-        // if (typeValue === 'Internal Link') {
-        //     //    var win = window.open("index.php/" + thisObject[0][0].__data__.hlink);
-        //     let win = window.open(thisObject[0][0].__data__.hlink);
-        // } else if (typeValue === 'URI') {
-        //     let win = window.open(thisObject[0][0].__data__.hlink);
-        // }
-        clickText = true;
-    }
-    ;
-    static nodeMouseOver() {
-        let selector = this.this1;
-        // const thisObject = d3.select(selector);
-        // const typeValue = thisObject.attr("type_value");
-        // const strippedTypeValue = typeValue.replace(/ /g, "_");
-        //
-        // d3.select(selector).select("circle").transition()
-        //     .duration(250)
-        //     .attr("r", (d: any, i) => d.id === MyClass.focalNodeID ? 65 : 15);
-        // d3.select(selector).select("text").transition()
-        //     .duration(250)
-        //     .style("font", "bold 20px Arial")
-        //     .attr("fill", "Blue");
-        Utility.setLegendStyles("strippedTypeValue", "Maroon", 1.2 * 6);
-    }
-    ;
-    static nodeMouseOut() {
-        let selector = this.this1;
-        // const thisObject = d3.select(selector);
-        // const typeValue = thisObject.attr("type_value");
-        // const colorValue = thisObject.attr("color_value");
-        // const strippedTypeValue = typeValue.replace(/ /g, "_");
-        // d3.select(selector).select("circle").transition()
-        //     .duration(250)
-        //     .attr("r", (d: { id: string }) => d.id === MyClass.focalNodeID ? MyClass.centerNodeSize : MyClass.nodeSize);
-        // d3.select(selector).select("text").transition()
-        //     .duration(250)
-        //     .style("font", "normal 16px Arial")
-        //     .attr("fill", "Blue");
-        Utility.setLegendStyles("strippedTypeValue", "colorValue", 6);
-    }
-    ;
-    static typeMouseOver(nodeSize) {
-        // let selector = this.this1;
-        // const thisObject = d3.select(selector);
-        // const typeValue = thisObject.attr("type_value");
-        // const strippedTypeValue = typeValue.replace(/ /g, "_");
-        //
-        // Utility.setLegendStyles("strippedTypeValue", "Maroon", 1.2 * 6);
-        // Utility.setNodeStyles(strippedTypeValue, "Maroon", "bold", nodeSize, false);
-    }
-    static typeMouseOut(selector, nodeSize) {
-        const thisObject = d3.select(selector);
-        const typeValue = thisObject.attr("type_value");
-        const colorValue = thisObject.attr("color_value");
-        const strippedTypeValue = typeValue.replace(/ /g, "_");
-        Utility.setLegendStyles("strippedTypeValue", "colorValue", 6);
-        Utility.setNodeStyles(strippedTypeValue, "Blue", "normal", nodeSize, false);
-    }
-    static InitCanvas(selectString) {
-        // const svgCanvas = d3.select(selectString)
-        //     .append("svg:svg")
-        //     .call(d3.zoom().on("zoom", (event: any) => {
-        //         this.scale = event.transform.k;
-        //         svgCanvas.attr("transform", event.transform);
-        //         }))
-        //     .attr("width", this.width)
-        //     .attr("height", this.height)
-        //     .attr("id", "svgCanvas")
-        //     .append("svg:g")
-        //     .attr("class", "focalNodeCanvas");
-        // return svgCanvas;
-    }
-    static CreateAForceLayoutAndBindNodesAndLinks(nodeSetApp) {
-        let force = d3.forceSimulation()
-            .nodes(nodeSetApp)
-            // .links(linkSetApp)
-            .force("charge", d3.forceManyBody().strength(-1000))
-            .force("gravity", d3.forceManyBody().strength(.01))
-            .force("friction", d3.forceManyBody().strength(.2))
-            // .force("link", d3.forceLink().id((d: any) => d.id).distance(100).strength(1)) => d.id).strength(9))
-            // .force("link", d3.forceLink().id((d: any) => d.id).distance((d) => width < height ? width * 1 / 3 : height * 1 / 3))
-            .force("center", d3.forceCenter(this.width / 2, this.height / 2));
-        // .start();
-        return force;
-    }
-    static DrawLinesForLinksBetweenNodes(svgCanvas) {
-        let link = svgCanvas.selectAll(".gLink")
-            // .data(force.links())
-            .enter().append("g")
-            .attr("class", "gLink")
-            //    .attr("class", "link")
-            .attr("endNode", (d) => d.targetId)
-            .attr("startNode", (d) => d.sourceId)
-            .attr("targetType", (d) => d.target.type)
-            .attr("sourceType", (d) => d.source.type)
-            .append("line")
-            .style("stroke", "#ccc")
-            .style("stroke-width", "1.5px")
-            .attr("marker-end", (d, i) => `url(#arrow_${i})`)
-            .attr("x1", (l) => l.source.x)
-            .attr("y1", (l) => l.source.y)
-            .attr("x2", (l) => l.target.x)
-            .attr("y2", (l) => l.target.y);
-        return link;
-    }
-    static CreateNodes(svgCanvas, force) {
-        const node = svgCanvas.selectAll(".node")
-            .data(force.nodes())
-            .enter().append("g")
-            .attr("class", "node")
-            .attr("id", (d) => d.id)
-            .attr("type_value", (d) => d.type)
-            .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
-            .attr("xlink:href", (d) => d.hlink)
-            //.attr("fixed", function(d) { if (d.id==focalNodeID) { return true; } else { return false; } } )
-            .on("mouseover", this.nodeMouseOver)
-            .on("click", this.mouseClickNode)
-            .on("mouseout", this.nodeMouseOut)
-            // .call(force.drag)
-            .append("a");
-        return node;
-    }
-    static AppendCirclesToNodes(node) {
-        node.append("circle")
-            //.attr("x", function(d) { return d.x; })
-            //.attr("y", function(d) { return d.y; })
-            .attr("r", (d) => d.id === app_1.MyClass.focalNodeID ? this.centerNodeSize : this.nodeSize)
-            .style("fill", "White") // Make the nodes hollow looking
-            //.style("fill", "transparent")
-            .attr("type_value", (d) => d.type)
-            .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
-            //.attr("fixed", function(d) { if (d.id==focalNodeID) { return true; } else { return false; } } )
-            //.attr("x", function(d) { if (d.id==focalNodeID) { return width/2; } else { return d.x; } })
-            //.attr("y", function(d) { if (d.id==focalNodeID) { return height/2; } else { return d.y; } })
-            .attr("class", (d) => {
-            const str = d.type;
-            const strippedString = str.replace(/ /g, "_");
-            //return "nodeCircle-" + strippedString; })
-            return d.id === app_1.MyClass.focalNodeID ? "focalNodeCircle" : `nodeCircle-${strippedString}`;
-        })
-            .style("stroke-width", 5) // Give the node strokes some thickness
-            .style("stroke", (d) => ColorHelper_1.ColorHelper.color_hash[d.type]); // Node stroke colors
-        // .call(force.drag);
-    }
-    static AppendTextToNodes(node) {
-        node.append("text")
-            .attr("x", (d) => d.id === app_1.MyClass.focalNodeID ? 0 : 20)
-            .attr("y", (d) => {
-            return d.id === app_1.MyClass.focalNodeID ? 0 : -10;
-        })
-            .attr("text-anchor", (d) => d.id === app_1.MyClass.focalNodeID ? "middle" : "start")
-            .on("click", this.mouseClickNodeText)
-            .attr("font-family", "Arial, Helvetica, sans-serif")
-            .style("font", "normal 16px Arial")
-            .attr("fill", "Blue")
-            .style("fill", (d) => ColorHelper_1.ColorHelper.color_hash[d])
-            .attr("type_value", (d) => d.type)
-            .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
-            .attr("class", (d) => {
-            const str = d.type;
-            const strippedString = str.replace(/ /g, "_");
-            //return "nodeText-" + strippedString; })
-            return d.id === app_1.MyClass.focalNodeID ? "focalNodeText" : `nodeText-${strippedString}`;
-        })
-            .attr("dy", ".35em")
-            .text((d) => d.name);
-    }
-    static AppendTextToLinkEdges(svgCanvas) {
-        const linkText = svgCanvas.selectAll(".gLink")
-            // .data(force.links())
-            .append("text")
-            .attr("font-family", "Arial, Helvetica, sans-serif")
-            .attr("x", (d) => this.getNumber2(d))
-            .attr("y", (d) => this.getNumber2(d))
-            .attr("fill", "Black")
-            .style("font", "normal 12px Arial")
-            .attr("dy", ".35em")
-            .text((d) => d.linkName);
-        return linkText;
-    }
-    static getNumber2(d) {
-        return d.target.y > d.source.y ? (d.source.y + (d.target.y - d.source.y) / 2) : (d.target.y + (d.source.y - d.target.y) / 2);
-    }
-    static getNumber(d) {
-        return d.target.x > d.source.x ? (d.source.x + (d.target.x - d.source.x) / 2) : (d.target.x + (d.source.x - d.target.x) / 2);
-    }
-    static updateLinkPositions(link, data, source, target) {
-        link.attr("x1", (link) => source.x)
-            .attr("y1", (link) => source.y)
-            .attr("x2", (link) => target.x)
-            .attr("y2", (link) => target.y);
-    }
-    static updateNodePositions(node, clientWidth, clientHeight) {
-        node.attr("cx", (d) => {
-            if (d.id === app_1.MyClass.focalNodeID) {
-                const s = 1 / this.scale;
-                return d.x = Math.max(60, Math.min(s * (clientWidth - 60), d.x));
-            }
-            else {
-                const s = 1 / this.scale;
-                return d.x = Math.max(20, Math.min(s * (clientWidth - 20), d.x));
-            }
-        }).attr("cy", (d) => {
-            if (d.id === app_1.MyClass.focalNodeID) {
-                const s = 1 / this.scale;
-                return d.y = Math.max(60, Math.min(s * (clientHeight - 60), d.y));
-            }
-            else {
-                const s = 1 / this.scale;
-                return d.y = Math.max(20, Math.min(s * (clientHeight - 20), d.y));
-            }
-        });
-    }
-    static Tick(link, node, linkText) {
-        let clientWidth = $(".chart")[0].clientWidth;
-        let clientHeight = $(".chart")[0].clientHeight;
-        Utility.updateLinkPositions(link, link.data(), link.source, link.target);
-        Utility.updateNodePositions(node, clientWidth, clientHeight);
-        Utility.updateLinkPositions(link, link.data(), link.source, link.target);
-        node.attr("transform", (d) => `translate(${d.x},${d.y})`);
-        linkText
-            .attr("x", (d) => d.target.x > d.source.x ? (d.source.x + (d.target.x - d.source.x) / 2) : (d.target.x + (d.source.x - d.target.x) / 2))
-            .attr("y", (d) => d.target.y > d.source.y ? (d.source.y + (d.target.y - d.source.y) / 2) : (d.target.y + (d.source.y - d.target.y) / 2));
-    }
-    static CreateLegendTextThatActsAsLabelKeys(svgCanvas, sortedColors) {
-        svgCanvas.selectAll("a.legend_link")
-            .data(sortedColors) // Instruct to bind dataSet to text elements
-            .enter().append("svg:a") // Append legend elements
-            .append("text")
-            .attr("text-anchor", "center")
-            .attr("x", 40)
-            .attr("y", (d, i) => (45 + (i * 20)))
-            .attr("dx", 0)
-            .attr("dy", "4px") // Controls padding to place text in alignment with bullets
-            .text((d) => d)
-            .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d])
-            .attr("type_value", (d) => d)
-            .attr("index_value", (d, i) => `index-${i}`)
-            .attr("class", (d) => {
-            const strippedString = d.replace(/ /g, "_");
-            return `legendText-${strippedString}`;
-        })
-            .style("fill", "Black")
-            .style("font", "normal 14px Arial")
-            .on('mouseover', this.typeMouseOver)
-            .on("mouseout", this.typeMouseOut);
-    }
-    static PlotTheBulletCircles(svgCanvas, sortedColors) {
-        svgCanvas.selectAll("focalNodeCanvas")
-            .data(sortedColors).enter().append("svg:circle") // Append circle elements
-            .attr("cx", 20)
-            .attr("cy", (d, i) => (45 + (i * 20)))
-            .attr("stroke-width", ".5")
-            .style("fill", (d) => ColorHelper_1.ColorHelper.color_hash[d])
-            .attr("r", 6)
-            .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d])
-            .attr("type_value", (d) => d)
-            .attr("index_value", (d, i) => `index-${i}`)
-            .attr("class", (d) => {
-            const strippedString = d.replace(/ /g, "_");
-            return `legendBullet-${strippedString}`;
-        })
-            .on('mouseover', this.typeMouseOver)
-            .on("mouseout", this.typeMouseOut)
-            .on('click', this.clickLegend);
-    }
-    static BuildTheArrows(svgCanvas) {
-        svgCanvas.selectAll(".gLink").append("marker")
-            .attr("id", (d, i) => `arrow_${i}`)
-            .attr("viewBox", "0 -5 10 10")
-            .attr("refX", (d) => d.targetId === app_1.MyClass.focalNodeID ? 55 : 20)
-            .attr("refY", 0)
-            .attr("markerWidth", 8)
-            .attr("markerHeight", 8)
-            .attr("orient", "auto")
-            .append("svg:path")
-            .attr("d", "M0,-5L10,0L0,5");
-    }
-    static PrintLegendTitle(svgCanvas) {
-        svgCanvas.append("text").attr("class", "region")
-            .text("Color Keys for Data Types...")
-            .attr("x", 15)
-            .attr("y", 25)
-            .style("fill", "Black")
-            .style("font", "bold 16px Arial")
-            .attr("text-anchor", "start");
-    }
-    static setNodeStyles(strippedTypeValue, colorValue, fontWeight, nodeSize, focalNode) {
-        const nodeTextSelector = `.nodeText-${strippedTypeValue}`;
-        const selectedNodeText = d3.selectAll(nodeTextSelector);
-        selectedNodeText.style("font", `${fontWeight} 16px Arial`);
-        selectedNodeText.style("fill", colorValue);
-        const nodeCircleSelector = `.nodeCircle-${strippedTypeValue}`;
-        const selectedCircle = d3.selectAll(nodeCircleSelector);
-        selectedCircle.style("fill", colorValue);
-        selectedCircle.style("stroke", colorValue);
-        selectedCircle.attr("r", focalNode ? nodeSize : 1.2 * nodeSize);
-        if (focalNode) {
-            const focalNodeCircleSelector = ".focalNodeCircle";
-            const selectedFocalNodeCircle = d3.selectAll(focalNodeCircleSelector);
-            selectedFocalNodeCircle.style("stroke", colorValue);
-            selectedFocalNodeCircle.style("fill", "White");
-            const focalNodeTextSelector = ".focalNodeText";
-            const selectedFocalNodeText = d3.selectAll(focalNodeTextSelector);
-            selectedFocalNodeText.style("fill", colorValue);
-            selectedFocalNodeText.style("font", `${fontWeight} 16px Arial`);
-        }
-    }
-    static setLegendStyles(strippedTypeValue, colorValue, radius) {
-        const legendBulletSelector = `.legendBullet-${strippedTypeValue}`;
-        const selectedBullet = d3.selectAll(legendBulletSelector);
-        selectedBullet.style("fill", colorValue);
-        selectedBullet.attr("r", radius);
-        const legendTextSelector = `.legendText-${strippedTypeValue}`;
-        const selectedLegendText = d3.selectAll(legendTextSelector);
-        selectedLegendText.style("font", colorValue === "Maroon" ? "bold 14px Arial" : "normal 14px Arial");
-        selectedLegendText.style("fill", colorValue === "Maroon" ? "Maroon" : "Black");
-    }
-}
-exports.Utility = Utility;
-Utility.width = $(".chart")[0].clientWidth;
-Utility.height = $(".chart")[0].clientHeight;
-Utility.centerNodeSize = 50;
-Utility.nodeSize = 10;
-Utility.scale = 1;
 
 
 /***/ }),

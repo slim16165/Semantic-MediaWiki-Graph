@@ -1,6 +1,6 @@
 <?php
 
-public class SpecialSemanticMediaWikiGraph extends SpecialPage
+class SpecialSemanticMediaWikiGraph extends SpecialPage
 {
     public function __construct()
     {
@@ -41,7 +41,7 @@ public class SpecialSemanticMediaWikiGraph extends SpecialPage
 </head>
 <title>Title in the Browser</title>
 <body>
-<div class='wrapper' style='display: none'>
+<div class='wrapper'>
 
     <section>
         <article>

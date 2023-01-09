@@ -2,8 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Utility = void 0;
 var d3_1 = require("d3");
-var ColorHelper_1 = require("./ColorHelper");
-var app_1 = require("./app");
+var ColorHelper_1 = require("../ColorHelper");
+var app_1 = require("../app");
 var Utility = /** @class */ (function () {
     function Utility() {
     }

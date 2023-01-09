@@ -1,5 +1,5 @@
 import d3 from "d3-scale-chromatic";
-import {INode} from "./OtherTypes";
+import {INode} from "./INode";
 
 export class ColorHelper
 {
@@ -27,6 +27,7 @@ export class ColorHelper
     }
 
     public static color_hash: { [key: string]: string } = {};
+
 
     public static GetColor(colors: string)
     {

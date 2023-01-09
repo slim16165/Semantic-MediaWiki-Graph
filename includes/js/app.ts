@@ -1,6 +1,8 @@
-import {Utility} from "./utility";
-import {Article, BacklinksCallbackParams, ExtractedParams, IForce, ILink, INode, SuccessParams} from "./OtherTypes";
+import {Utility} from "./Ui/utility";
+import {Article, BacklinksCallbackParams, ExtractedParams, Link, SuccessParams} from "./Link";
 import "select2";
+import {INode} from "./INode";
+import {IForce} from "./IForce";
 
 
 export class MyClass {
@@ -8,9 +10,9 @@ export class MyClass {
     static invisibleEdge: string[] = [];
     static invisibleType: any[] = [];
     static done: any[] = [];
-    static focalNodeID: string = '';
+    static focalNodeID: string = ''; // Esempio  di valore reale: 'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
     static nodeSet: INode[] = [];
-    static linkSet: ILink[] = [];
+    static linkSet: Link[] = [];
     static force: IForce;
 
     private static wikiArticleElement: JQuery = $('#wikiArticle');
@@ -84,12 +86,13 @@ export class MyClass {
                 //backlinks(wikiArticle);
                 //und Ask wer hierhin zeigt?
                 $('#cluster_chart .chart').empty();
-                Utility.drawCluster('Drawing1', MyClass.focalNodeID, MyClass.nodeSet, MyClass.linkSet, '#cluster_chart .chart', 'colorScale20');
-                const elem: JQuery<HTMLElement> = $(`[id=${MyClass.focalNodeID}] a`);
-                // @ts-ignore
-                elem[0].__data__.px = $(".chart")[0].clientWidth / 2;
-                // @ts-ignore
-                elem[0].__data__.py = $(".chart")[0].clientHeight / 2;
+                Utility.drawCluster('Drawing1', MyClass.focalNodeID, MyClass.nodeSet, MyClass.linkSet, 'colorScale20');
+
+                // const elem: JQuery<HTMLElement> = $(`[id=${MyClass.focalNodeID}] a`);
+                // // @ts-ignore
+                // elem[0].__data__.px = $(".chart")[0].clientWidth / 2;
+                // // @ts-ignore
+                // elem[0].__data__.py = $(".chart")[0].clientHeight / 2;
             }
         }
 
@@ -214,7 +217,7 @@ export class MyClass {
                     $('#cluster_chart .chart').empty();
                     //  var k = cloneNode(nodeSet);
                     //  var m = cloneEdge(linkSet);
-                    Utility.drawCluster('Drawing1', MyClass.focalNodeID, MyClass.nodeSet, MyClass.linkSet, '#cluster_chart .chart', 'colorScale20');
+                    Utility.drawCluster('Drawing1', MyClass.focalNodeID, MyClass.nodeSet, MyClass.linkSet, 'colorScale20');
                     //drawCluster.update();
                     MyClass.hideElements();
                 }
@@ -266,8 +269,8 @@ export class MyClass {
     }
 
     public static extractLinkData(subject: string, property: string, dataitem: { item: string, type: string }[]):
-        ILink {
-        return <ILink>{
+        Link {
+        return <Link>{
             sourceId: subject,
             linkName: MyClass.nicePropertyName(property),
             targetId: dataitem[0].item,
@@ -309,11 +312,11 @@ export class MyClass {
         return newArr;
     }
 
-    public static cloneEdge(array: ILink[]) {
+    public static cloneEdge(array: Link[]) {
 
-        const newArr: ILink[] = [];
-        array.forEach((item: ILink) => {
-            newArr.push(new ILink(item.sourceId, item.linkName, item.targetId, item.source, item.target, item.direction));
+        const newArr: Link[] = [];
+        array.forEach((item: Link) => {
+            newArr.push(new Link(item.sourceId, item.linkName, item.targetId, item.Source, item.Target, item.direction));
         });
 
         return newArr;
@@ -405,7 +408,7 @@ export class MyClass {
         $('#cluster_chart .chart').empty();
         //  var k = cloneNode(nodeSet);
         //  var m = cloneEdge(linkSet);
-        Utility.drawCluster('Drawing1', MyClass.focalNodeID, MyClass.nodeSet, MyClass.linkSet, '#cluster_chart .chart', 'colorScale20');
+        Utility.drawCluster('Drawing1', MyClass.focalNodeID, MyClass.nodeSet, MyClass.linkSet, 'colorScale20');
         //drawCluster.update();
         MyClass.hideElements();
     }
@@ -420,7 +423,7 @@ export class MyClass {
                 hlink: article.title
             });
 
-            MyClass.linkSet.push(<ILink>{
+            MyClass.linkSet.push(<Link>{
                 sourceId: article.title,
                 linkName: 'Unknown',
                 targetId: MyClass.focalNodeID
