@@ -56,19 +56,3 @@ export interface Article {
     title: string;
 }
 
-
-export interface SuccessParams {
-    edit: { result: string };
-    error: any;
-    query: { allpages: any }
-}
-
-export interface BacklinksCallbackParams {
-    data: { edit: { result: string }; error: any; query: { backlinks: any } };
-}
-
-export interface ExtractedParams {
-    property: string;
-    dataitem: any[];
-    subject: any;
-}

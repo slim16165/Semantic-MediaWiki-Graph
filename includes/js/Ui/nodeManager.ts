@@ -7,6 +7,7 @@ import {Utility} from "./utility";
 import {Canvas} from "./Canvas";
 import { NodeStore } from "../nodeStore";
 import { INode } from "../INode";
+import { SemanticWikiApi } from "../semanticWikiApi";
 
 const TRANSACTION_DURATION : number = 250;
 
@@ -19,7 +20,7 @@ export class NodeManager {
         if (!clickText && typeValue === 'Internal Link') {
             const nodeName = thisObject.node().__data__.name;
             if (!MyClass.downloadedArticles.includes(nodeName)) {
-                MyClass.askNode(nodeName);
+                SemanticWikiApi.BrowseBySubject(nodeName);
             }
         }
 

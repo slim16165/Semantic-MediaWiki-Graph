@@ -121,7 +121,12 @@ export class Utility {
             .attr("dy", ".35em")
             .text((link: Link) => link.linkName);
 
-        this.setLinkTextInMiddle(linkText);
+        if (linkText.empty()) {
+            console.log("linkText is empty");
+        } else {
+            this.setLinkTextInMiddle(linkText);
+        }
+
 
         return linkText;
     }
