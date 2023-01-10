@@ -38,15 +38,14 @@ export class SemanticWikiApi {
      */
 
     MyClass.resetData();
-    let mw_article_id = data.query.subject; //'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
-    MyClass.addArticleDownloaded(wikiArticleTitle, mw_article_id);
+    MyClass.downloadedArticles.push(wikiArticleTitle);
+    let mediawikiArticleId = data.query.subject; //'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
 
-    for (const semanticNode of data.query.data) {
-      MyClass.getNodesAndLinks(semanticNode, mw_article_id);
-    }
+    MyClass.AddMainArticle(wikiArticleTitle, mediawikiArticleId, data.query.data);
 
     // MyClass.force.stop();
-    SemanticWikiApi.QueryBackLinks(wikiArticleTitle);
+    SemanticWikiApi.QueryBackLinks(wikiArticleTitle); //tramite questa chiama → MyClass.InitNodeAndLinks(data.query.backlinks);
+
 
     $("#cluster_chart .chart").empty();
     //  var k = cloneNode(nodeSet);
@@ -60,6 +59,17 @@ export class SemanticWikiApi {
     // elem[0].__data__.px = Canvas.width / 2;
     // // @ts-ignore
     // elem[0].__data__.py = Canvas.height / 2;
+  }
+
+  /*
+      I valori delle property "_SKEY", "_MDAT" e "_ASK" sono proprietà speciali predefinite in Semantic MediaWiki.
+      "_SKEY" è una proprietà che viene utilizzata per memorizzare le chiavi di ricerca per ogni oggetto di dati, che vengono utilizzate per velocizzare le query su quell'oggetto.
+      "_MDAT" è una proprietà che viene utilizzata per memorizzare la data di modifica di un oggetto di dati.
+      "_ASK" è una proprietà che viene utilizzata per memorizzare una query SPARQL o una query di tipo "ask" per un oggetto di dati. Questa proprietà viene utilizzata per eseguire query complesse sui dati semantici.
+      * INST
+      */
+  static IsSpecialProperty(property: any) {
+    return ["_SKEY", "_MDAT", "_ASK"].includes(property);
   }
 
   public static QueryBackLinks(wikiArticle: string) {
@@ -118,7 +128,6 @@ export class SemanticWikiApi {
     });
   }
 
-
   public static getNodeType(propertyName: string, type: number) {
     switch (propertyName) {
       case "_boo":
@@ -150,22 +159,28 @@ export class SemanticWikiApi {
       case "_INST":
         return "Category";
       default:
-        switch (type) {
-          case 1:
-            return "Number";
-          case 2:
-            return "Text";
-          case 4:
-            return "Boolean";
-          case 5:
-            return "URI"; //oder Email //oder Telefon
-          case 6:
-            return "Date";
-          case 9:
-            return "Internal Link";
-          default:
-            return "Unknown Type";
-        }
+        return this.getTypeDescr(type);
+    }
+  }
+
+  /* This type comes from the wiki interface
+  * */
+  static getTypeDescr(type: number) {
+    switch (type) {
+      case 1:
+        return "Number";
+      case 2:
+        return "Text";
+      case 4:
+        return "Boolean";
+      case 5:
+        return "URI"; //oder Email //oder Telefon
+      case 6:
+        return "Date";
+      case 9:
+        return "Internal Link";
+      default:
+        return "Unknown Type";
     }
   }
 }

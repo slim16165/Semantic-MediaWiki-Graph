@@ -1,10 +1,13 @@
 import * as d3 from "d3";
-import {Selection} from "d3";
+import { Selection } from "d3";
+import {Link} from "../Link";
 import {ColorHelper} from "../ColorHelper";
 import {MyClass} from "../app";
 import {NodeManager} from "./nodeManager";
 import { NodeStore } from "../nodeStore";
 import { Canvas } from "./Canvas";
+import { CustomHTMLElement, NodeType } from "../OtherTypes";
+import { INode } from "../INode";
 
 export class LegendManager {
 
@@ -86,31 +89,33 @@ export class LegendManager {
     }
 
     private static MakeInvisible(index: any, el: CustomHTMLElement, typeValue: string) {
-        if (el.__data__.type !== typeValue) {
+        let node = el.__data__ as NodeType;
+        if (node.type !== typeValue) {
             return;
         }
-        const invIndex = MyClass.invisibleNode.indexOf(el.__data__.id);
+        const invIndex = MyClass.invisibleNode.indexOf(node.id);
         if (invIndex > -1) {
             MyClass.invisibleNode.splice(invIndex, 1);
         } else {
-            MyClass.invisibleNode.push(el.__data__.id);
+            MyClass.invisibleNode.push(node.id);
         }
         $(this).toggle();
     }
 
     private static MakeInvisible2(index: number, el: CustomHTMLElement) {
         //      debugger;
-        const valSource = el.__data__.sourceId;
-        const valTarget = el.__data__.targetId;
+        let data = el.__data__ as Link;
+        const valSource = data.sourceId;
+        const valTarget = data.targetId;
         //if beide
         const indexSource = MyClass.invisibleNode.indexOf(valSource);
         const indexTarget = MyClass.invisibleNode.indexOf(valTarget);
-        const indexEdge = MyClass.invisibleEdge.indexOf(`${valSource}_${valTarget}_${el.__data__.linkName}`);
+        const indexEdge = MyClass.invisibleEdge.indexOf(`${valSource}_${valTarget}_${data.linkName}`);
 
         if ((indexSource > -1 || indexTarget > -1) && indexEdge === -1) {
             //Einer der beiden Knoten ist unsichtbar, aber Kante noch nicht
             $(this).toggle();
-            MyClass.invisibleEdge.push(`${valSource}_${valTarget}_${el.__data__.linkName}`);
+            MyClass.invisibleEdge.push(`${valSource}_${valTarget}_${data.linkName}`);
         } else if (indexSource === -1 && indexTarget === -1 && indexEdge === -1) {
             //Beide Knoten sind nicht unsichtbar und Kante ist nicht unsichtbar
         } else if (indexSource === -1 && indexTarget === -1 && indexEdge > -1) {

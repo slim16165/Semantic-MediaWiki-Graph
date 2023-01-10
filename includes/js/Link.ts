@@ -3,9 +3,9 @@
 import {INode} from "./INode";
 
 export class Link {
-    public linkName: any;
-    public sourceId: any;
-    public targetId: any;
+    public linkName: string;
+    public sourceId: string;
+    public targetId: string;
     public source!: INode;
     public target!: INode;
     public direction!: string;
@@ -52,7 +52,5 @@ export class Link {
     }
 }
 
-export interface Article {
-    title: string;
-}
+
 

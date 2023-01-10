@@ -17118,30 +17118,32 @@ class LegendManager {
         selectedLegendText.style("fill", colorValue === "Maroon" ? "Maroon" : "Black");
     }
     static MakeInvisible(index, el, typeValue) {
-        if (el.__data__.type !== typeValue) {
+        let node = el.__data__;
+        if (node.type !== typeValue) {
             return;
         }
-        const invIndex = app_1.MyClass.invisibleNode.indexOf(el.__data__.id);
+        const invIndex = app_1.MyClass.invisibleNode.indexOf(node.id);
         if (invIndex > -1) {
             app_1.MyClass.invisibleNode.splice(invIndex, 1);
         }
         else {
-            app_1.MyClass.invisibleNode.push(el.__data__.id);
+            app_1.MyClass.invisibleNode.push(node.id);
         }
         $(this).toggle();
     }
     static MakeInvisible2(index, el) {
         //      debugger;
-        const valSource = el.__data__.sourceId;
-        const valTarget = el.__data__.targetId;
+        let data = el.__data__;
+        const valSource = data.sourceId;
+        const valTarget = data.targetId;
         //if beide
         const indexSource = app_1.MyClass.invisibleNode.indexOf(valSource);
         const indexTarget = app_1.MyClass.invisibleNode.indexOf(valTarget);
-        const indexEdge = app_1.MyClass.invisibleEdge.indexOf(`${valSource}_${valTarget}_${el.__data__.linkName}`);
+        const indexEdge = app_1.MyClass.invisibleEdge.indexOf(`${valSource}_${valTarget}_${data.linkName}`);
         if ((indexSource > -1 || indexTarget > -1) && indexEdge === -1) {
             //Einer der beiden Knoten ist unsichtbar, aber Kante noch nicht
             $(this).toggle();
-            app_1.MyClass.invisibleEdge.push(`${valSource}_${valTarget}_${el.__data__.linkName}`);
+            app_1.MyClass.invisibleEdge.push(`${valSource}_${valTarget}_${data.linkName}`);
         }
         else if (indexSource === -1 && indexTarget === -1 && indexEdge === -1) {
             //Beide Knoten sind nicht unsichtbar und Kante ist nicht unsichtbar
@@ -17632,18 +17634,28 @@ class MyClass {
         //     allowClear: true
         // });
     }
-    static getNodesAndLinks(semanticNode, url) {
-        // Non fare nulla se la proprietà è una delle proprietà speciali "_SKEY", "_MDAT" o "_ASK"
-        if (["_SKEY", "_MDAT", "_ASK"].includes(semanticNode.property)) {
-            /*
-            I valori delle property "_SKEY", "_MDAT" e "_ASK" sono proprietà speciali predefinite in Semantic MediaWiki.
-            "_SKEY" è una proprietà che viene utilizzata per memorizzare le chiavi di ricerca per ogni oggetto di dati, che vengono utilizzate per velocizzare le query su quell'oggetto.
-            "_MDAT" è una proprietà che viene utilizzata per memorizzare la data di modifica di un oggetto di dati.
-            "_ASK" è una proprietà che viene utilizzata per memorizzare una query SPARQL o una query di tipo "ask" per un oggetto di dati. Questa proprietà viene utilizzata per eseguire query complesse sui dati semantici.
-            * INST
-            */
-            return;
+    //Unclear why...
+    static ForceFirstElemUrl(dataitems, semanticNode, url) {
+        let firstDataitem = dataitems[0];
+        let urlFromItem = firstDataitem.item;
+        if (urlFromItem === url) {
+            firstDataitem.item = `${urlFromItem}_${semanticNode.property}`;
         }
+    }
+    static AddMainArticle(wikiArticleTitle, mediawikiArticleId, semanticNodeList) {
+        let nameDoslike = mediawikiArticleId.split("#")[0];
+        let name = nameDoslike.replace("_", " ");
+        let node = new INode_1.INode(mediawikiArticleId, name, "Internal Link", 10, 0, `./${nameDoslike}`);
+        node.fixed = true;
+        MyClass.nodeSet.push(node);
+        MyClass.focalNodeID = mediawikiArticleId;
+        for (const semanticNode of semanticNodeList) {
+            if (semanticWikiApi_1.SemanticWikiApi.IsSpecialProperty(semanticNode.property))
+                continue; // Non fare nulla se la proprietà è una delle proprietà speciali "_SKEY", "_MDAT" o "_ASK"
+            MyClass.getNodesAndLinks(semanticNode, mediawikiArticleId);
+        }
+    }
+    static getNodesAndLinks(semanticNode, url) {
         // JSON.stringify(dataitem)
         // '[{"type":9,"item":"Polarizzazione#14##"},{"type":9,"item":"Social_network#14##"},{"type":9,"item":"Cancel_Culture#14##"},{"type":9,"item":"Episodio#14##"},{"type":9,"item":"Razzismo#14##"}]'
         //
@@ -17662,24 +17674,10 @@ class MyClass {
             MyClass.linkSet.push(link);
         }
     }
-    //Unclear why...
-    static ForceFirstElemUrl(dataitems, semanticNode, url) {
-        let firstDataitem = dataitems[0];
-        let urlFromItem = firstDataitem.item;
-        if (urlFromItem === url) {
-            firstDataitem.item = `${urlFromItem}_${semanticNode.property}`;
-        }
-    }
-    static addArticleDownloaded(wikiArticleTitle, mw_article_id) {
-        MyClass.downloadedArticles.push(wikiArticleTitle);
-        let node = this.ParseNode(mw_article_id);
-        MyClass.nodeSet.push(node);
-        MyClass.focalNodeID = mw_article_id;
-    }
     static InitNodeAndLinks(backlinks) {
         for (let article of backlinks) {
             let node = new INode_1.INode(article.title, article.title, "Unknown", 0, 0, article.title);
-            let link = { sourceId: article.title, linkName: "Unknown", targetId: MyClass.focalNodeID };
+            let link = new Link_1.Link("Unknown", article.title, MyClass.focalNodeID, null, null, "");
             MyClass.nodeSet.push(node);
             MyClass.linkSet.push(link);
         }
@@ -17693,31 +17691,26 @@ class MyClass {
         $(".node").each(HideEach);
         function HideEach(index, element) {
             let el = element;
-            const invIndex = MyClass.invisibleType.indexOf(el.__data__.type);
+            let node = el.__data__;
+            const invIndex = MyClass.invisibleType.indexOf(node.type);
             if (!(invIndex > -1)) {
                 return;
             }
             $(el).toggle();
-            const invIndexNode = MyClass.invisibleNode.indexOf(el.__data__.id);
+            const invIndexNode = MyClass.invisibleNode.indexOf(node.id);
             if (invIndexNode === -1) {
-                MyClass.invisibleNode.push(el.__data__.id);
+                MyClass.invisibleNode.push(node.id);
             }
         }
         $(".gLink").each((index, element) => MyClass.SomethingRelatedToNodeVisibility(index, element));
     }
-    static InitializeNodesAndLinks(sourceNodeUrl, arrayElement, propertyName, nameToParse, type) {
+    static InitializeNodesAndLinks(sourceNodeUrl, arrayElement, propertyTypeName, nameToParse, type) {
         let { name, hlink } = nameHelper_1.NameHelper.parseNodeName(nameToParse, type, sourceNodeUrl);
         let node = new INode_1.INode(nameToParse, name, "null", 0, 0, hlink);
-        let linkName = nameHelper_1.NameHelper.nicePropertyName(propertyName);
+        let linkName = nameHelper_1.NameHelper.nicePropertyName(propertyTypeName);
         let targetId = [arrayElement][0].item;
         let link = new Link_1.Link(linkName, sourceNodeUrl, targetId, null, null, "");
         return { node, link };
-    }
-    static ParseNode(mw_article_id) {
-        let name = mw_article_id.split("#")[0].replace("_", " ");
-        let node = new INode_1.INode(mw_article_id, name, "Internal Link", 10, 0, `./${mw_article_id.split("#")[0]}`);
-        node.fixed = true;
-        return node;
     }
     static SomethingRelatedToNodeVisibility(index, el) {
         //(this: el: CustomHTMLElement)
@@ -17922,13 +17915,11 @@ class SemanticWikiApi {
          * https://jsonformatter.org/json-parser/5e9d52
          */
         app_1.MyClass.resetData();
-        let mw_article_id = data.query.subject; //'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
-        app_1.MyClass.addArticleDownloaded(wikiArticleTitle, mw_article_id);
-        for (const semanticNode of data.query.data) {
-            app_1.MyClass.getNodesAndLinks(semanticNode, mw_article_id);
-        }
+        app_1.MyClass.downloadedArticles.push(wikiArticleTitle);
+        let mediawikiArticleId = data.query.subject; //'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
+        app_1.MyClass.AddMainArticle(wikiArticleTitle, mediawikiArticleId, data.query.data);
         // MyClass.force.stop();
-        SemanticWikiApi.QueryBackLinks(wikiArticleTitle);
+        SemanticWikiApi.QueryBackLinks(wikiArticleTitle); //tramite questa chiama → MyClass.InitNodeAndLinks(data.query.backlinks);
         $("#cluster_chart .chart").empty();
         //  var k = cloneNode(nodeSet);
         //  var m = cloneEdge(linkSet);
@@ -17941,6 +17932,16 @@ class SemanticWikiApi {
         // elem[0].__data__.px = Canvas.width / 2;
         // // @ts-ignore
         // elem[0].__data__.py = Canvas.height / 2;
+    }
+    /*
+        I valori delle property "_SKEY", "_MDAT" e "_ASK" sono proprietà speciali predefinite in Semantic MediaWiki.
+        "_SKEY" è una proprietà che viene utilizzata per memorizzare le chiavi di ricerca per ogni oggetto di dati, che vengono utilizzate per velocizzare le query su quell'oggetto.
+        "_MDAT" è una proprietà che viene utilizzata per memorizzare la data di modifica di un oggetto di dati.
+        "_ASK" è una proprietà che viene utilizzata per memorizzare una query SPARQL o una query di tipo "ask" per un oggetto di dati. Questa proprietà viene utilizzata per eseguire query complesse sui dati semantici.
+        * INST
+        */
+    static IsSpecialProperty(property) {
+        return ["_SKEY", "_MDAT", "_ASK"].includes(property);
     }
     static QueryBackLinks(wikiArticle) {
         $.ajax({
@@ -18024,22 +18025,27 @@ class SemanticWikiApi {
             case "_INST":
                 return "Category";
             default:
-                switch (type) {
-                    case 1:
-                        return "Number";
-                    case 2:
-                        return "Text";
-                    case 4:
-                        return "Boolean";
-                    case 5:
-                        return "URI"; //oder Email //oder Telefon
-                    case 6:
-                        return "Date";
-                    case 9:
-                        return "Internal Link";
-                    default:
-                        return "Unknown Type";
-                }
+                return this.getTypeDescr(type);
+        }
+    }
+    /* This type comes from the wiki interface
+    * */
+    static getTypeDescr(type) {
+        switch (type) {
+            case 1:
+                return "Number";
+            case 2:
+                return "Text";
+            case 4:
+                return "Boolean";
+            case 5:
+                return "URI"; //oder Email //oder Telefon
+            case 6:
+                return "Date";
+            case 9:
+                return "Internal Link";
+            default:
+                return "Unknown Type";
         }
     }
 }

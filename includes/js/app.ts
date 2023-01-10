@@ -1,9 +1,10 @@
-import { Article, Link } from "./Link";
+import { Link } from "./Link";
 import "select2";
 import { INode } from "./INode";
 import { IForce } from "./IForce";
 import { NameHelper } from "./nameHelper";
 import { DataItem, SemanticNode, SemanticWikiApi } from "./semanticWikiApi";
+import { Article, CustomHTMLElement, LinkType, NodeType } from "./OtherTypes";
 
 
 export class MyClass {
@@ -56,20 +57,36 @@ export class MyClass {
     // });
   }
 
+
+
+  //Unclear why...
+  private static ForceFirstElemUrl(dataitems: any, semanticNode: any, url: string) {
+    let firstDataitem = dataitems[0];
+    let urlFromItem = firstDataitem.item;
+
+    if (urlFromItem === url) {
+      firstDataitem.item = `${urlFromItem}_${semanticNode.property}`;
+    }
+  }
+
+  public static AddMainArticle(wikiArticleTitle: string, mediawikiArticleId: string, semanticNodeList: any) {
+    let nameDoslike = mediawikiArticleId.split("#")[0];
+    let name = nameDoslike.replace("_", " ");
+    let node = new INode(mediawikiArticleId, name, "Internal Link", 10, 0, `./${nameDoslike}`);
+    node.fixed = true;
+    MyClass.nodeSet.push(node);
+    MyClass.focalNodeID = mediawikiArticleId;
+
+    for (const semanticNode of semanticNodeList)
+    {
+      if (SemanticWikiApi.IsSpecialProperty(semanticNode.property)) continue; // Non fare nulla se la proprietà è una delle proprietà speciali "_SKEY", "_MDAT" o "_ASK"
+
+      MyClass.getNodesAndLinks(semanticNode, mediawikiArticleId);
+    }
+  }
+
   public static getNodesAndLinks(semanticNode: SemanticNode, url: string)
   {
-    // Non fare nulla se la proprietà è una delle proprietà speciali "_SKEY", "_MDAT" o "_ASK"
-    if (["_SKEY", "_MDAT", "_ASK"].includes(semanticNode.property)) {
-      /*
-      I valori delle property "_SKEY", "_MDAT" e "_ASK" sono proprietà speciali predefinite in Semantic MediaWiki.
-      "_SKEY" è una proprietà che viene utilizzata per memorizzare le chiavi di ricerca per ogni oggetto di dati, che vengono utilizzate per velocizzare le query su quell'oggetto.
-      "_MDAT" è una proprietà che viene utilizzata per memorizzare la data di modifica di un oggetto di dati.
-      "_ASK" è una proprietà che viene utilizzata per memorizzare una query SPARQL o una query di tipo "ask" per un oggetto di dati. Questa proprietà viene utilizzata per eseguire query complesse sui dati semantici.
-      * INST
-      */
-      return;
-    }
-
     // JSON.stringify(dataitem)
     // '[{"type":9,"item":"Polarizzazione#14##"},{"type":9,"item":"Social_network#14##"},{"type":9,"item":"Cancel_Culture#14##"},{"type":9,"item":"Episodio#14##"},{"type":9,"item":"Razzismo#14##"}]'
     //
@@ -93,27 +110,11 @@ export class MyClass {
     }
   }
 
-  //Unclear why...
-  private static ForceFirstElemUrl(dataitems: any, semanticNode: any, url: string) {
-    let firstDataitem = dataitems[0];
-    let urlFromItem = firstDataitem.item;
-
-    if (urlFromItem === url) {
-      firstDataitem.item = `${urlFromItem}_${semanticNode.property}`;
-    }
-  }
-
-  static addArticleDownloaded(wikiArticleTitle: string, mw_article_id: string) {
-    MyClass.downloadedArticles.push(wikiArticleTitle);
-    let node = this.ParseNode(mw_article_id);
-    MyClass.nodeSet.push(node);
-    MyClass.focalNodeID = mw_article_id;
-  }
 
   static InitNodeAndLinks(backlinks: Article[]) {
     for (let article of backlinks) {
       let node = new INode(article.title, article.title, "Unknown", 0, 0, article.title);
-      let link = { sourceId: article.title, linkName: "Unknown", targetId: MyClass.focalNodeID } as Link;
+      let link = new Link("Unknown", article.title, MyClass.focalNodeID, null, null, "");
 
       MyClass.nodeSet.push(node);
       MyClass.linkSet.push(link);
@@ -126,50 +127,42 @@ export class MyClass {
     MyClass.downloadedArticles = [];
   }
 
-
-
   public static hideElements() {
     $(".node").each(HideEach);
 
     function HideEach(index: number, element: HTMLElement) {
       let el = element as CustomHTMLElement;
-      const invIndex = MyClass.invisibleType.indexOf(el.__data__.type);
+      let node = el.__data__ as NodeType;
+      const invIndex = MyClass.invisibleType.indexOf(node.type);
       if (!(invIndex > -1)) {
         return;
       }
       $(el).toggle();
-      const invIndexNode = MyClass.invisibleNode.indexOf(el.__data__.id);
+      const invIndexNode = MyClass.invisibleNode.indexOf(node.id);
       if (invIndexNode === -1) {
-        MyClass.invisibleNode.push(el.__data__.id);
+        MyClass.invisibleNode.push(node.id);
       }
     }
 
     $(".gLink").each((index, element) => MyClass.SomethingRelatedToNodeVisibility(index, element as CustomHTMLElement));
   }
 
-  private static InitializeNodesAndLinks(sourceNodeUrl: string, arrayElement: DataItem, propertyName: string, nameToParse: any, type: string) {
+  private static InitializeNodesAndLinks(sourceNodeUrl: string, arrayElement: DataItem, propertyTypeName: string, nameToParse: string, type: string) {
 
     let { name, hlink } = NameHelper.parseNodeName(nameToParse, type, sourceNodeUrl);
     let node = new INode(nameToParse, name, "null", 0, 0, hlink);
 
-    let linkName = NameHelper.nicePropertyName(propertyName);
+    let linkName = NameHelper.nicePropertyName(propertyTypeName);
     let targetId = [arrayElement][0].item;
     let link = new Link(linkName, sourceNodeUrl, targetId, null, null, "");
 
     return { node, link };
   }
 
-  private static ParseNode(mw_article_id: string) {
-    let name = mw_article_id.split("#")[0].replace("_", " ");
-    let node: INode = new INode(mw_article_id, name, "Internal Link", 10, 0, `./${mw_article_id.split("#")[0]}`);
-    node.fixed = true;
-    return node;
-  }
-
   private static SomethingRelatedToNodeVisibility(index: number, el: CustomHTMLElement) {
     //(this: el: CustomHTMLElement)
     //      debugger;
-    let link: { linkName: string; targetId: string; sourceId: string; id: string; type: string; px: number; py: number } = el.__data__;
+    let link = el.__data__ as LinkType;
     const valSource = link.sourceId;
     const valTarget = link.targetId;
     let indexEdge: number;
@@ -188,8 +181,6 @@ export class MyClass {
       MyClass.invisibleEdge.push(`${valSource}_${valTarget}_${link.linkName}`);
     }
   };
-
-
 }
 
 new MyClass();
