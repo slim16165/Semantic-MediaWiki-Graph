@@ -1,5 +1,5 @@
 export class NameHelper {
-  static parseNodeName(nameToParse: string, type: any, url: string) {
+  static parseNodeName(nameToParse: string, type: string, url: string) {
     function parseNodeName() {
       return nameToParse.split("#")[0].replace("_", " ");
     }

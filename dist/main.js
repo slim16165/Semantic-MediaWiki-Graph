@@ -16829,12 +16829,15 @@ ColorHelper.color_hash = {};
 /*!******************************!*\
   !*** ./includes/js/INode.ts ***!
   \******************************/
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.INode = void 0;
+const utility_1 = __webpack_require__(/*! ./Ui/utility */ "./includes/js/Ui/utility.ts");
+const app_1 = __webpack_require__(/*! ./app */ "./includes/js/app.ts");
+const Canvas_1 = __webpack_require__(/*! ./Ui/Canvas */ "./includes/js/Ui/Canvas.ts");
 class INode {
     constructor(id, name, type, x, y, hlink) {
         this.id = id;
@@ -16855,6 +16858,18 @@ class INode {
         });
         return newArr;
     }
+    IsFocalNode() {
+        return this.id === app_1.MyClass.focalNodeID;
+    }
+    updatePositions() {
+        this.x = this.calcNewPosition(Canvas_1.Canvas.width, this.x);
+        this.y = this.calcNewPosition(Canvas_1.Canvas.heigth, this.y);
+    }
+    calcNewPosition(containerSize, currentPos) {
+        const minDistFromBorder = this.IsFocalNode() ? 60 : 20;
+        const maxDistFromBorder = (containerSize - minDistFromBorder) / utility_1.Utility.scale;
+        return Math.max(minDistFromBorder, Math.min(maxDistFromBorder, currentPos));
+    }
 }
 exports.INode = INode;
 
@@ -16872,7 +16887,7 @@ exports.INode = INode;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Link = void 0;
 class Link {
-    constructor(sourceId, linkName, targetId, source, target, direction) {
+    constructor(linkName, sourceId, targetId, source, target, direction) {
         this.sourceId = sourceId;
         this.linkName = linkName;
         this.targetId = targetId;
@@ -16885,7 +16900,7 @@ class Link {
     static cloneEdge(array) {
         const newArr = [];
         array.forEach((item) => {
-            newArr.push(new Link(item.sourceId, item.linkName, item.targetId, item.source, item.target, item.direction));
+            newArr.push(new Link(item.linkName, item.sourceId, item.targetId, item.source, item.target, item.direction));
         });
         return newArr;
     }
@@ -16947,10 +16962,18 @@ const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/ind
 const utility_1 = __webpack_require__(/*! ./utility */ "./includes/js/Ui/utility.ts");
 class Canvas {
     constructor() {
-        Canvas.svgCanvas = Canvas.InitCanvas('#cluster_chart .chart');
+        Canvas.svgCanvas = Canvas.InitCanvas();
     }
-    static InitCanvas(selectString) {
-        const svgCanvas = d3.select(selectString)
+    /**
+     * Initialize the canvas and create the svg element with all its attributes.
+     * @returns {d3.Selection<any, any, any, any>} svgCanvas - The svg canvas element
+     */
+    static InitCanvas() {
+        Canvas.setCanvasSize();
+        //outer = .chart
+        //inner = svgCanvas
+        //inner = .focalNodeCanvas
+        const svgCanvas = d3.select("#cluster_chart .chart")
             .append("svg:svg")
             .call((selection, ...args) => {
             d3.zoom().on("zoom", (event) => {
@@ -16965,12 +16988,19 @@ class Canvas {
             .attr("class", "focalNodeCanvas");
         return svgCanvas;
     }
-    static updateWindow() {
-        Canvas.width = $(".chart")[0].clientWidth - 60;
-        Canvas.heigth = $(".chart")[0].clientHeight - 60;
-        Canvas.svgCanvas.attr("width", Canvas.width).attr("height", Canvas.heigth);
+    static updateWindowSize() {
+        console.log("Called method updateWindow");
+        let c = $(".chart")[0];
+        this.setCanvasSize(c.clientWidth - 60, c.clientHeight - 60);
         $('#svgCanvas').width(Canvas.width + 90);
         $('#svgCanvas').height(Canvas.heigth + 60);
+    }
+    static setCanvasSize(canvasWidth = $(".chart")[0].clientWidth, canvasHeigth = $(".chart")[0].clientHeight) {
+        this.width = canvasWidth;
+        this.heigth = canvasHeigth;
+        Canvas.svgCanvas
+            .attr("width", Canvas.width)
+            .attr("height", Canvas.heigth);
     }
 }
 exports.Canvas = Canvas;
@@ -17218,19 +17248,12 @@ class NodeManager {
     }
     ;
     static mouseClickNodeText(selector, clickText) {
-        // let selector = this.this1;
-        // let win: any;
         const thisObject = d3.select(selector);
         const typeValue = thisObject.attr("type_value");
-        let node = thisObject.node();
-        if (typeValue === 'Internal Link') {
+        let node = thisObject.datum();
+        if (typeValue === "Internal Link" || typeValue === "URI") {
             if (node) {
-                let win = window.open(node.__data__.hlink);
-            }
-        }
-        else if (typeValue === 'URI') {
-            if (node) {
-                let win = window.open(node.__data__.hlink);
+                window.open(node.__data__.hlink);
             }
         }
         clickText = true;
@@ -17243,7 +17266,7 @@ class NodeManager {
         const strippedTypeValue = typeValue.replace(/ /g, "_");
         d3.select(selector).select("circle").transition()
             .duration(TRANSACTION_DURATION)
-            .attr("r", (d, i) => d.id === app_1.MyClass.focalNodeID ? 65 : 15);
+            .attr("r", (d, i) => d.IsFocalNode() ? 65 : 15);
         d3.select(selector).select("text").transition()
             .duration(TRANSACTION_DURATION)
             .style("font", "bold 20px Arial")
@@ -17257,21 +17280,21 @@ class NodeManager {
         const typeValue = thisObject.attr("type_value");
         const colorValue = thisObject.attr("color_value");
         const strippedTypeValue = typeValue.replace(/ /g, "_");
-        function getValue(d) {
-            return d.id === app_1.MyClass.focalNodeID ? utility_1.Utility.centerNodeSize : utility_1.Utility.nodeSize;
-        }
         d3.select(selector).select("circle")
             .transition()
             .duration(TRANSACTION_DURATION)
-            .attr("r", (d) => getValue(d));
+            .attr("r", (d) => { return d.IsFocalNode() ? utility_1.Utility.centerNodeSize : utility_1.Utility.nodeSize; });
         d3.select(selector).select("text")
             .transition()
             .duration(TRANSACTION_DURATION)
             .style("font", "normal 16px Arial")
             .attr("fill", "Blue");
-        legendManager_1.LegendManager.setLegendStyles("strippedTypeValue", "colorValue", 6);
+        legendManager_1.LegendManager.setLegendStyles(strippedTypeValue, colorValue, 6);
     }
     ;
+    /*
+    They are initially invisible
+    * */
     static CreateNodes() {
         /*
         In the provided code, the enter() function is used to create a new g group for each element in the NodeStore.nodeList
@@ -17302,66 +17325,45 @@ class NodeManager {
         return x3;
     }
     static setNodeStyles(strippedTypeValue, colorValue, fontWeight, nodeSize, focalNode) {
-        const nodeTextSelector = `.nodeText-${strippedTypeValue}`;
-        const selectedNodeText = d3.selectAll(nodeTextSelector);
+        const selectedNodeText = d3.selectAll(`.nodeText-${strippedTypeValue}`);
         selectedNodeText.style("font", `${fontWeight} 16px Arial`);
         selectedNodeText.style("fill", colorValue);
-        const nodeCircleSelector = `.nodeCircle-${strippedTypeValue}`;
-        const selectedCircle = d3.selectAll(nodeCircleSelector);
+        const selectedCircle = d3.selectAll(`.nodeCircle-${strippedTypeValue}`);
         selectedCircle.style("fill", colorValue);
         selectedCircle.style("stroke", colorValue);
         selectedCircle.attr("r", focalNode ? nodeSize : 1.2 * nodeSize);
         if (focalNode) {
-            const focalNodeCircleSelector = ".focalNodeCircle";
-            const selectedFocalNodeCircle = d3.selectAll(focalNodeCircleSelector);
+            const selectedFocalNodeCircle = d3.selectAll(".focalNodeCircle");
             selectedFocalNodeCircle.style("stroke", colorValue);
             selectedFocalNodeCircle.style("fill", "White");
-            const focalNodeTextSelector = ".focalNodeText";
-            const selectedFocalNodeText = d3.selectAll(focalNodeTextSelector);
+            const selectedFocalNodeText = d3.selectAll(".focalNodeText");
             selectedFocalNodeText.style("fill", colorValue);
             selectedFocalNodeText.style("font", `${fontWeight} 16px Arial`);
         }
     }
-    static updateNodePositions(node, clientWidth, clientHeight, scale) {
-        node.attr("cx", (d) => {
-            if (d.id === app_1.MyClass.focalNodeID) {
-                const s = 1 / scale;
-                return d.x = Math.max(60, Math.min(s * (clientWidth - 60), d.x));
-            }
-            else {
-                const s = 1 / scale;
-                return d.x = Math.max(20, Math.min(s * (clientWidth - 20), d.x));
-            }
-        }).attr("cy", (d) => {
-            if (d.id === app_1.MyClass.focalNodeID) {
-                const s = 1 / scale;
-                return d.y = Math.max(60, Math.min(s * (clientHeight - 60), d.y));
-            }
-            else {
-                const s = 1 / scale;
-                return d.y = Math.max(20, Math.min(s * (clientHeight - 20), d.y));
-            }
-        });
+    static updateNodePositions(node) {
+        node.datum().updatePositions();
+        node.attr("cx", (d) => d.x)
+            .attr("cy", (d) => d.y);
     }
     static AppendTextToNodes(node) {
         node.append("text")
-            .attr("x", (d) => d.id === app_1.MyClass.focalNodeID ? 0 : 20)
+            .attr("x", (d) => d.IsFocalNode() ? 0 : 20)
             .attr("y", (d) => {
-            return d.id === app_1.MyClass.focalNodeID ? 0 : -10;
+            return d.IsFocalNode() ? 0 : -10;
         })
-            .attr("text-anchor", (d) => d.id === app_1.MyClass.focalNodeID ? "middle" : "start")
+            .attr("text-anchor", (d) => d.IsFocalNode() ? "middle" : "start")
             // .on("click", this.mouseClickNodeText)
             .attr("font-family", "Arial, Helvetica, sans-serif")
             .style("font", "normal 16px Arial")
             .attr("fill", "Blue")
-            .style("fill", (d) => ColorHelper_1.ColorHelper.color_hash[d])
+            .style("fill", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
             .attr("type_value", (d) => d.type)
             .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
             .attr("class", (d) => {
-            const str = d.type;
-            const strippedString = str.replace(/ /g, "_");
-            //return "nodeText-" + strippedString; })
-            return d.id === app_1.MyClass.focalNodeID ? "focalNodeText" : `nodeText-${strippedString}`;
+            const type_string = d.type.replace(/ /g, "_");
+            //return "nodeText-" + type_string; })
+            return d.IsFocalNode() ? "focalNodeText" : `nodeText-${type_string}`;
         })
             .attr("dy", ".35em")
             .text((d) => d.name);
@@ -17370,34 +17372,19 @@ class NodeManager {
         node.append("circle")
             .attr("x", function (d) { return d.x; })
             .attr("y", function (d) { return d.y; })
-            .attr("r", (d) => d.id === app_1.MyClass.focalNodeID ? utility_1.Utility.centerNodeSize : utility_1.Utility.nodeSize)
+            .attr("r", (d) => d.IsFocalNode() ? utility_1.Utility.centerNodeSize : utility_1.Utility.nodeSize)
             .style("fill", "White") // Make the nodes hollow looking
             .style("fill", "transparent")
             .attr("type_value", (d) => d.type)
             .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
-            .attr("fixed", function (d) { if (d.id == app_1.MyClass.focalNodeID) {
-            return true;
-        }
-        else {
-            return false;
-        } })
-            .attr("x", function (d) { if (d.id == app_1.MyClass.focalNodeID) {
-            return Canvas_1.Canvas.width / 2;
-        }
-        else {
-            return d.x;
-        } })
-            .attr("y", function (d) { if (d.id == app_1.MyClass.focalNodeID) {
-            return Canvas_1.Canvas.heigth / 2;
-        }
-        else {
-            return d.y;
-        } })
+            .attr("fixed", function (d) { return d.id == app_1.MyClass.focalNodeID ? true : false; })
+            .attr("x", function (d) { return d.id == app_1.MyClass.focalNodeID ? Canvas_1.Canvas.width / 2 : d.x; })
+            .attr("y", function (d) { return d.id == app_1.MyClass.focalNodeID ? Canvas_1.Canvas.heigth / 2 : d.y; })
             .attr("class", (d) => {
             const str = d.type;
             const strippedString = str.replace(/ /g, "_");
             //return "nodeCircle-" + strippedString; })
-            return d.id === app_1.MyClass.focalNodeID ? "focalNodeCircle" : `nodeCircle-${strippedString}`;
+            return d.IsFocalNode() ? "focalNodeCircle" : `nodeCircle-${strippedString}`;
         })
             .style("stroke-width", 5) // Give the node strokes some thickness
             .style("stroke", (d) => ColorHelper_1.ColorHelper.color_hash[d.type]); // Node stroke colors
@@ -17481,7 +17468,7 @@ class Utility {
         //Build the Arrows
         this.buildArrows();
         legendManager_1.LegendManager.DrawLegend();
-        d3.select(window).on('resize.updatesvg', Canvas_1.Canvas.updateWindow);
+        d3.select(window).on('resize.updatesvg', Canvas_1.Canvas.updateWindowSize);
     }
     static CreateAForceLayoutAndBindNodesAndLinks() {
         let force = d3.forceSimulation()
@@ -17541,10 +17528,8 @@ class Utility {
             .attr("y2", (link) => link.target.y);
     }
     static Tick() {
-        let clientWidth = $(".chart")[0].clientWidth;
-        let clientHeight = $(".chart")[0].clientHeight;
         Utility.updateLinkPositions(this.link);
-        nodeManager_1.NodeManager.updateNodePositions(this.nodes, clientWidth, clientHeight, this.scale);
+        nodeManager_1.NodeManager.updateNodePositions(this.nodes);
         Utility.updateLinkPositions(this.link);
         this.nodes.attr("transform", (d) => `translate(${d.x},${d.y})`);
         // Questo pezzo di codice si occupa di aggiungere del testo ai link e di posizionarlo nella parte centrale del link stesso.
@@ -17630,11 +17615,22 @@ class MyClass {
                 }
                 else {
                     $("#error_msg").hide();
-                    MyClass.downloadedArticles = [];
                     semanticWikiApi_1.SemanticWikiApi.BrowseBySubject(wikiArticleTitle);
                 }
             });
         });
+    }
+    static PopulateSelectorWithWikiArticleUi(articles) {
+        MyClass.downloadedArticles = [];
+        for (const article of articles) {
+            $("#wikiArticle").append(`<option value="${article.title}">${article.title}</option>`);
+        }
+        // require("select2");
+        //
+        // $("#wikiArticle").select2({
+        //     placeholder: "Select a Wiki Article",
+        //     allowClear: true
+        // });
     }
     static getNodesAndLinks(semanticNode, url) {
         // Non fare nulla se la proprietà è una delle proprietà speciali "_SKEY", "_MDAT" o "_ASK"
@@ -17693,17 +17689,6 @@ class MyClass {
         MyClass.linkSet = [];
         MyClass.downloadedArticles = [];
     }
-    static PopulateSelectorWithWikiArticleUi(articles) {
-        for (const article of articles) {
-            $("#wikiArticle").append(`<option value="${article.title}">${article.title}</option>`);
-        }
-        // require("select2");
-        //
-        // $("#wikiArticle").select2({
-        //     placeholder: "Select a Wiki Article",
-        //     allowClear: true
-        // });
-    }
     static hideElements() {
         $(".node").each(HideEach);
         function HideEach(index, element) {
@@ -17720,10 +17705,12 @@ class MyClass {
         }
         $(".gLink").each((index, element) => MyClass.SomethingRelatedToNodeVisibility(index, element));
     }
-    static InitializeNodesAndLinks(url, arrayElement, propertyName, nameToParse, type) {
-        let { name, hlink } = nameHelper_1.NameHelper.parseNodeName(nameToParse, type, url);
+    static InitializeNodesAndLinks(sourceNodeUrl, arrayElement, propertyName, nameToParse, type) {
+        let { name, hlink } = nameHelper_1.NameHelper.parseNodeName(nameToParse, type, sourceNodeUrl);
         let node = new INode_1.INode(nameToParse, name, "null", 0, 0, hlink);
-        let link = new Link_1.Link(url, nameHelper_1.NameHelper.nicePropertyName(propertyName), [arrayElement][0].item, null, null, "");
+        let linkName = nameHelper_1.NameHelper.nicePropertyName(propertyName);
+        let targetId = [arrayElement][0].item;
+        let link = new Link_1.Link(linkName, sourceNodeUrl, targetId, null, null, "");
         return { node, link };
     }
     static ParseNode(mw_article_id) {
@@ -17735,12 +17722,13 @@ class MyClass {
     static SomethingRelatedToNodeVisibility(index, el) {
         //(this: el: CustomHTMLElement)
         //      debugger;
-        const valSource = el.__data__.sourceId;
-        const valTarget = el.__data__.targetId;
+        let link = el.__data__;
+        const valSource = link.sourceId;
+        const valTarget = link.targetId;
         let indexEdge;
         const indexSource = MyClass.invisibleNode.indexOf(valSource);
         const indexTarget = MyClass.invisibleNode.indexOf(valTarget);
-        indexEdge = MyClass.invisibleEdge.indexOf(`${valSource}_${valTarget}_${el.__data__.linkName}`);
+        indexEdge = MyClass.invisibleEdge.indexOf(`${valSource}_${valTarget}_${link.linkName}`);
         if (indexEdge > -1) {
             //Einer der beiden Knoten ist unsichtbar, aber Kante noch nicht
             $(this).toggle();
@@ -17749,7 +17737,7 @@ class MyClass {
         else if ((indexSource > -1 || indexTarget > -1)) {
             //Knoten sind nicht unsichtbar, aber Kante ist es
             $(this).toggle();
-            MyClass.invisibleEdge.push(`${valSource}_${valTarget}_${el.__data__.linkName}`);
+            MyClass.invisibleEdge.push(`${valSource}_${valTarget}_${link.linkName}`);
         }
     }
     ;
@@ -17950,9 +17938,9 @@ class SemanticWikiApi {
         app_1.MyClass.hideElements();
         // const elem: JQuery<HTMLElement> = $(`[id=${MyClass.focalNodeID}] a`);
         // // @ts-ignore
-        // elem[0].__data__.px = $(".chart")[0].clientWidth / 2;
+        // elem[0].__data__.px = Canvas.width / 2;
         // // @ts-ignore
-        // elem[0].__data__.py = $(".chart")[0].clientHeight / 2;
+        // elem[0].__data__.py = Canvas.height / 2;
     }
     static QueryBackLinks(wikiArticle) {
         $.ajax({

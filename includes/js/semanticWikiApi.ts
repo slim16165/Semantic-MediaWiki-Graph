@@ -57,9 +57,9 @@ export class SemanticWikiApi {
     MyClass.hideElements();
     // const elem: JQuery<HTMLElement> = $(`[id=${MyClass.focalNodeID}] a`);
     // // @ts-ignore
-    // elem[0].__data__.px = $(".chart")[0].clientWidth / 2;
+    // elem[0].__data__.px = Canvas.width / 2;
     // // @ts-ignore
-    // elem[0].__data__.py = $(".chart")[0].clientHeight / 2;
+    // elem[0].__data__.py = Canvas.height / 2;
   }
 
   public static QueryBackLinks(wikiArticle: string) {

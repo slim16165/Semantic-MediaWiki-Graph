@@ -10,7 +10,7 @@ export class Link {
     public target!: INode;
     public direction!: string;
 
-    constructor(sourceId: any, linkName: any, targetId: any, source: INode | null, target: INode | null, direction: string) {
+    constructor(linkName: string, sourceId: string, targetId: string, source: INode | null, target: INode | null, direction: string) {
         this.sourceId = sourceId;
         this.linkName = linkName;
         this.targetId = targetId;
@@ -25,7 +25,7 @@ export class Link {
 
         const newArr: Link[] = [];
         array.forEach((item: Link) => {
-            newArr.push(new Link(item.sourceId, item.linkName, item.targetId, item.source, item.target, item.direction));
+            newArr.push(new Link(item.linkName, item.sourceId, item.targetId, item.source, item.target, item.direction));
         });
 
         return newArr;

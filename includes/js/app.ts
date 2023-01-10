@@ -36,11 +36,24 @@ export class MyClass {
         } else {
           $("#error_msg").hide();
 
-          MyClass.downloadedArticles = [];
           SemanticWikiApi.BrowseBySubject(wikiArticleTitle);
         }
       });
     });
+  }
+
+  static PopulateSelectorWithWikiArticleUi(articles: Article[]) {
+    MyClass.downloadedArticles = [];
+    for (const article of articles) {
+      $("#wikiArticle").append(`<option value="${article.title}">${article.title}</option>`);
+    }
+
+    // require("select2");
+    //
+    // $("#wikiArticle").select2({
+    //     placeholder: "Select a Wiki Article",
+    //     allowClear: true
+    // });
   }
 
   public static getNodesAndLinks(semanticNode: SemanticNode, url: string)
@@ -113,18 +126,7 @@ export class MyClass {
     MyClass.downloadedArticles = [];
   }
 
-  static PopulateSelectorWithWikiArticleUi(articles: Article[]) {
-    for (const article of articles) {
-      $("#wikiArticle").append(`<option value="${article.title}">${article.title}</option>`);
-    }
 
-    // require("select2");
-    //
-    // $("#wikiArticle").select2({
-    //     placeholder: "Select a Wiki Article",
-    //     allowClear: true
-    // });
-  }
 
   public static hideElements() {
     $(".node").each(HideEach);
@@ -145,11 +147,14 @@ export class MyClass {
     $(".gLink").each((index, element) => MyClass.SomethingRelatedToNodeVisibility(index, element as CustomHTMLElement));
   }
 
-  private static InitializeNodesAndLinks(url: string, arrayElement: DataItem, propertyName: string, nameToParse: any, type: string) {
+  private static InitializeNodesAndLinks(sourceNodeUrl: string, arrayElement: DataItem, propertyName: string, nameToParse: any, type: string) {
 
-    let { name, hlink } = NameHelper.parseNodeName(nameToParse, type, url);
+    let { name, hlink } = NameHelper.parseNodeName(nameToParse, type, sourceNodeUrl);
     let node = new INode(nameToParse, name, "null", 0, 0, hlink);
-    let link = new Link(url, NameHelper.nicePropertyName(propertyName), [arrayElement][0].item, null, null, "");
+
+    let linkName = NameHelper.nicePropertyName(propertyName);
+    let targetId = [arrayElement][0].item;
+    let link = new Link(linkName, sourceNodeUrl, targetId, null, null, "");
 
     return { node, link };
   }
@@ -164,13 +169,14 @@ export class MyClass {
   private static SomethingRelatedToNodeVisibility(index: number, el: CustomHTMLElement) {
     //(this: el: CustomHTMLElement)
     //      debugger;
-    const valSource = el.__data__.sourceId;
-    const valTarget = el.__data__.targetId;
+    let link: { linkName: string; targetId: string; sourceId: string; id: string; type: string; px: number; py: number } = el.__data__;
+    const valSource = link.sourceId;
+    const valTarget = link.targetId;
     let indexEdge: number;
 
     const indexSource = MyClass.invisibleNode.indexOf(valSource);
     const indexTarget = MyClass.invisibleNode.indexOf(valTarget);
-    indexEdge = MyClass.invisibleEdge.indexOf(`${valSource}_${valTarget}_${el.__data__.linkName}`);
+    indexEdge = MyClass.invisibleEdge.indexOf(`${valSource}_${valTarget}_${link.linkName}`);
 
     if (indexEdge > -1) {
       //Einer der beiden Knoten ist unsichtbar, aber Kante noch nicht
@@ -179,7 +185,7 @@ export class MyClass {
     } else if ((indexSource > -1 || indexTarget > -1)) {
       //Knoten sind nicht unsichtbar, aber Kante ist es
       $(this).toggle();
-      MyClass.invisibleEdge.push(`${valSource}_${valTarget}_${el.__data__.linkName}`);
+      MyClass.invisibleEdge.push(`${valSource}_${valTarget}_${link.linkName}`);
     }
   };
 

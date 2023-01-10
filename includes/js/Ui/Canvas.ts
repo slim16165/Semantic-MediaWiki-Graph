@@ -8,11 +8,21 @@ export class Canvas {
     public static heigth = $(".chart")[0].clientHeight;
 
     constructor() {
-        Canvas.svgCanvas = Canvas.InitCanvas('#cluster_chart .chart');
+        Canvas.svgCanvas = Canvas.InitCanvas();
     }
 
-    public static InitCanvas(selectString: string): Selection<any, any, any, any> {
-        const svgCanvas = d3.select(selectString)
+    /**
+     * Initialize the canvas and create the svg element with all its attributes.
+     * @returns {d3.Selection<any, any, any, any>} svgCanvas - The svg canvas element
+     */
+    public static InitCanvas(): Selection<any, any, any, any> {
+        Canvas.setCanvasSize();
+
+        //outer = .chart
+        //inner = svgCanvas
+        //inner = .focalNodeCanvas
+
+        const svgCanvas = d3.select("#cluster_chart .chart")
             .append("svg:svg")
             .call((selection: any, ...args: any[]) => {
                 d3.zoom().on("zoom", (event: any) => {
@@ -28,12 +38,24 @@ export class Canvas {
         return svgCanvas;
     }
 
-    public static updateWindow() {
-        Canvas.width = $(".chart")[0].clientWidth - 60;
-        Canvas.heigth = $(".chart")[0].clientHeight - 60;
+    public static updateWindowSize() {
+        console.log("Called method updateWindow");
 
-        Canvas.svgCanvas.attr("width", Canvas.width).attr("height", Canvas.heigth);
+        let c = $(".chart")[0];
+        this.setCanvasSize(c.clientWidth - 60, c.clientHeight - 60);
+
         $('#svgCanvas').width(Canvas.width + 90);
         $('#svgCanvas').height(Canvas.heigth + 60);
+    }
+
+    private static setCanvasSize(canvasWidth : number = $(".chart")[0].clientWidth,
+                                 canvasHeigth : number = $(".chart")[0].clientHeight)
+    {
+        this.width = canvasWidth;
+        this.heigth = canvasHeigth;
+
+        Canvas.svgCanvas
+          .attr("width", Canvas.width)
+          .attr("height", Canvas.heigth);
     }
 }

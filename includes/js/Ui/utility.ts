@@ -14,9 +14,9 @@ interface Point {
 }
 
 export class Utility {
-    public static centerNodeSize = 50;
-    public static nodeSize = 10;
-    public static scale = 1;
+    public static centerNodeSize :number = 50;
+    public static nodeSize :number = 10;
+    public static scale :number = 1;
     private static svgCanvas: Selection<SVGGElement, Link, any, any>;
     private static linkText: d3.Selection<SVGTextElement, any, SVGGElement, Link>;
     private static nodes: any;
@@ -68,7 +68,7 @@ export class Utility {
 
         LegendManager.DrawLegend();
 
-        d3.select(window).on('resize.updatesvg', Canvas.updateWindow);
+        d3.select(window).on('resize.updatesvg', Canvas.updateWindowSize);
     }
 
 
@@ -142,12 +142,9 @@ export class Utility {
 
 
     private static Tick() {
-        let clientWidth = $(".chart")[0].clientWidth;
-        let clientHeight = $(".chart")[0].clientHeight;
-
         Utility.updateLinkPositions(this.link);
 
-        NodeManager.updateNodePositions(this.nodes, clientWidth, clientHeight, this.scale);
+        NodeManager.updateNodePositions(this.nodes);
 
         Utility.updateLinkPositions(this.link);
 

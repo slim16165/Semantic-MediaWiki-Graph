@@ -1,3 +1,7 @@
+import { Utility } from "./Ui/utility";
+import { MyClass } from "./app";
+import { Canvas } from "./Ui/Canvas";
+
 export class INode {
     id: string;
     name: string;
@@ -32,5 +36,20 @@ export class INode {
         });
 
         return newArr;
+    }
+
+    public IsFocalNode() : boolean {
+        return this.id === MyClass.focalNodeID;
+    }
+
+    public updatePositions() {
+        this.x = this.calcNewPosition(Canvas.width, this.x)
+        this.y = this.calcNewPosition(Canvas.heigth, this.y)
+    }
+
+    public calcNewPosition(containerSize: number, currentPos: number) {
+        const minDistFromBorder = this.IsFocalNode() ? 60 : 20;
+        const maxDistFromBorder = (containerSize - minDistFromBorder) / Utility.scale;
+        return Math.max(minDistFromBorder, Math.min(maxDistFromBorder, currentPos));
     }
 }
