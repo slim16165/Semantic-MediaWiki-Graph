@@ -3,27 +3,31 @@ import { NodeStore } from "./nodeStore";
 import { MyClass } from "./app";
 
 export class SemanticWikiApi {
-  public static async BrowseBySubject(wikiArticleTitle: string): Promise<void> {
-    const api = new mw.Api();
-
-    try {
-      const response = await api.get({
-        action: 'browsebysubject',
+  public static BrowseBySubject(wikiArticleTitle: string) {
+    MyClass.downloadedArticles = [];
+    $.ajax({
+      url: mw.util.wikiScript("api"),
+      data: {
+        action: "browsebysubject",
         subject: wikiArticleTitle,
-        format: 'json'
-      });
+        format: "json"
+      },
+      type: "GET",
+      success: execSuccessCallback
+    });
 
-      await response;
-
-      if (response.data.edit?.result === 'Success') {
+    function execSuccessCallback(data: { edit: { result: string; }; error: any; query: { subject: string; data: any; }; }) {
+      if (data?.edit && data.edit.result === "Success") {
+        // debugger;
+      } else if (data?.error) {
+        alert(data);
         // debugger;
       } else {
-        SemanticWikiApi.BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle, response.data);
+        SemanticWikiApi.BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle, data);
       }
-    } catch (error) {
-      debugger;
     }
   }
+
 
   static BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle: string, data: { edit: { result: string }; error: any; query: { subject: string; data: any }} )
   {
@@ -37,12 +41,9 @@ export class SemanticWikiApi {
     let mw_article_id = data.query.subject; //'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
     MyClass.addArticleDownloaded(wikiArticleTitle, mw_article_id);
 
-
     for (const semanticNode of data.query.data) {
       MyClass.getNodesAndLinks(semanticNode, mw_article_id);
     }
-
-
 
     // MyClass.force.stop();
     SemanticWikiApi.QueryBackLinks(wikiArticleTitle);
@@ -50,6 +51,7 @@ export class SemanticWikiApi {
     $("#cluster_chart .chart").empty();
     //  var k = cloneNode(nodeSet);
     //  var m = cloneEdge(linkSet);
+    console.log("BrowseBySubject");
     Utility.drawCluster("Drawing1", MyClass.focalNodeID);
     //drawCluster.update();
     MyClass.hideElements();
@@ -89,6 +91,7 @@ export class SemanticWikiApi {
 
       NodeStore.InitialSetup(MyClass.nodeSet, MyClass.linkSet);
 
+      console.log("BacklinksCallback");
       Utility.drawCluster("Drawing1", MyClass.focalNodeID);
       //drawCluster.update();
       MyClass.hideElements();

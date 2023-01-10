@@ -3,7 +3,6 @@ import {Selection} from "d3";
 import {ColorHelper} from "../ColorHelper";
 import {MyClass} from "../app";
 import {NodeManager} from "./nodeManager";
-import {INode} from "../INode";
 import { NodeStore } from "../nodeStore";
 import { Canvas } from "./Canvas";
 

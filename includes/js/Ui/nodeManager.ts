@@ -8,6 +8,7 @@ import {Canvas} from "./Canvas";
 import { NodeStore } from "../nodeStore";
 import { INode } from "../INode";
 import { SemanticWikiApi } from "../semanticWikiApi";
+import { Console, debug } from "console";
 
 const TRANSACTION_DURATION : number = 250;
 
@@ -91,22 +92,44 @@ export class NodeManager {
         LegendManager.setLegendStyles("strippedTypeValue", "colorValue", 6);
     };
 
+    /*
+    They are initially invisible
+    * */
     static CreateNodes() {
-        const node = Canvas.svgCanvas.selectAll(".node")
-            .data(NodeStore.nodeList)
-            .enter().append("g")
+
+        /*
+        In the provided code, the enter() function is used to create a new g group for each element in the NodeStore.nodeList
+        dataset that does not yet have a corresponding element in the HTML. The "node" class attribute and several other attributes
+        are then assigned to the created group. Additionally, the events on("mouseover", (d)=> this.nodeMouseOver),
+        on("click", () => this.mouseClickNode), on("mouseout", () => this.nodeMouseOut) are associated with the created group.
+        In summary enter() allows to select and operate on data elements that haven't been associated yet to DOM elements.
+        * */
+
+        console.log(NodeStore.nodeList.length);
+
+        const node = Canvas.svgCanvas.selectAll(".node");
+
+            let x1 = node.data(NodeStore.nodeList);
+            let x2 = x1.enter();
+
+            let x3 = x2.append("g")
             .attr("class", "node")
             .attr("id", (node: INode) => node.id)
             .attr("type_value", (d: INode) => d.type)
             .attr("color_value", (d: INode) => ColorHelper.color_hash[d.type])
-            .attr("xlink:href", (d: INode) => d.hlink)
+            .attr("xlink:href", (d: INode) => d.hlink as string)
             .attr("fixed", function(d) { return d.id == MyClass.focalNodeID; } )
             .on("mouseover", (d)=> this.nodeMouseOver)
             .on("click", () => this.mouseClickNode)
             .on("mouseout", () => this.nodeMouseOut)
             // .call(force.drag)
+            // .attr("transform", function(d) {
+            //     return `translate(${d.x},${d.y})`;
+            // })
             .append("a");
-        return node;
+
+
+        return x3;
     }
 
     public static setNodeStyles(strippedTypeValue: string, colorValue: string, fontWeight: string, nodeSize: number, focalNode: boolean) {
@@ -187,9 +210,9 @@ export class NodeManager {
             .style("fill", "transparent")
             .attr("type_value", (d: any) => d.type)
             .attr("color_value", (d: any) => ColorHelper.color_hash[d.type])
-            //.attr("fixed", function(d) { if (d.id==focalNodeID) { return true; } else { return false; } } )
-            //.attr("x", function(d) { if (d.id==focalNodeID) { return width/2; } else { return d.x; } })
-            //.attr("y", function(d) { if (d.id==focalNodeID) { return height/2; } else { return d.y; } })
+            .attr("fixed", function(d) { if (d.id==MyClass.focalNodeID) { return true; } else { return false; } } )
+            .attr("x", function(d) { if (d.id==MyClass.focalNodeID) { return Canvas.width/2; } else { return d.x; } })
+            .attr("y", function(d) { if (d.id==MyClass.focalNodeID) { return Canvas.heigth/2; } else { return d.y; } })
             .attr("class", (d: any) => {
                 const str = d.type;
                 const strippedString = str.replace(/ /g, "_");

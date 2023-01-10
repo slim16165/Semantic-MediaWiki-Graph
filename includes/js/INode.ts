@@ -1,16 +1,19 @@
 export class INode {
-    id: any;
-    name: any;
+    id: string;
+    name: string;
     type: string;
     fixed?: boolean;
     x: number;
     y: number;
-    hlink?: any;
+    hlink?: string;
 
-    public constructor(id: any, name: any, type: string, x: number, y: number, hlink: string) {
+    public constructor(id: string, name: string, type: string, x: number, y: number, hlink: string) {
+        this.id = id;
+        this.name = name;
         this.x = 0;
         this.y = 0;
-        this.type = "";
+        this.hlink = hlink;
+        this.type = type;
     }
 
 

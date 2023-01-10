@@ -36,6 +36,8 @@ export class Utility {
         let canvas = new Canvas();
         this.svgCanvas = Canvas.svgCanvas;
 
+        console.log("N° NodeStore.nodeList: " +NodeStore.nodeList.length);
+
         // Create Nodes
         this.nodes = NodeManager.CreateNodes();
 

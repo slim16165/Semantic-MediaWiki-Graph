@@ -16837,9 +16837,12 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.INode = void 0;
 class INode {
     constructor(id, name, type, x, y, hlink) {
+        this.id = id;
+        this.name = name;
         this.x = 0;
         this.y = 0;
-        this.type = "";
+        this.hlink = hlink;
+        this.type = type;
     }
     static cloneNode(array) {
         const newArr = [];
@@ -17270,9 +17273,18 @@ class NodeManager {
     }
     ;
     static CreateNodes() {
-        const node = Canvas_1.Canvas.svgCanvas.selectAll(".node")
-            .data(nodeStore_1.NodeStore.nodeList)
-            .enter().append("g")
+        /*
+        In the provided code, the enter() function is used to create a new g group for each element in the NodeStore.nodeList
+        dataset that does not yet have a corresponding element in the HTML. The "node" class attribute and several other attributes
+        are then assigned to the created group. Additionally, the events on("mouseover", (d)=> this.nodeMouseOver),
+        on("click", () => this.mouseClickNode), on("mouseout", () => this.nodeMouseOut) are associated with the created group.
+        In summary enter() allows to select and operate on data elements that haven't been associated yet to DOM elements.
+        * */
+        console.log(nodeStore_1.NodeStore.nodeList.length);
+        const node = Canvas_1.Canvas.svgCanvas.selectAll(".node");
+        let x1 = node.data(nodeStore_1.NodeStore.nodeList);
+        let x2 = x1.enter();
+        let x3 = x2.append("g")
             .attr("class", "node")
             .attr("id", (node) => node.id)
             .attr("type_value", (d) => d.type)
@@ -17283,8 +17295,11 @@ class NodeManager {
             .on("click", () => this.mouseClickNode)
             .on("mouseout", () => this.nodeMouseOut)
             // .call(force.drag)
+            // .attr("transform", function(d) {
+            //     return `translate(${d.x},${d.y})`;
+            // })
             .append("a");
-        return node;
+        return x3;
     }
     static setNodeStyles(strippedTypeValue, colorValue, fontWeight, nodeSize, focalNode) {
         const nodeTextSelector = `.nodeText-${strippedTypeValue}`;
@@ -17360,9 +17375,24 @@ class NodeManager {
             .style("fill", "transparent")
             .attr("type_value", (d) => d.type)
             .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
-            //.attr("fixed", function(d) { if (d.id==focalNodeID) { return true; } else { return false; } } )
-            //.attr("x", function(d) { if (d.id==focalNodeID) { return width/2; } else { return d.x; } })
-            //.attr("y", function(d) { if (d.id==focalNodeID) { return height/2; } else { return d.y; } })
+            .attr("fixed", function (d) { if (d.id == app_1.MyClass.focalNodeID) {
+            return true;
+        }
+        else {
+            return false;
+        } })
+            .attr("x", function (d) { if (d.id == app_1.MyClass.focalNodeID) {
+            return Canvas_1.Canvas.width / 2;
+        }
+        else {
+            return d.x;
+        } })
+            .attr("y", function (d) { if (d.id == app_1.MyClass.focalNodeID) {
+            return Canvas_1.Canvas.heigth / 2;
+        }
+        else {
+            return d.y;
+        } })
             .attr("class", (d) => {
             const str = d.type;
             const strippedString = str.replace(/ /g, "_");
@@ -17431,6 +17461,7 @@ class Utility {
     static drawCluster(drawingName, focalNode) {
         let canvas = new Canvas_1.Canvas();
         this.svgCanvas = Canvas_1.Canvas.svgCanvas;
+        console.log("N° NodeStore.nodeList: " + nodeStore_1.NodeStore.nodeList.length);
         // Create Nodes
         this.nodes = nodeManager_1.NodeManager.CreateNodes();
         // Append circles to Nodes
@@ -17861,19 +17892,10 @@ NodeStore.linkList = [];
 /*!****************************************!*\
   !*** ./includes/js/semanticWikiApi.ts ***!
   \****************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SemanticWikiApi = void 0;
 const utility_1 = __webpack_require__(/*! ./Ui/utility */ "./includes/js/Ui/utility.ts");
@@ -17881,27 +17903,29 @@ const nodeStore_1 = __webpack_require__(/*! ./nodeStore */ "./includes/js/nodeSt
 const app_1 = __webpack_require__(/*! ./app */ "./includes/js/app.ts");
 class SemanticWikiApi {
     static BrowseBySubject(wikiArticleTitle) {
-        var _a;
-        return __awaiter(this, void 0, void 0, function* () {
-            const api = new mw.Api();
-            try {
-                const response = yield api.get({
-                    action: 'browsebysubject',
-                    subject: wikiArticleTitle,
-                    format: 'json'
-                });
-                if (((_a = response.data.edit) === null || _a === void 0 ? void 0 : _a.result) === 'Success') {
-                    // debugger;
-                }
-                else {
-                    SemanticWikiApi.BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle, response.data);
-                }
-            }
-            catch (error) {
-                alert(error);
+        app_1.MyClass.downloadedArticles = [];
+        $.ajax({
+            url: mw.util.wikiScript("api"),
+            data: {
+                action: "browsebysubject",
+                subject: wikiArticleTitle,
+                format: "json"
+            },
+            type: "GET",
+            success: execSuccessCallback
+        });
+        function execSuccessCallback(data) {
+            if ((data === null || data === void 0 ? void 0 : data.edit) && data.edit.result === "Success") {
                 // debugger;
             }
-        });
+            else if (data === null || data === void 0 ? void 0 : data.error) {
+                alert(data);
+                // debugger;
+            }
+            else {
+                SemanticWikiApi.BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle, data);
+            }
+        }
     }
     static BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle, data) {
         /**
@@ -17920,6 +17944,7 @@ class SemanticWikiApi {
         $("#cluster_chart .chart").empty();
         //  var k = cloneNode(nodeSet);
         //  var m = cloneEdge(linkSet);
+        console.log("BrowseBySubject");
         utility_1.Utility.drawCluster("Drawing1", app_1.MyClass.focalNodeID);
         //drawCluster.update();
         app_1.MyClass.hideElements();
@@ -17956,6 +17981,7 @@ class SemanticWikiApi {
             //  var k = cloneNode(nodeSet);
             //  var m = cloneEdge(linkSet);
             nodeStore_1.NodeStore.InitialSetup(app_1.MyClass.nodeSet, app_1.MyClass.linkSet);
+            console.log("BacklinksCallback");
             utility_1.Utility.drawCluster("Drawing1", app_1.MyClass.focalNodeID);
             //drawCluster.update();
             app_1.MyClass.hideElements();
