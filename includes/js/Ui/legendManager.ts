@@ -6,7 +6,7 @@ import {MyClass} from "../app";
 import {NodeManager} from "./nodeManager";
 import { NodeStore } from "../nodeStore";
 import { Canvas } from "./Canvas";
-import { CustomHTMLElement, NodeType } from "../OtherTypes";
+import { CustomHTMLElement } from "../OtherTypes";
 import { INode } from "../INode";
 
 export class LegendManager {
@@ -72,7 +72,7 @@ export class LegendManager {
         }
         $(".node").each((index, el) => this.MakeInvisible(index, el as CustomHTMLElement, typeValue));
 
-        $(".gLink").each((index, el) => this.MakeInvisible2(index, el as CustomHTMLElement));
+        $(".gLink").each((index, el) => this.MakeInvisible2(el as CustomHTMLElement));
 
     };
 
@@ -89,7 +89,7 @@ export class LegendManager {
     }
 
     private static MakeInvisible(index: any, el: CustomHTMLElement, typeValue: string) {
-        let node = el.__data__ as NodeType;
+        let node = el.__data__ as INode;
         if (node.type !== typeValue) {
             return;
         }
@@ -102,7 +102,7 @@ export class LegendManager {
         $(this).toggle();
     }
 
-    private static MakeInvisible2(index: number, el: CustomHTMLElement) {
+    private static MakeInvisible2(el: CustomHTMLElement) {
         //      debugger;
         let data = el.__data__ as Link;
         const valSource = data.sourceId;
@@ -160,7 +160,7 @@ export class LegendManager {
         const colorValue = thisObject.attr("color_value");
         const strippedTypeValue = typeValue.replace(/ /g, "_");
 
-        LegendManager.setLegendStyles("strippedTypeValue", "colorValue", 6);
+        LegendManager.setLegendStyles(strippedTypeValue, colorValue, 6);
         NodeManager.setNodeStyles(strippedTypeValue, "Blue", "normal", nodeSize, false);
     }
 }

@@ -1,6 +1,7 @@
 import { Utility } from "./Ui/utility";
 import { NodeStore } from "./nodeStore";
 import { MyClass } from "./app";
+import { VisibilityHandler } from "./Ui/visibilityHandler";
 
 export class SemanticWikiApi {
   public static BrowseBySubject(wikiArticleTitle: string) {
@@ -41,7 +42,7 @@ export class SemanticWikiApi {
     MyClass.downloadedArticles.push(wikiArticleTitle);
     let mediawikiArticleId = data.query.subject; //'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
 
-    MyClass.AddMainArticle(wikiArticleTitle, mediawikiArticleId, data.query.data);
+    MyClass.AddMainArticle_BrowseBySubject(wikiArticleTitle, mediawikiArticleId, data.query.data);
 
     // MyClass.force.stop();
     SemanticWikiApi.QueryBackLinks(wikiArticleTitle); //tramite questa chiama → MyClass.InitNodeAndLinks(data.query.backlinks);
@@ -53,7 +54,7 @@ export class SemanticWikiApi {
     console.log("BrowseBySubject");
     Utility.drawCluster("Drawing1", MyClass.focalNodeID);
     //drawCluster.update();
-    MyClass.hideElements();
+    VisibilityHandler.hideElements();
     // const elem: JQuery<HTMLElement> = $(`[id=${MyClass.focalNodeID}] a`);
     // // @ts-ignore
     // elem[0].__data__.px = Canvas.width / 2;
@@ -92,7 +93,7 @@ export class SemanticWikiApi {
         alert((data) as any);
         // debugger;
       } else {
-        MyClass.InitNodeAndLinks(data.query.backlinks);
+        MyClass.InitNodeAndLinks_Backlinks(data.query.backlinks);
       }
 
       $("#cluster_chart .chart").empty();
@@ -104,7 +105,7 @@ export class SemanticWikiApi {
       console.log("BacklinksCallback");
       Utility.drawCluster("Drawing1", MyClass.focalNodeID);
       //drawCluster.update();
-      MyClass.hideElements();
+      VisibilityHandler.hideElements();
     }
   }
 
@@ -191,16 +192,6 @@ export interface SuccessParams {
   error: any;
   query: { allpages: any }
 }
-
-export interface BacklinksCallbackParams {
-  data:
-    {
-      edit: { result: string };
-      error: any;
-      query: { backlinks: any }
-    };
-}
-
 export type DataItem = {
   type: number,
   item: string
