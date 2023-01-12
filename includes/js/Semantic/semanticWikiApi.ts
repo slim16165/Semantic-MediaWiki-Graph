@@ -2,11 +2,7 @@ import { Utility } from "../Ui/utility";
 import { NodeStore } from "../Model/nodeStore";
 import { MainEntry } from "../app";
 import { VisibilityHandler } from "../Ui/visibilityHandler";
-import { MediaWikiArticle } from "./mediaWikiArticle";
-
-interface SuccessCallback {
-   edit: { result: string }; error: any; query: { subject: string; data: any }
-}
+import { MyData, SuccessCallback, SuccessParams } from "./myData";
 
 export class SemanticWikiApi {
   public static BrowseBySubject(wikiArticleTitle: string) {
@@ -46,7 +42,7 @@ export class SemanticWikiApi {
     MainEntry.resetData();
     MainEntry.downloadedArticles.push(wikiArticleTitle);
 
-    data.Parse(wikiArticleTitle)
+    data.Parse()
 
     // MyClass.force.stop();
     SemanticWikiApi.QueryBackLinks(wikiArticleTitle); //tramite questa chiama → MyClass.InitNodeAndLinks(data.query.backlinks);
@@ -124,41 +120,6 @@ export class SemanticWikiApi {
     });
   }
 
-}
-
-
-export interface SuccessParams {
-  edit: { result: string };
-  error: any;
-  query: { allpages: any }
-}
-
-class MyData {
-
-  // query!: {
-  //   subject: string;
-  //   data: SemanticPropertyAndItems[];
-  //   serializer: string;
-  //   version: number;
-  // };
-
-  mediawikiArticle!: MediaWikiArticle;
-  private query: { subject: string; data: any };
-
-  constructor(callback: SuccessCallback) {
-    this.query = callback.query;
-  }
-
-
-  public Parse(wikiArticleTitle: string)
-  {
-    this.mediawikiArticle = new MediaWikiArticle(this.query.subject, this.query.data)
-    let wikiArticle = this.mediawikiArticle;
-
-    wikiArticle.HandleProperties();
-    MainEntry.nodeSet.push(wikiArticle.node);
-    MainEntry.focalNodeID = wikiArticle.Id;
-  }
 }
 
 

@@ -17040,6 +17040,35 @@ exports.MediaWikiArticle = MediaWikiArticle;
 
 /***/ }),
 
+/***/ "./includes/js/Semantic/myData.ts":
+/*!****************************************!*\
+  !*** ./includes/js/Semantic/myData.ts ***!
+  \****************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.MyData = void 0;
+const mediaWikiArticle_1 = __webpack_require__(/*! ./mediaWikiArticle */ "./includes/js/Semantic/mediaWikiArticle.ts");
+const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
+class MyData {
+    constructor(callback) {
+        this.query = callback.query;
+    }
+    Parse() {
+        this.mediawikiArticle = new mediaWikiArticle_1.MediaWikiArticle(this.query.subject, this.query.data);
+        let wikiArticle = this.mediawikiArticle;
+        wikiArticle.HandleProperties();
+        app_1.MainEntry.nodeSet.push(wikiArticle.node);
+        app_1.MainEntry.focalNodeID = wikiArticle.Id;
+    }
+}
+exports.MyData = MyData;
+
+
+/***/ }),
+
 /***/ "./includes/js/Semantic/propertyDataItem.ts":
 /*!**************************************************!*\
   !*** ./includes/js/Semantic/propertyDataItem.ts ***!
@@ -17236,7 +17265,7 @@ const utility_1 = __webpack_require__(/*! ../Ui/utility */ "./includes/js/Ui/uti
 const nodeStore_1 = __webpack_require__(/*! ../Model/nodeStore */ "./includes/js/Model/nodeStore.ts");
 const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
 const visibilityHandler_1 = __webpack_require__(/*! ../Ui/visibilityHandler */ "./includes/js/Ui/visibilityHandler.ts");
-const mediaWikiArticle_1 = __webpack_require__(/*! ./mediaWikiArticle */ "./includes/js/Semantic/mediaWikiArticle.ts");
+const myData_1 = __webpack_require__(/*! ./myData */ "./includes/js/Semantic/myData.ts");
 class SemanticWikiApi {
     static BrowseBySubject(wikiArticleTitle) {
         app_1.MainEntry.downloadedArticles = [];
@@ -17259,7 +17288,7 @@ class SemanticWikiApi {
                 // debugger;
             }
             else {
-                SemanticWikiApi.BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle, new MyData(data));
+                SemanticWikiApi.BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle, new myData_1.MyData(data));
             }
         }
     }
@@ -17271,7 +17300,7 @@ class SemanticWikiApi {
          */
         app_1.MainEntry.resetData();
         app_1.MainEntry.downloadedArticles.push(wikiArticleTitle);
-        data.Parse(wikiArticleTitle);
+        data.Parse();
         // MyClass.force.stop();
         SemanticWikiApi.QueryBackLinks(wikiArticleTitle); //tramite questa chiama → MyClass.InitNodeAndLinks(data.query.backlinks);
         $("#cluster_chart .chart").empty();
@@ -17340,18 +17369,6 @@ class SemanticWikiApi {
     }
 }
 exports.SemanticWikiApi = SemanticWikiApi;
-class MyData {
-    constructor(callback) {
-        this.query = callback.query;
-    }
-    Parse(wikiArticleTitle) {
-        this.mediawikiArticle = new mediaWikiArticle_1.MediaWikiArticle(this.query.subject, this.query.data);
-        let wikiArticle = this.mediawikiArticle;
-        wikiArticle.HandleProperties();
-        app_1.MainEntry.nodeSet.push(wikiArticle.node);
-        app_1.MainEntry.focalNodeID = wikiArticle.Id;
-    }
-}
 class testUnit {
     static test() {
         const jsonString = "{\"query\":{\"subject\":\"Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##\",\"data\":[{\"property\":\"_INST\",\"dataitem\":[{\"type\":9,\"item\":\"Polarizzazione#14##\"},{\"type\":9,\"item\":\"Social_network#14##\"},{\"type\":9,\"item\":\"Cancel_Culture#14##\"},{\"type\":9,\"item\":\"Episodio#14##\"},{\"type\":9,\"item\":\"Razzismo#14##\"}]},{\"property\":\"_MDAT\",\"dataitem\":[{\"type\":6,\"item\":\"1/2022/12/21/9/38/54/0\"}]},{\"property\":\"_SKEY\",\"dataitem\":[{\"type\":2,\"item\":\"Abbandono dei principi giornalistici, nascita delle Fuck News ed episodi vari\"}]}],\"serializer\":\"SMW\\\\Serializers\\\\SemanticDataSerializer\",\"version\":2}}";
@@ -18097,20 +18114,10 @@ class MainEntry {
         MainEntry.InitialPageLoad();
     }
     static InitialPageLoad() {
+        //
         semanticWikiApi_1.SemanticWikiApi.AllPagesCall();
-        // MyClass.loadScript('select2.full.min.js');
         $(() => {
-            $("#visualiseSite").click(() => {
-                let wikiArticleTitle = MainEntry.wikiArticleElement.val();
-                if (wikiArticleTitle === "") {
-                    // Error Message
-                    $("#error_msg").show();
-                }
-                else {
-                    $("#error_msg").hide();
-                    semanticWikiApi_1.SemanticWikiApi.BrowseBySubject(wikiArticleTitle);
-                }
-            });
+            this.HandleOnClick();
         });
     }
     static PopulateSelectorWithWikiArticleUi(articles) {
@@ -18124,6 +18131,20 @@ class MainEntry {
         //     placeholder: "Select a Wiki Article",
         //     allowClear: true
         // });
+    }
+    static HandleOnClick() {
+        $("#visualiseSite").on("click", () => {
+            //Get the selected article in the combobox
+            let wikiArticleTitle = $("#wikiArticle").val();
+            if (wikiArticleTitle === "") {
+                // Error Message
+                $("#error_msg").show();
+            }
+            else {
+                $("#error_msg").hide();
+                semanticWikiApi_1.SemanticWikiApi.BrowseBySubject(wikiArticleTitle);
+            }
+        });
     }
     static InitNodeAndLinks_Backlinks(backlinks) {
         for (let article of backlinks) {
@@ -18144,7 +18165,6 @@ MainEntry.downloadedArticles = [];
 MainEntry.focalNodeID = ""; // Esempio  di valore reale: 'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
 MainEntry.nodeSet = [];
 MainEntry.linkSet = [];
-MainEntry.wikiArticleElement = $("#wikiArticle");
 new MainEntry();
 
 

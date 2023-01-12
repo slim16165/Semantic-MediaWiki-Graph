@@ -15,29 +15,16 @@ export class MainEntry {
   static linkSet: Link[] = [];
   static force: IForce;
 
-  private static wikiArticleElement: JQuery = $("#wikiArticle");
-
   constructor() {
     MainEntry.InitialPageLoad();
   }
 
   static InitialPageLoad(): void {
+    //
     SemanticWikiApi.AllPagesCall();
-    // MyClass.loadScript('select2.full.min.js');
 
     $(() => {
-      $("#visualiseSite").click(() => {
-        let wikiArticleTitle = MainEntry.wikiArticleElement.val() as string;
-
-        if (wikiArticleTitle === "") {
-          // Error Message
-          $("#error_msg").show();
-        } else {
-          $("#error_msg").hide();
-
-          SemanticWikiApi.BrowseBySubject(wikiArticleTitle);
-        }
-      });
+      this.HandleOnClick();
     });
   }
 
@@ -54,6 +41,27 @@ export class MainEntry {
     //     allowClear: true
     // });
   }
+
+
+
+  private static HandleOnClick() {
+    $("#visualiseSite").on("click", () => {
+
+      //Get the selected article in the combobox
+      let wikiArticleTitle = $("#wikiArticle").val() as string;
+
+      if (wikiArticleTitle === "") {
+        // Error Message
+        $("#error_msg").show();
+      } else {
+        $("#error_msg").hide();
+
+        SemanticWikiApi.BrowseBySubject(wikiArticleTitle);
+      }
+    });
+  }
+
+
 
     static InitNodeAndLinks_Backlinks(backlinks: Article[])
   {
