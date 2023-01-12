@@ -17434,13 +17434,20 @@ class Canvas {
                 selection.attr("transform", event.transform);
             })(selection, ...args);
         })
-            .attr("width", this.width)
-            .attr("height", this.heigth)
+            .setWidthAndHeight(this.width, this.heigth)
             .attr("id", "svgCanvas")
             .append("svg:g")
             .attr("class", "focalNodeCanvas");
         Canvas.setCanvasSize();
     }
+    // public static setWidthAndHeight(width: number, heigth: number) {
+    //     this.width = width;
+    //     this.heigth = heigth;
+    //
+    //     this.svgCanvas
+    //       .attr("width", this.width + this.margin.left + this.margin.right)
+    //       .attr("height", this.heigth + this.margin.top + this.margin.bottom);
+    // }
     static updateWindowSize() {
         console.log("Called method updateWindow");
         let c = $(".chart")[0];
@@ -17453,14 +17460,13 @@ class Canvas {
         this.heigth = canvasHeigth;
         if (!Canvas.svgCanvas)
             console.log("svgCanvas not set");
-        Canvas.svgCanvas
-            .attr("width", Canvas.width)
-            .attr("height", Canvas.heigth);
+        Canvas.svgCanvas.setWidthAndHeight(Canvas.width, Canvas.heigth);
     }
 }
 exports.Canvas = Canvas;
 Canvas.width = $(".chart")[0].clientWidth;
 Canvas.heigth = $(".chart")[0].clientHeight;
+Canvas.margin = { top: 20, right: 20, bottom: 30, left: 40 };
 
 
 /***/ }),

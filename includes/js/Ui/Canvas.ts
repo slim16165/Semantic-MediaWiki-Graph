@@ -1,11 +1,14 @@
 import * as d3 from "d3";
 import {Selection} from "d3";
 import {Utility} from "./utility";
+//import needed
+import * as d3Ext from "./d3Extension";
 
 export class Canvas {
     public static svgCanvas: d3.Selection<any, any, any, any>;
     public static width = $(".chart")[0].clientWidth;
     public static heigth = $(".chart")[0].clientHeight;
+    public static margin = {top: 20, right: 20, bottom: 30, left: 40};
 
     constructor() {
         Canvas.InitCanvas();
@@ -28,14 +31,22 @@ export class Canvas {
                     selection.attr("transform", event.transform);
                 })(selection, ...args);
             })
-            .attr("width", this.width)
-            .attr("height", this.heigth)
+            .setWidthAndHeight(this.width, this.heigth)
             .attr("id", "svgCanvas")
             .append("svg:g")
             .attr("class", "focalNodeCanvas");
 
         Canvas.setCanvasSize();
     }
+
+    // public static setWidthAndHeight(width: number, heigth: number) {
+    //     this.width = width;
+    //     this.heigth = heigth;
+    //
+    //     this.svgCanvas
+    //       .attr("width", this.width + this.margin.left + this.margin.right)
+    //       .attr("height", this.heigth + this.margin.top + this.margin.bottom);
+    // }
 
     public static updateWindowSize() {
         console.log("Called method updateWindow");
@@ -56,8 +67,6 @@ export class Canvas {
         if(!Canvas.svgCanvas)
             console.log("svgCanvas not set");
 
-        Canvas.svgCanvas
-          .attr("width", Canvas.width)
-          .attr("height", Canvas.heigth);
+        Canvas.svgCanvas.setWidthAndHeight(Canvas.width, Canvas.heigth)
     }
 }
