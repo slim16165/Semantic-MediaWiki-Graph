@@ -1,13 +1,13 @@
 import * as d3 from "d3";
 import { Selection } from "d3";
-import { MyClass } from "../app";
+import { MainEntry } from "../app";
 import { LegendManager } from "./legendManager";
-import { ColorHelper } from "../ColorHelper";
+import { ColorHelper } from "../Helpers/ColorHelper";
 import { Utility } from "./utility";
 import { Canvas } from "./Canvas";
-import { NodeStore } from "../nodeStore";
-import { INode } from "../INode";
-import { SemanticWikiApi } from "../semanticWikiApi";
+import { NodeStore } from "../Model/nodeStore";
+import { INode } from "../Model/INode";
+import { SemanticWikiApi } from "../Semantic/semanticWikiApi";
 
 const TRANSACTION_DURATION : number = 250;
 
@@ -19,7 +19,7 @@ export class NodeManager {
 
         if (!clickText && typeValue === 'Internal Link') {
             const nodeName = thisObject.node().__data__.name;
-            if (!MyClass.downloadedArticles.includes(nodeName)) {
+            if (!MainEntry.downloadedArticles.includes(nodeName)) {
                 SemanticWikiApi.BrowseBySubject(nodeName);
             }
         }
@@ -106,7 +106,7 @@ export class NodeManager {
             .attr("type_value", (d: INode) => d.type)
             .attr("color_value", (d: INode) => ColorHelper.color_hash[d.type])
             .attr("xlink:href", (d: INode) => d.hlink as string)
-            .attr("fixed", function(d) { return d.id == MyClass.focalNodeID; } )
+            .attr("fixed", function(d) { return d.id == MainEntry.focalNodeID; } )
             .on("mouseover", (d)=> this.nodeMouseOver)
             .on("click", () => this.mouseClickNode)
             .on("mouseout", () => this.nodeMouseOut)
@@ -179,9 +179,9 @@ export class NodeManager {
             .style("fill", "transparent")
             .attr("type_value", (d: INode) => d.type)
             .attr("color_value", (d: INode) => ColorHelper.color_hash[d.type])
-            .attr("fixed", function(d) { return d.id == MyClass.focalNodeID ? true : false; } )
-            .attr("x", function(d) { return d.id == MyClass.focalNodeID ? Canvas.width / 2 : d.x; })
-            .attr("y", function(d) { return d.id == MyClass.focalNodeID ? Canvas.heigth / 2 : d.y; })
+            .attr("fixed", function(d) { return d.id == MainEntry.focalNodeID ? true : false; } )
+            .attr("x", function(d) { return d.id == MainEntry.focalNodeID ? Canvas.width / 2 : d.x; })
+            .attr("y", function(d) { return d.id == MainEntry.focalNodeID ? Canvas.heigth / 2 : d.y; })
             .attr("class", (d: INode) => {
                 const str = d.type;
                 const strippedString = str.replace(/ /g, "_");

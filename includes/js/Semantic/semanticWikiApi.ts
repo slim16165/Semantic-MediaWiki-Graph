@@ -1,7 +1,7 @@
-import { Utility } from "./Ui/utility";
-import { NodeStore } from "./nodeStore";
-import { MyClass } from "./app";
-import { VisibilityHandler } from "./Ui/visibilityHandler";
+import { Utility } from "../Ui/utility";
+import { NodeStore } from "../Model/nodeStore";
+import { MainEntry } from "../app";
+import { VisibilityHandler } from "../Ui/visibilityHandler";
 import { MediaWikiArticle } from "./mediaWikiArticle";
 
 interface SuccessCallback {
@@ -10,7 +10,7 @@ interface SuccessCallback {
 
 export class SemanticWikiApi {
   public static BrowseBySubject(wikiArticleTitle: string) {
-    MyClass.downloadedArticles = [];
+    MainEntry.downloadedArticles = [];
     $.ajax({
       url: mw.util.wikiScript("api"),
       data: {
@@ -43,8 +43,8 @@ export class SemanticWikiApi {
      * https://jsonformatter.org/json-parser/5e9d52
      */
 
-    MyClass.resetData();
-    MyClass.downloadedArticles.push(wikiArticleTitle);
+    MainEntry.resetData();
+    MainEntry.downloadedArticles.push(wikiArticleTitle);
 
     data.Parse(wikiArticleTitle)
 
@@ -56,7 +56,7 @@ export class SemanticWikiApi {
     //  var k = cloneNode(nodeSet);
     //  var m = cloneEdge(linkSet);
     console.log("BrowseBySubject");
-    Utility.drawCluster("Drawing1", MyClass.focalNodeID);
+    Utility.drawCluster("Drawing1", MainEntry.focalNodeID);
     //drawCluster.update();
     VisibilityHandler.hideElements();
     // const elem: JQuery<HTMLElement> = $(`[id=${MyClass.focalNodeID}] a`);
@@ -88,17 +88,17 @@ export class SemanticWikiApi {
         alert((data) as any);
         // debugger;
       } else {
-        MyClass.InitNodeAndLinks_Backlinks(data.query.backlinks);
+        MainEntry.InitNodeAndLinks_Backlinks(data.query.backlinks);
       }
 
       $("#cluster_chart .chart").empty();
       //  var k = cloneNode(nodeSet);
       //  var m = cloneEdge(linkSet);
 
-      NodeStore.InitialSetup(MyClass.nodeSet, MyClass.linkSet);
+      NodeStore.InitialSetup(MainEntry.nodeSet, MainEntry.linkSet);
 
       console.log("BacklinksCallback");
-      Utility.drawCluster("Drawing1", MyClass.focalNodeID);
+      Utility.drawCluster("Drawing1", MainEntry.focalNodeID);
       //drawCluster.update();
       VisibilityHandler.hideElements();
     }
@@ -119,7 +119,7 @@ export class SemanticWikiApi {
         if (!(!(data?.edit && data.edit.result === "Success") && !(data?.error))) {
           return;
         }
-        MyClass.PopulateSelectorWithWikiArticleUi(data.query.allpages);
+        MainEntry.PopulateSelectorWithWikiArticleUi(data.query.allpages);
       }
     });
   }
@@ -156,8 +156,8 @@ class MyData {
     let wikiArticle = this.mediawikiArticle;
 
     wikiArticle.HandleProperties();
-    MyClass.nodeSet.push(wikiArticle.node);
-    MyClass.focalNodeID = wikiArticle.Id;
+    MainEntry.nodeSet.push(wikiArticle.node);
+    MainEntry.focalNodeID = wikiArticle.Id;
   }
 }
 

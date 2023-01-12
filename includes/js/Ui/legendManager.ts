@@ -1,13 +1,13 @@
 import * as d3 from "d3";
 import { Selection } from "d3";
-import {Link} from "../Link";
-import {ColorHelper} from "../ColorHelper";
-import {MyClass} from "../app";
+import {Link} from "../Model/Link";
+import {ColorHelper} from "../Helpers/ColorHelper";
+import {MainEntry} from "../app";
 import {NodeManager} from "./nodeManager";
-import { NodeStore } from "../nodeStore";
+import { NodeStore } from "../Model/nodeStore";
 import { Canvas } from "./Canvas";
-import { CustomHTMLElement } from "../OtherTypes";
-import { INode } from "../INode";
+import { CustomHTMLElement } from "../Model/OtherTypes";
+import { INode } from "../Model/INode";
 import { VisibilityHandler } from "./visibilityHandler";
 
 export class LegendManager {

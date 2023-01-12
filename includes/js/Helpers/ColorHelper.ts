@@ -1,5 +1,5 @@
 import d3 from "d3-scale-chromatic";
-import {INode} from "./INode";
+import {INode} from "../Model/INode";
 
 export class ColorHelper
 {

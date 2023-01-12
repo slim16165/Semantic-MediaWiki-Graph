@@ -1,6 +1,7 @@
-import { INode } from "./INode";
-import { MyClass } from "./app";
+import { INode } from "../Model/INode";
+import { MainEntry } from "../app";
 import { SemanticPropertyAndItems } from "./semanticPropertyAndItems";
+import { NodeType } from "../Model/nodeType";
 
 export class MediaWikiArticle {
   node: INode;
@@ -22,7 +23,7 @@ export class MediaWikiArticle {
     let nameDoslike = this.Id.split("#")[0];
     let nodeName = nameDoslike.replace("_", " ");
     let nodeHlink = `./${nameDoslike}`;
-    let node = new INode(this.Id, nodeName, "Internal Link", 10, 0, nodeHlink);
+    let node = new INode(NodeType.Article, this.Id, nodeName, "Internal Link", 10, 0, nodeHlink);
     node.fixed = true;
     return node;
   }
@@ -35,8 +36,8 @@ export class MediaWikiArticle {
       semanticNode.SemanticNodeParse();
 
       for (let dataitem of semanticNode.nodeAndLinks) {
-        MyClass.nodeSet.push(dataitem.node);
-        MyClass.linkSet.push(dataitem.link);
+        MainEntry.nodeSet.push(dataitem.node);
+        MainEntry.linkSet.push(dataitem.link);
       }
     }
   }

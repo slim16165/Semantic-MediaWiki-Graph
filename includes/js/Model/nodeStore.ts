@@ -1,6 +1,6 @@
 import {INode} from "./INode";
 import {Link} from "./Link";
-import {MyClass} from "./app";
+import {MainEntry} from "../app";
 
 export class NodeStore {
 
@@ -28,7 +28,7 @@ export class NodeStore {
     private static LinkInit(link: Link) {
         link.source = NodeStore.getNodeById(link.sourceId);
         link.target = NodeStore.getNodeById(link.targetId);
-        link.direction = link.sourceId === MyClass.focalNodeID ? "OUT" : "IN";
+        link.direction = link.sourceId === MainEntry.focalNodeID ? "OUT" : "IN";
     }
 
     private static getNodeById(sourceId: any) :  INode{

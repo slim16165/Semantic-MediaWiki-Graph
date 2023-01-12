@@ -1,12 +1,13 @@
-import { Link } from "./Link";
+import { Link } from "./Model/Link";
 import "select2";
-import { INode } from "./INode";
-import { IForce } from "./IForce";
-import { SemanticWikiApi } from "./semanticWikiApi";
-import { Article } from "./OtherTypes";
+import { INode } from "./Model/INode";
+import { IForce } from "./Model/IForce";
+import { SemanticWikiApi } from "./Semantic/semanticWikiApi";
+import { Article } from "./Model/OtherTypes";
+import { NodeType } from "./Model/nodeType";
 
 
-export class MyClass {
+export class MainEntry {
 
   static downloadedArticles: any[] = [];
   static focalNodeID: string = ""; // Esempio  di valore reale: 'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
@@ -17,7 +18,7 @@ export class MyClass {
   private static wikiArticleElement: JQuery = $("#wikiArticle");
 
   constructor() {
-    MyClass.InitialPageLoad();
+    MainEntry.InitialPageLoad();
   }
 
   static InitialPageLoad(): void {
@@ -26,7 +27,7 @@ export class MyClass {
 
     $(() => {
       $("#visualiseSite").click(() => {
-        let wikiArticleTitle = MyClass.wikiArticleElement.val() as string;
+        let wikiArticleTitle = MainEntry.wikiArticleElement.val() as string;
 
         if (wikiArticleTitle === "") {
           // Error Message
@@ -41,7 +42,7 @@ export class MyClass {
   }
 
   static PopulateSelectorWithWikiArticleUi(articles: Article[]) {
-    MyClass.downloadedArticles = [];
+    MainEntry.downloadedArticles = [];
     for (const article of articles) {
       $("#wikiArticle").append(`<option value="${article.title}">${article.title}</option>`);
     }
@@ -54,35 +55,22 @@ export class MyClass {
     // });
   }
 
-  //TODO: tutti i metodi che seguono sono molto simili
-
-  public static AddMainArticle_BrowseBySubject(wikiArticleTitle: string, mediawikiArticleId: string, semanticNodeList: any) {
-
-  }
-
-
-
-
-
-  static InitNodeAndLinks_Backlinks(backlinks: Article[])
+    static InitNodeAndLinks_Backlinks(backlinks: Article[])
   {
     for (let article of backlinks) {
-      let node = new INode(article.title, article.title, "Unknown", 0, 0, article.title);
-      let link = new Link("Unknown", article.title, MyClass.focalNodeID, null, null, "");
+      let node = new INode(NodeType.Backlink, article.title, article.title, "Unknown", 0, 0, article.title);
+      let link = new Link(NodeType.Backlink,"Unknown", article.title, MainEntry.focalNodeID, null, null, "");
 
-      MyClass.nodeSet.push(node);
-      MyClass.linkSet.push(link);
+      MainEntry.nodeSet.push(node);
+      MainEntry.linkSet.push(link);
     }
   }
 
-
-
-
   static resetData() {
-    MyClass.nodeSet = [];
-    MyClass.linkSet = [];
-    MyClass.downloadedArticles = [];
+    MainEntry.nodeSet = [];
+    MainEntry.linkSet = [];
+    MainEntry.downloadedArticles = [];
   }
 }
 
-new MyClass();
+new MainEntry();

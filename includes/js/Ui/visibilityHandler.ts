@@ -1,6 +1,6 @@
-import { CustomHTMLElement } from "../OtherTypes";
-import { INode } from "../INode";
-import { Link } from "../Link";
+import { CustomHTMLElement } from "../Model/OtherTypes";
+import { INode } from "../Model/INode";
+import { Link } from "../Model/Link";
 
 export class VisibilityHandler{
   static invisibleNode: any[] = [];

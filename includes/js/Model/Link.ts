@@ -1,7 +1,9 @@
+import {INode} from "./INode";
+import { NodeType } from "./nodeType";
+import { Point } from "./OtherTypes";
+
 /* Connection between two Nodes
 * */
-import {INode} from "./INode";
-
 export class Link {
     public linkName: string;
     public sourceId: string;
@@ -9,8 +11,9 @@ export class Link {
     public source!: INode;
     public target!: INode;
     public direction!: string;
+    public nodetype: NodeType;
 
-    constructor(linkName: string, sourceId: string, targetId: string, source: INode | null, target: INode | null, direction: string) {
+    constructor(nodetype: NodeType, linkName: string, sourceId: string, targetId: string, source: INode | null, target: INode | null, direction: string) {
         this.sourceId = sourceId;
         this.linkName = linkName;
         this.targetId = targetId;
@@ -19,22 +22,21 @@ export class Link {
             this.source = source;
         if(target)
             this.target = target;
+        this.nodetype = nodetype;
     }
 
     public static cloneEdge(array: Link[]) {
 
         const newArr: Link[] = [];
         array.forEach((item: Link) => {
-            newArr.push(new Link(item.linkName, item.sourceId, item.targetId, item.source, item.target, item.direction));
+            newArr.push(new Link(item.nodetype, item.linkName, item.sourceId, item.targetId, item.source, item.target, item.direction));
         });
 
         return newArr;
     }
 
     /**
-     Calculates the x-coordinate for the midpoint of a link.
-     @param {ILink} link - The link whose midpoint x-coordinate we want to calculate.
-     @return {number} The x-coordinate for the midpoint of the link.
+     Calculates the x-y coordinates for the midpoint of a link.
      */
     public CalculateMidpoint(): { x: number; y: number }
     {
@@ -44,7 +46,7 @@ export class Link {
         let x = this.CalcMiddlePoint(source.x, target.x);
         let y = this.CalcMiddlePoint(source.y, target.y);
 
-        return {x, y};
+        return {x, y} as Point;
     }
 
     private CalcMiddlePoint(x: number, y: number) {

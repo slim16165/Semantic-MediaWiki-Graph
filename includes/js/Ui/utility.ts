@@ -1,12 +1,12 @@
 import * as d3 from 'd3';
 import {Selection, Simulation, SimulationNodeDatum} from 'd3';
-import {MyClass} from "../app";
-import {Link} from "../Link";
+import {MainEntry} from "../app";
+import {Link} from "../Model/Link";
 import {Canvas} from "./Canvas";
 import {LegendManager} from "./legendManager";
 import {NodeManager} from "./nodeManager";
-import {NodeStore} from "../nodeStore";
-import {Point} from "../OtherTypes";
+import {NodeStore} from "../Model/nodeStore";
+import {Point} from "../Model/OtherTypes";
 
 export class Utility {
     public static centerNodeSize :number = 50;
@@ -187,7 +187,7 @@ export class Utility {
         selection.append('marker')
             .attr('id', (d: Link, i: number) => `arrow_${i}`)
             .attr('viewBox', '0 -5 10 10')
-            .attr('refX', (d: Link) => d.targetId === MyClass.focalNodeID ? 55 : 20)
+            .attr('refX', (d: Link) => d.targetId === MainEntry.focalNodeID ? 55 : 20)
             .attr('refY', 0)
             .attr('markerWidth', 8)
             .attr('markerHeight', 8)

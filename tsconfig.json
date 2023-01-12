@@ -3,7 +3,7 @@
     "includes/js/app.ts",
     "includes/js/Ui/utility.ts",
     "includes/js/Ui/Canvas.ts",
-    "includes/js/OtherTypes.ts",
+    "includes/js/Model/OtherTypes.ts",
     "node_modules/types-mediawiki/mw/index.d.ts"
   ],
   "knownSymbols": {
@@ -25,7 +25,7 @@
     "ColorHelper": [
       {
         "name": "ColorHelper",
-        "path": "./includes/js/ColorHelper.ts",
+        "path": "./includes/js/Helpers/ColorHelper.ts",
         "type": "class",
         "isDefault": false
       }

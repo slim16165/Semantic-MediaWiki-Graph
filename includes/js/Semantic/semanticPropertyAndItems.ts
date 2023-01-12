@@ -1,7 +1,8 @@
 import { MediaWikiArticle } from "./mediaWikiArticle";
-import { INode } from "./INode";
-import { Link } from "./Link";
+import { INode } from "../Model/INode";
+import { Link } from "../Model/Link";
 import { PropertyDataItem } from "./propertyDataItem";
+import { NodeType } from "../Model/nodeType";
 
 export class SemanticPropertyAndItems {
   public propertyName: string;
@@ -50,7 +51,7 @@ export class SemanticPropertyAndItems {
 
       let node = this.ParsePropertyNode(dataitem);
 
-      let link = new Link(this.nicePropertyName, this.sourceNodeUrl, dataitem.item /*targetId*/, null, null, "");
+      let link = new Link(NodeType.Property, this.nicePropertyName, this.sourceNodeUrl, dataitem.item /*targetId*/, null, null, "");
 
       this.nodeAndLinks.push({ node: node, link: link });
     }
@@ -70,7 +71,7 @@ export class SemanticPropertyAndItems {
     //In the original version it was using the firstElement for the last 2 parameters
     let name = this.parseNodeName(dataitem.item, dataitem.typeStr);
     let hlink = this.parseHlink(dataitem.item, dataitem.typeStr, this.sourceNodeUrl);
-    let node = new INode(dataitem.item, name, "null", 0, 0, hlink);
+    let node = new INode(NodeType.Property, dataitem.item, name, "null", 0, 0, hlink);
     return node;
   }
 
@@ -142,18 +143,7 @@ export class SemanticPropertyAndItems {
   }
 
   private parseHlink(nameToParse: string, type: string, url: string) {
-    let hlink = "";
-
-    switch (type) {
-      case "URI":
-        hlink = url;
-        break;
-      case "Internal Link":
-        hlink = `./${nameToParse.split("#")[0]}`;
-      default:
-        break;
-    }
-    return  hlink;
+    return type === "URI" ? url : type === "Internal Link" ? `./${nameToParse.split("#")[0]}` : "";
   }
 
 }
