@@ -25,6 +25,7 @@ export class Link {
         this.nodetype = nodetype;
     }
 
+    // noinspection JSUnusedGlobalSymbols
     public static cloneEdge(array: Link[]) {
 
         const newArr: Link[] = [];
@@ -38,7 +39,7 @@ export class Link {
     /**
      Calculates the x-y coordinates for the midpoint of a link.
      */
-    public CalculateMidpoint(): { x: number; y: number }
+    public CalculateMidpoint(): Point
     {
         let source = this.source;
         let target = this.target;

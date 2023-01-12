@@ -8,12 +8,12 @@ export class VisibilityHandler{
   static invisibleType: any[] = [];
   
   public static hideElements() {
-    $(".node").each((index, element) => this.HideEach(index, element));
+    $(".node").each((index, element) => this.HideEach(element));
 
     $(".gLink").each((index, element) => this.SomethingRelatedToNodeVisibility(element as CustomHTMLElement));
   }
 
-  private static HideEach(index: number, element: HTMLElement) {
+  private static HideEach(element: HTMLElement) {
     let el = element as CustomHTMLElement;
     let node = el.__data__ as INode;
     const invIndex = this.invisibleType.indexOf(node.type);

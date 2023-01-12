@@ -66,7 +66,7 @@ export class ColorHelper
 
 
         // Add colors to original node records...
-        nodeSetApp.forEach((d: any, i: any) => {
+        nodeSetApp.forEach((d: any) => {
             d.color = this.color_hash[d.type];
             //document.writeln(d.type);
         });

@@ -2,7 +2,6 @@ import * as d3 from "d3";
 import { Selection } from "d3";
 import {Link} from "../Model/Link";
 import {ColorHelper} from "../Helpers/ColorHelper";
-import {MainEntry} from "../app";
 import {NodeManager} from "./nodeManager";
 import { NodeStore } from "../Model/nodeStore";
 import { Canvas } from "./Canvas";
@@ -71,7 +70,7 @@ export class LegendManager {
         } else {
             invisibleType.push(typeValue);
         }
-        $(".node").each((index, el) => this.MakeInvisible(index, el as CustomHTMLElement, typeValue));
+        $(".node").each((index, el) => this.MakeInvisible(el as CustomHTMLElement, typeValue));
 
         $(".gLink").each((index, el) => this.MakeInvisible2(el as CustomHTMLElement));
 
@@ -89,7 +88,7 @@ export class LegendManager {
         selectedLegendText.style("fill", colorValue === "Maroon" ? "Maroon" : "Black");
     }
 
-    private static MakeInvisible(index: any, el: CustomHTMLElement, typeValue: string) {
+    private static MakeInvisible(el: CustomHTMLElement, typeValue: string) {
         let node = el.__data__ as INode;
         if (node.type !== typeValue) {
             return;

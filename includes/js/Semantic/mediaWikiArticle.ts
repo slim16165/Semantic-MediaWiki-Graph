@@ -10,7 +10,7 @@ export class MediaWikiArticle {
 
   constructor(id: string, semanticNodeList: any[]) {
     this.Id = id; //'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
-    this.node = this.ParseNodeBrowseBySubject1();
+    this.node = this.ParseNodeBrowseBySubject();
 
     this.semanticNodeList = [];
     for (const data of semanticNodeList) {
@@ -19,11 +19,10 @@ export class MediaWikiArticle {
     }
   }
 
-  private ParseNodeBrowseBySubject1() {
+  private ParseNodeBrowseBySubject() {
     let nameDoslike = this.Id.split("#")[0];
     let nodeName = nameDoslike.replace("_", " ");
-    let nodeHlink = `./${nameDoslike}`;
-    let node = new INode(NodeType.Article, this.Id, nodeName, "Internal Link", 10, 0, nodeHlink);
+    let node = new INode(NodeType.Article, this.Id, nodeName, "Internal Link", 10, 0, `./${nameDoslike}`);
     node.fixed = true;
     return node;
   }
@@ -41,6 +40,4 @@ export class MediaWikiArticle {
       }
     }
   }
-
-
 }

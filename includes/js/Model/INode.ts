@@ -24,6 +24,7 @@ export class INode {
     }
 
 
+    // noinspection JSUnusedGlobalSymbols
     public static cloneNode(array: INode[]) {
         const newArr: INode[] = [];
 

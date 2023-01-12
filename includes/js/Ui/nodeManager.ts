@@ -49,14 +49,14 @@ export class NodeManager {
 
         d3.select(selector).select("circle").transition()
             .duration(TRANSACTION_DURATION)
-            .attr("r", (d: any, i) => d.IsFocalNode() ? 65 : 15);
+            .attr("r", (d: any) => d.IsFocalNode() ? 65 : 15);
 
         d3.select(selector).select("text").transition()
             .duration(TRANSACTION_DURATION)
             .style("font", "bold 20px Arial")
             .attr("fill", "Blue");
 
-        LegendManager.setLegendStyles("strippedTypeValue", "Maroon", 1.2 * 6);
+        LegendManager.setLegendStyles(strippedTypeValue, "Maroon", 1.2 * 6);
     };
 
     public static nodeMouseOut(selector: string) {
@@ -179,7 +179,7 @@ export class NodeManager {
             .style("fill", "transparent")
             .attr("type_value", (d: INode) => d.type)
             .attr("color_value", (d: INode) => ColorHelper.color_hash[d.type])
-            .attr("fixed", function(d) { return d.id == MainEntry.focalNodeID ? true : false; } )
+            .attr("fixed", function(d) { return d.id == MainEntry.focalNodeID; } )
             .attr("x", function(d) { return d.id == MainEntry.focalNodeID ? Canvas.width / 2 : d.x; })
             .attr("y", function(d) { return d.id == MainEntry.focalNodeID ? Canvas.heigth / 2 : d.y; })
             .attr("class", (d: INode) => {

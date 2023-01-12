@@ -8,6 +8,7 @@ import {NodeManager} from "./nodeManager";
 import {NodeStore} from "../Model/nodeStore";
 import {Point} from "../Model/OtherTypes";
 
+// noinspection UnnecessaryLocalVariableJS
 export class Utility {
     public static centerNodeSize :number = 50;
     public static nodeSize :number = 10;
@@ -27,7 +28,7 @@ export class Utility {
      *              1 = Sort by arc value size.
      */
     public static drawCluster(drawingName: string, focalNode: string): void {
-        let canvas = new Canvas();
+        new Canvas();
 
         console.log("N° NodeStore.nodeList: " +NodeStore.nodeList.length);
         if(NodeStore.nodeList.length == 0) return;
@@ -154,7 +155,6 @@ export class Utility {
 
      Calculates and sets the position of the text element for the given link.
      @param linkText
-     @param {Link} link - The link for which to set the text position.
      @returns {void}
      */
     private static setLinkTextInMiddle(linkText: Selection<SVGTextElement, Link, any, any>) {
@@ -168,14 +168,8 @@ export class Utility {
 
     /**
      * Builds the arrows for the specified SVG canvas.
-     *
-     *      @param {Selection<any, any, any, any>} svgElement - The SVG element to append the marker to.
-     *      @param {number} index - The index of the marker element.
-     *      @param {number} focalNodeId - The ID of the focal node.
-     *      @returns {Selection<any, any, any, any>} The marker element.
      */
     public static buildArrows(): void {
-
         /*
         * Il tipo marker è un tipo di elemento SVG (Scalable Vector Graphics). Viene utilizzato per definire un segno o un simbolo da inserire in un altro elemento SVG, ad esempio una linea o un percorso. In questo caso, il codice sta creando un marker che verrà inserito come "punta di freccia" in tutti gli elementi di classe gLink.
         Il marker viene creato con l'elemento marker di SVG, che ha un insieme di attributi che ne definiscono l'aspetto e il comportamento. Gli attributi id, viewBox, refX, refY, markerWidth e markerHeight sono tutti attributi standard del tag marker di SVG, mentre l'attributo orient è un attributo non standard che viene utilizzato per specificare l'orientamento del simbolo all'interno del marker.

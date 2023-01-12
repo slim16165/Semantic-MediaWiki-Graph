@@ -4,6 +4,7 @@ import { Link } from "../Model/Link";
 import { PropertyDataItem } from "./propertyDataItem";
 import { NodeType } from "../Model/nodeType";
 
+// noinspection UnnecessaryLocalVariableJS
 export class SemanticPropertyAndItems {
   public propertyName: string;
   private readonly nicePropertyName: string;
