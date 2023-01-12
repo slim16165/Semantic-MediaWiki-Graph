@@ -8,6 +8,7 @@ import { NodeStore } from "../nodeStore";
 import { Canvas } from "./Canvas";
 import { CustomHTMLElement } from "../OtherTypes";
 import { INode } from "../INode";
+import { VisibilityHandler } from "./visibilityHandler";
 
 export class LegendManager {
 
@@ -93,11 +94,11 @@ export class LegendManager {
         if (node.type !== typeValue) {
             return;
         }
-        const invIndex = MyClass.invisibleNode.indexOf(node.id);
+        const invIndex = VisibilityHandler.invisibleNode.indexOf(node.id);
         if (invIndex > -1) {
-            MyClass.invisibleNode.splice(invIndex, 1);
+            VisibilityHandler.invisibleNode.splice(invIndex, 1);
         } else {
-            MyClass.invisibleNode.push(node.id);
+            VisibilityHandler.invisibleNode.push(node.id);
         }
         $(this).toggle();
     }
@@ -108,20 +109,20 @@ export class LegendManager {
         const valSource = data.sourceId;
         const valTarget = data.targetId;
         //if beide
-        const indexSource = MyClass.invisibleNode.indexOf(valSource);
-        const indexTarget = MyClass.invisibleNode.indexOf(valTarget);
-        const indexEdge = MyClass.invisibleEdge.indexOf(`${valSource}_${valTarget}_${data.linkName}`);
+        const indexSource = VisibilityHandler.invisibleNode.indexOf(valSource);
+        const indexTarget = VisibilityHandler.invisibleNode.indexOf(valTarget);
+        const indexEdge = VisibilityHandler.invisibleEdge.indexOf(`${valSource}_${valTarget}_${data.linkName}`);
 
         if ((indexSource > -1 || indexTarget > -1) && indexEdge === -1) {
             //Einer der beiden Knoten ist unsichtbar, aber Kante noch nicht
             $(this).toggle();
-            MyClass.invisibleEdge.push(`${valSource}_${valTarget}_${data.linkName}`);
+            VisibilityHandler.invisibleEdge.push(`${valSource}_${valTarget}_${data.linkName}`);
         } else if (indexSource === -1 && indexTarget === -1 && indexEdge === -1) {
             //Beide Knoten sind nicht unsichtbar und Kante ist nicht unsichtbar
         } else if (indexSource === -1 && indexTarget === -1 && indexEdge > -1) {
             //Knoten sind nicht unsichtbar, aber Kante ist es
             $(this).toggle();
-            MyClass.invisibleEdge.splice(indexEdge, 1);
+            VisibilityHandler.invisibleEdge.splice(indexEdge, 1);
         }
     }
 

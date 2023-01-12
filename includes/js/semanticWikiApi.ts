@@ -2,6 +2,11 @@ import { Utility } from "./Ui/utility";
 import { NodeStore } from "./nodeStore";
 import { MyClass } from "./app";
 import { VisibilityHandler } from "./Ui/visibilityHandler";
+import { MediaWikiArticle } from "./mediaWikiArticle";
+
+interface SuccessCallback {
+   edit: { result: string }; error: any; query: { subject: string; data: any }
+}
 
 export class SemanticWikiApi {
   public static BrowseBySubject(wikiArticleTitle: string) {
@@ -17,20 +22,20 @@ export class SemanticWikiApi {
       success: execSuccessCallback
     });
 
-    function execSuccessCallback(data: { edit: { result: string; }; error: any; query: { subject: string; data: any; }; }) {
+    function execSuccessCallback(data: SuccessCallback) {
       if (data?.edit && data.edit.result === "Success") {
         // debugger;
       } else if (data?.error) {
         alert(data);
         // debugger;
       } else {
-        SemanticWikiApi.BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle, data);
+        SemanticWikiApi.BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle, new MyData(data));
       }
     }
   }
 
 
-  static BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle: string, data: { edit: { result: string }; error: any; query: { subject: string; data: any }} )
+  static BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle: string, data : MyData)
   {
     /**
      *  }
@@ -40,9 +45,8 @@ export class SemanticWikiApi {
 
     MyClass.resetData();
     MyClass.downloadedArticles.push(wikiArticleTitle);
-    let mediawikiArticleId = data.query.subject; //'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
 
-    MyClass.AddMainArticle_BrowseBySubject(wikiArticleTitle, mediawikiArticleId, data.query.data);
+    data.Parse(wikiArticleTitle)
 
     // MyClass.force.stop();
     SemanticWikiApi.QueryBackLinks(wikiArticleTitle); //tramite questa chiama → MyClass.InitNodeAndLinks(data.query.backlinks);
@@ -62,16 +66,7 @@ export class SemanticWikiApi {
     // elem[0].__data__.py = Canvas.height / 2;
   }
 
-  /*
-      I valori delle property "_SKEY", "_MDAT" e "_ASK" sono proprietà speciali predefinite in Semantic MediaWiki.
-      "_SKEY" è una proprietà che viene utilizzata per memorizzare le chiavi di ricerca per ogni oggetto di dati, che vengono utilizzate per velocizzare le query su quell'oggetto.
-      "_MDAT" è una proprietà che viene utilizzata per memorizzare la data di modifica di un oggetto di dati.
-      "_ASK" è una proprietà che viene utilizzata per memorizzare una query SPARQL o una query di tipo "ask" per un oggetto di dati. Questa proprietà viene utilizzata per eseguire query complesse sui dati semantici.
-      * INST
-      */
-  static IsSpecialProperty(property: any) {
-    return ["_SKEY", "_MDAT", "_ASK"].includes(property);
-  }
+
 
   public static QueryBackLinks(wikiArticle: string) {
     $.ajax({
@@ -129,61 +124,6 @@ export class SemanticWikiApi {
     });
   }
 
-  public static getNodeType(propertyName: string, type: number) {
-    switch (propertyName) {
-      case "_boo":
-        return "Boolean";
-      case "_cod":
-        return "Code";
-      case "_dat":
-        return "Date";
-      case "_ema":
-        return "Email";
-      case "_num":
-        return "Number"; //oder Email //oder Telefon
-      case "_qty":
-        return "Quantity";
-      case "_rec":
-        return "Record";
-      case "_tem":
-        return "Temperature";
-      case "_uri":
-        return "URI";
-      case "_wpg":
-        return "Internal Link";
-      case "Monolingual":
-        return "Monolingual Text";
-      case "Telephone":
-        return "Telephone";
-      case "_TEXT":
-        return "Text";
-      case "_INST":
-        return "Category";
-      default:
-        return this.getTypeDescr(type);
-    }
-  }
-
-  /* This type comes from the wiki interface
-  * */
-  static getTypeDescr(type: number) {
-    switch (type) {
-      case 1:
-        return "Number";
-      case 2:
-        return "Text";
-      case 4:
-        return "Boolean";
-      case 5:
-        return "URI"; //oder Email //oder Telefon
-      case 6:
-        return "Date";
-      case 9:
-        return "Internal Link";
-      default:
-        return "Unknown Type";
-    }
-  }
 }
 
 
@@ -192,15 +132,40 @@ export interface SuccessParams {
   error: any;
   query: { allpages: any }
 }
-export type DataItem = {
-  type: number,
-  item: string
+
+class MyData {
+
+  // query!: {
+  //   subject: string;
+  //   data: SemanticPropertyAndItems[];
+  //   serializer: string;
+  //   version: number;
+  // };
+
+  mediawikiArticle!: MediaWikiArticle;
+  private query: { subject: string; data: any };
+
+  constructor(callback: SuccessCallback) {
+    this.query = callback.query;
+  }
+
+
+  public Parse(wikiArticleTitle: string)
+  {
+    this.mediawikiArticle = new MediaWikiArticle(this.query.subject, this.query.data)
+    let wikiArticle = this.mediawikiArticle;
+
+    wikiArticle.HandleProperties();
+    MyClass.nodeSet.push(wikiArticle.node);
+    MyClass.focalNodeID = wikiArticle.Id;
+  }
 }
 
-export type SemanticNode = {
-  property: string,
-  dataitem: DataItem[],
-  subject: any
-}
 
-export type Data = SemanticNode[]
+class testUnit
+{
+  static test() {
+    const jsonString = "{\"query\":{\"subject\":\"Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##\",\"data\":[{\"property\":\"_INST\",\"dataitem\":[{\"type\":9,\"item\":\"Polarizzazione#14##\"},{\"type\":9,\"item\":\"Social_network#14##\"},{\"type\":9,\"item\":\"Cancel_Culture#14##\"},{\"type\":9,\"item\":\"Episodio#14##\"},{\"type\":9,\"item\":\"Razzismo#14##\"}]},{\"property\":\"_MDAT\",\"dataitem\":[{\"type\":6,\"item\":\"1/2022/12/21/9/38/54/0\"}]},{\"property\":\"_SKEY\",\"dataitem\":[{\"type\":2,\"item\":\"Abbandono dei principi giornalistici, nascita delle Fuck News ed episodi vari\"}]}],\"serializer\":\"SMW\\\\Serializers\\\\SemanticDataSerializer\",\"version\":2}}";
+    // const myData = new MyData(jsonString);
+  }
+}

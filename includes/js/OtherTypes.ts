@@ -19,3 +19,8 @@ export interface CustomHTMLElement extends HTMLElement {
 export interface Article {
     title: string;
 }
+
+export interface Point {
+    x: number
+    y: number
+}

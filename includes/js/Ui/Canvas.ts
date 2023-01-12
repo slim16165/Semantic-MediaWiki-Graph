@@ -8,21 +8,19 @@ export class Canvas {
     public static heigth = $(".chart")[0].clientHeight;
 
     constructor() {
-        Canvas.svgCanvas = Canvas.InitCanvas();
+        Canvas.InitCanvas();
     }
 
     /**
      * Initialize the canvas and create the svg element with all its attributes.
      * @returns {d3.Selection<any, any, any, any>} svgCanvas - The svg canvas element
      */
-    public static InitCanvas(): Selection<any, any, any, any> {
-        Canvas.setCanvasSize();
-
+    public static InitCanvas(){
         //outer = .chart
         //inner = svgCanvas
         //inner = .focalNodeCanvas
 
-        const svgCanvas = d3.select("#cluster_chart .chart")
+        this.svgCanvas = d3.select("#cluster_chart .chart")
             .append("svg:svg")
             .call((selection: any, ...args: any[]) => {
                 d3.zoom().on("zoom", (event: any) => {
@@ -35,7 +33,8 @@ export class Canvas {
             .attr("id", "svgCanvas")
             .append("svg:g")
             .attr("class", "focalNodeCanvas");
-        return svgCanvas;
+
+        Canvas.setCanvasSize();
     }
 
     public static updateWindowSize() {
@@ -53,6 +52,9 @@ export class Canvas {
     {
         this.width = canvasWidth;
         this.heigth = canvasHeigth;
+
+        if(!Canvas.svgCanvas)
+            console.log("svgCanvas not set");
 
         Canvas.svgCanvas
           .attr("width", Canvas.width)

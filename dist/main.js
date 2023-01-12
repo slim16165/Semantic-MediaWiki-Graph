@@ -16962,18 +16962,17 @@ const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/ind
 const utility_1 = __webpack_require__(/*! ./utility */ "./includes/js/Ui/utility.ts");
 class Canvas {
     constructor() {
-        Canvas.svgCanvas = Canvas.InitCanvas();
+        Canvas.InitCanvas();
     }
     /**
      * Initialize the canvas and create the svg element with all its attributes.
      * @returns {d3.Selection<any, any, any, any>} svgCanvas - The svg canvas element
      */
     static InitCanvas() {
-        Canvas.setCanvasSize();
         //outer = .chart
         //inner = svgCanvas
         //inner = .focalNodeCanvas
-        const svgCanvas = d3.select("#cluster_chart .chart")
+        this.svgCanvas = d3.select("#cluster_chart .chart")
             .append("svg:svg")
             .call((selection, ...args) => {
             d3.zoom().on("zoom", (event) => {
@@ -16986,7 +16985,7 @@ class Canvas {
             .attr("id", "svgCanvas")
             .append("svg:g")
             .attr("class", "focalNodeCanvas");
-        return svgCanvas;
+        Canvas.setCanvasSize();
     }
     static updateWindowSize() {
         console.log("Called method updateWindow");
@@ -16998,6 +16997,8 @@ class Canvas {
     static setCanvasSize(canvasWidth = $(".chart")[0].clientWidth, canvasHeigth = $(".chart")[0].clientHeight) {
         this.width = canvasWidth;
         this.heigth = canvasHeigth;
+        if (!Canvas.svgCanvas)
+            console.log("svgCanvas not set");
         Canvas.svgCanvas
             .attr("width", Canvas.width)
             .attr("height", Canvas.heigth);
@@ -17045,10 +17046,10 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.LegendManager = void 0;
 const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
 const ColorHelper_1 = __webpack_require__(/*! ../ColorHelper */ "./includes/js/ColorHelper.ts");
-const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
 const nodeManager_1 = __webpack_require__(/*! ./nodeManager */ "./includes/js/Ui/nodeManager.ts");
 const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
 const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts");
+const visibilityHandler_1 = __webpack_require__(/*! ./visibilityHandler */ "./includes/js/Ui/visibilityHandler.ts");
 class LegendManager {
     static DrawLegend() {
         const sortedColors = ColorHelper_1.ColorHelper.GetColors('colorScale20', nodeStore_1.NodeStore.nodeList);
@@ -17122,12 +17123,12 @@ class LegendManager {
         if (node.type !== typeValue) {
             return;
         }
-        const invIndex = app_1.MyClass.invisibleNode.indexOf(node.id);
+        const invIndex = visibilityHandler_1.VisibilityHandler.invisibleNode.indexOf(node.id);
         if (invIndex > -1) {
-            app_1.MyClass.invisibleNode.splice(invIndex, 1);
+            visibilityHandler_1.VisibilityHandler.invisibleNode.splice(invIndex, 1);
         }
         else {
-            app_1.MyClass.invisibleNode.push(node.id);
+            visibilityHandler_1.VisibilityHandler.invisibleNode.push(node.id);
         }
         $(this).toggle();
     }
@@ -17137,13 +17138,13 @@ class LegendManager {
         const valSource = data.sourceId;
         const valTarget = data.targetId;
         //if beide
-        const indexSource = app_1.MyClass.invisibleNode.indexOf(valSource);
-        const indexTarget = app_1.MyClass.invisibleNode.indexOf(valTarget);
-        const indexEdge = app_1.MyClass.invisibleEdge.indexOf(`${valSource}_${valTarget}_${data.linkName}`);
+        const indexSource = visibilityHandler_1.VisibilityHandler.invisibleNode.indexOf(valSource);
+        const indexTarget = visibilityHandler_1.VisibilityHandler.invisibleNode.indexOf(valTarget);
+        const indexEdge = visibilityHandler_1.VisibilityHandler.invisibleEdge.indexOf(`${valSource}_${valTarget}_${data.linkName}`);
         if ((indexSource > -1 || indexTarget > -1) && indexEdge === -1) {
             //Einer der beiden Knoten ist unsichtbar, aber Kante noch nicht
             $(this).toggle();
-            app_1.MyClass.invisibleEdge.push(`${valSource}_${valTarget}_${data.linkName}`);
+            visibilityHandler_1.VisibilityHandler.invisibleEdge.push(`${valSource}_${valTarget}_${data.linkName}`);
         }
         else if (indexSource === -1 && indexTarget === -1 && indexEdge === -1) {
             //Beide Knoten sind nicht unsichtbar und Kante ist nicht unsichtbar
@@ -17151,7 +17152,7 @@ class LegendManager {
         else if (indexSource === -1 && indexTarget === -1 && indexEdge > -1) {
             //Knoten sind nicht unsichtbar, aber Kante ist es
             $(this).toggle();
-            app_1.MyClass.invisibleEdge.splice(indexEdge, 1);
+            visibilityHandler_1.VisibilityHandler.invisibleEdge.splice(indexEdge, 1);
         }
     }
     static PlotTheBulletCircles(svgCanvas, sortedColors) {
@@ -17449,8 +17450,9 @@ class Utility {
      */
     static drawCluster(drawingName, focalNode) {
         let canvas = new Canvas_1.Canvas();
-        this.svgCanvas = Canvas_1.Canvas.svgCanvas;
         console.log("N° NodeStore.nodeList: " + nodeStore_1.NodeStore.nodeList.length);
+        if (nodeStore_1.NodeStore.nodeList.length == 0)
+            return;
         // Create Nodes
         this.nodes = nodeManager_1.NodeManager.CreateNodes();
         // Append circles to Nodes
@@ -17486,7 +17488,7 @@ class Utility {
         return force;
     }
     static DrawLinesForLinksBetweenNodes() {
-        let link = this.svgCanvas.selectAll(".gLink")
+        let link = Canvas_1.Canvas.svgCanvas.selectAll(".gLink")
             // .data(force.links())
             .enter().append("g")
             .attr("class", "gLink");
@@ -17506,7 +17508,7 @@ class Utility {
         return link;
     }
     static AppendTextToLinkEdges() {
-        let linkText = this.svgCanvas.selectAll(".gLink")
+        let linkText = Canvas_1.Canvas.svgCanvas.selectAll(".gLink")
             .data(nodeStore_1.NodeStore.linkList)
             .append("text")
             .attr("font-family", "Arial, Helvetica, sans-serif")
@@ -17565,7 +17567,7 @@ class Utility {
         Il marker viene creato con l'elemento marker di SVG, che ha un insieme di attributi che ne definiscono l'aspetto e il comportamento. Gli attributi id, viewBox, refX, refY, markerWidth e markerHeight sono tutti attributi standard del tag marker di SVG, mentre l'attributo orient è un attributo non standard che viene utilizzato per specificare l'orientamento del simbolo all'interno del marker.
         L'attributo id viene utilizzato per assegnare un identificatore univoco al marker, che può essere utilizzato per fare riferimento al marker in altri punti del codice o nei fogli di stile CSS. L'attributo viewBox definisce l'area di visualizzazione del marker e il suo contenuto. L'attributo refX e refY vengono utilizzati per specificare le coordinate del punto di riferimento del marker, ovvero il punto del marker che verrà ancorato al percorso o all'elemento che lo utilizza. Gli attributi markerWidth e markerHeight definiscono la dimensione del marker.
         Una volta creato il marker, viene aggiunto un elemento path che definisce la forma del simbolo all'interno del marker. In questo caso, la forma del simbolo è una freccia, definita dal valore "M0,-5L10,0L0,5" dell'attributo d dell'elemento path.*/
-        let selection = this.svgCanvas.selectAll('.gLink');
+        let selection = Canvas_1.Canvas.svgCanvas.selectAll('.gLink');
         selection.append('marker')
             .attr('id', (d, i) => `arrow_${i}`)
             .attr('viewBox', '0 -5 10 10')
@@ -17656,7 +17658,6 @@ exports.MyClass = void 0;
 const Link_1 = __webpack_require__(/*! ./Link */ "./includes/js/Link.ts");
 __webpack_require__(/*! select2 */ "./node_modules/select2/dist/js/select2.js");
 const INode_1 = __webpack_require__(/*! ./INode */ "./includes/js/INode.ts");
-const nameHelper_1 = __webpack_require__(/*! ./nameHelper */ "./includes/js/nameHelper.ts");
 const semanticWikiApi_1 = __webpack_require__(/*! ./semanticWikiApi */ "./includes/js/semanticWikiApi.ts");
 class MyClass {
     constructor() {
@@ -17693,39 +17694,6 @@ class MyClass {
     }
     //TODO: tutti i metodi che seguono sono molto simili
     static AddMainArticle_BrowseBySubject(wikiArticleTitle, mediawikiArticleId, semanticNodeList) {
-        let node = this.ParseNodeBrowseBySubject1(mediawikiArticleId);
-        MyClass.nodeSet.push(node);
-        MyClass.focalNodeID = mediawikiArticleId;
-        for (const semanticNode of semanticNodeList) {
-            if (semanticWikiApi_1.SemanticWikiApi.IsSpecialProperty(semanticNode.property))
-                continue; // Non fare nulla se la proprietà è una delle proprietà speciali "_SKEY", "_MDAT" o "_ASK"
-            MyClass.getNodesAndLinksBrowseBySubject(semanticNode, mediawikiArticleId);
-        }
-    }
-    static ParseNodeBrowseBySubject1(mediawikiArticleId) {
-        let nameDoslike = mediawikiArticleId.split("#")[0];
-        let name = nameDoslike.replace("_", " ");
-        let node = new INode_1.INode(mediawikiArticleId, name, "Internal Link", 10, 0, `./${nameDoslike}`);
-        node.fixed = true;
-        return node;
-    }
-    static getNodesAndLinksBrowseBySubject(semanticNode, sourceNodeUrl) {
-        // JSON.stringify(dataitem)
-        // '[{"type":9,"item":"Polarizzazione#14##"},{"type":9,"item":"Social_network#14##"},{"type":9,"item":"Cancel_Culture#14##"},{"type":9,"item":"Episodio#14##"},{"type":9,"item":"Razzismo#14##"}]'
-        //
-        // JSON.stringify(semanticNode)
-        // '{"property":"_INST","dataitem":[{"type":9,"item":"Polarizzazione#14##"},{"type":9,"item":"Social_network#14##"},{"type":9,"item":"Cancel_Culture#14##"},{"type":9,"item":"Episodio#14##"},{"type":9,"item":"Razzismo#14##"}]}'
-        //
-        // JSON.stringify(data)
-        // '[{"property":"_INST","dataitem":[{"type":9,"item":"Polarizzazione#14##"},{"type":9,"item":"Social_network#14##"},{"type":9,"item":"Cancel_Culture#14##"},{"type":9,"item":"Episodio#14##"},{"type":9,"item":"Razzismo#14##"}]},{"property":"_MDAT","dataitem":[{"type":6,"item":"1/2022/12/21/9/38/54/0"}]},{"property":"_SKEY","dataitem":[{"type":2,"item":"Abbandono dei principi giornalistici, nascita delle Fuck News ed episodi vari"}]}]'
-        let dataitems = semanticNode.dataitem;
-        this.ForceFirstElemUrlBrowseBySubject(sourceNodeUrl, dataitems[0], semanticNode.property);
-        for (let dataitem of dataitems) {
-            let node = this.ParseNodeBrowseBySubject2(dataitem.item, sourceNodeUrl, semanticNode.property, dataitem.type);
-            let link = this.ParseLinkBrowseBySubject(semanticNode.property, dataitem, sourceNodeUrl);
-            MyClass.nodeSet.push(node);
-            MyClass.linkSet.push(link);
-        }
     }
     static InitNodeAndLinks_Backlinks(backlinks) {
         for (let article of backlinks) {
@@ -17734,25 +17702,6 @@ class MyClass {
             MyClass.nodeSet.push(node);
             MyClass.linkSet.push(link);
         }
-    }
-    //Unclear why...
-    static ForceFirstElemUrlBrowseBySubject(url, firstDataitem, property) {
-        let urlFromFirstItem = firstDataitem.item;
-        if (urlFromFirstItem === url)
-            firstDataitem.item = `${urlFromFirstItem}_${property}`;
-    }
-    static ParseNodeBrowseBySubject2(nameToParse, sourceNodeUrl, propertyName, type) {
-        //In the original version it was using the firstElement for the last 2 parameters
-        const typeStr = semanticWikiApi_1.SemanticWikiApi.getNodeType(propertyName, type);
-        let { name, hlink } = nameHelper_1.NameHelper.parseNodeName(nameToParse, typeStr, sourceNodeUrl);
-        let node = new INode_1.INode(nameToParse, name, "null", 0, 0, hlink);
-        return node;
-    }
-    static ParseLinkBrowseBySubject(propertyTypeName, arrayElement, sourceNodeUrl) {
-        let linkName = nameHelper_1.NameHelper.nicePropertyName(propertyTypeName);
-        let targetId = [arrayElement][0].item;
-        let link = new Link_1.Link(linkName, sourceNodeUrl, targetId, null, null, "");
-        return link;
     }
     static resetData() {
         MyClass.nodeSet = [];
@@ -17771,79 +17720,50 @@ new MyClass();
 
 /***/ }),
 
-/***/ "./includes/js/nameHelper.ts":
-/*!***********************************!*\
-  !*** ./includes/js/nameHelper.ts ***!
-  \***********************************/
-/***/ ((__unused_webpack_module, exports) => {
+/***/ "./includes/js/mediaWikiArticle.ts":
+/*!*****************************************!*\
+  !*** ./includes/js/mediaWikiArticle.ts ***!
+  \*****************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.NameHelper = void 0;
-class NameHelper {
-    static parseNodeName(nameToParse, type, url) {
-        function parseNodeName() {
-            return nameToParse.split("#")[0].replace("_", " ");
+exports.MediaWikiArticle = void 0;
+const INode_1 = __webpack_require__(/*! ./INode */ "./includes/js/INode.ts");
+const app_1 = __webpack_require__(/*! ./app */ "./includes/js/app.ts");
+const semanticPropertyAndItems_1 = __webpack_require__(/*! ./semanticPropertyAndItems */ "./includes/js/semanticPropertyAndItems.ts");
+class MediaWikiArticle {
+    constructor(id, semanticNodeList) {
+        this.Id = id; //'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
+        this.node = this.ParseNodeBrowseBySubject1();
+        this.semanticNodeList = [];
+        for (const data of semanticNodeList) {
+            let item = new semanticPropertyAndItems_1.SemanticPropertyAndItems(data.property, data.dataitem, data.subject, this);
+            this.semanticNodeList.push(item);
         }
-        let name, hlink = "";
-        switch (type) {
-            case "URI":
-                name = parseNodeName();
-                hlink = url;
-                break;
-            case "Internal Link":
-                name = parseNodeName();
-                hlink = `./${nameToParse.split("#")[0]}`;
-                break;
-            case "Date":
-                name = nameToParse.substring(2);
-                break;
-            case "Boolean":
-                name = nameToParse === "t" ? "true" : "false";
-                break;
-            default:
-                name = parseNodeName();
-                break;
-        }
-        return { name, hlink };
     }
-    static nicePropertyName(name) {
-        switch (name) {
-            case "_boo":
-                return "Boolean";
-            case "_cod":
-                return "Code";
-            case "_dat":
-                return "Date";
-            case "_ema":
-                return "Email";
-            case "_num":
-                return "Number"; //oder Email //oder Telefon
-            case "_qty":
-                return "Quantity";
-            case "_rec":
-                return "Record";
-            case "_tem":
-                return "Temperature";
-            case "_uri":
-                return "URI";
-            case "_wpg":
-                return "Internal Link";
-            case "Monolingual":
-                return "Monolingual Text";
-            case "Telephone":
-                return "Telephone";
-            case "_TEXT":
-                return "Text";
-            case "_INST":
-                return "isA";
-            default:
-                return name.replace("_", " ");
+    ParseNodeBrowseBySubject1() {
+        let nameDoslike = this.Id.split("#")[0];
+        let nodeName = nameDoslike.replace("_", " ");
+        let nodeHlink = `./${nameDoslike}`;
+        let node = new INode_1.INode(this.Id, nodeName, "Internal Link", 10, 0, nodeHlink);
+        node.fixed = true;
+        return node;
+    }
+    HandleProperties() {
+        for (const semanticNode of this.semanticNodeList) {
+            if (semanticNode.IsSpecialProperty())
+                continue; // Non fare nulla se la proprietà è una delle proprietà speciali "_SKEY", "_MDAT" o "_ASK"
+            semanticNode.SemanticNodeParse();
+            for (let dataitem of semanticNode.nodeAndLinks) {
+                app_1.MyClass.nodeSet.push(dataitem.node);
+                app_1.MyClass.linkSet.push(dataitem.link);
+            }
         }
     }
 }
-exports.NameHelper = NameHelper;
+exports.MediaWikiArticle = MediaWikiArticle;
 
 
 /***/ }),
@@ -17891,6 +17811,196 @@ NodeStore.linkList = [];
 
 /***/ }),
 
+/***/ "./includes/js/propertyDataItem.ts":
+/*!*****************************************!*\
+  !*** ./includes/js/propertyDataItem.ts ***!
+  \*****************************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PropertyDataItem = void 0;
+class PropertyDataItem {
+    constructor(item, type, parentSemantProp) {
+        this.type = type;
+        this.item = item;
+        this.parentSemantProp = parentSemantProp;
+        this.typeStr = this.getTypeDescr(this.type);
+        this.NiceTypeName = this.getNodeType();
+    }
+    getNodeType() {
+        let p = this.parentSemantProp.getPropertyNiceName(this.parentSemantProp.propertyName);
+        if (!p || p === "")
+            return this.typeStr;
+        else
+            return p;
+    }
+    getTypeDescr(type) {
+        switch (type) {
+            case 1:
+                return "Number";
+            case 2:
+                return "Text";
+            case 4:
+                return "Boolean";
+            case 5:
+                return "URI"; //oder Email //oder Telefon
+            case 6:
+                return "Date";
+            case 9:
+                return "Internal Link";
+            default:
+                return "Unknown Type";
+        }
+    }
+}
+exports.PropertyDataItem = PropertyDataItem;
+
+
+/***/ }),
+
+/***/ "./includes/js/semanticPropertyAndItems.ts":
+/*!*************************************************!*\
+  !*** ./includes/js/semanticPropertyAndItems.ts ***!
+  \*************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SemanticPropertyAndItems = void 0;
+const INode_1 = __webpack_require__(/*! ./INode */ "./includes/js/INode.ts");
+const Link_1 = __webpack_require__(/*! ./Link */ "./includes/js/Link.ts");
+const propertyDataItem_1 = __webpack_require__(/*! ./propertyDataItem */ "./includes/js/propertyDataItem.ts");
+class SemanticPropertyAndItems {
+    constructor(property, dataitems, subject, parentArticle) {
+        this.propertyName = property;
+        this.nicePropertyName = this.NicePropertyName();
+        //Solo per alcune proprietà sono presenti dataitems e subject
+        this.dataitems = [];
+        for (const data of dataitems) {
+            let item = new propertyDataItem_1.PropertyDataItem(data.item, data.type, this);
+            this.dataitems.push(item);
+        }
+        this.subject = subject;
+        this.parentArticle = parentArticle;
+        this.sourceNodeUrl = parentArticle.Id;
+        this.nodeAndLinks = [];
+    }
+    IsSpecialProperty() {
+        /*
+              I valori delle property "_SKEY", "_MDAT" e "_ASK" sono proprietà speciali predefinite in Semantic MediaWiki.
+              "_SKEY" è una proprietà che viene utilizzata per memorizzare le chiavi di ricerca per ogni oggetto di dati, che vengono utilizzate per velocizzare le query su quell'oggetto.
+              "_MDAT" è una proprietà che viene utilizzata per memorizzare la data di modifica di un oggetto di dati.
+              "_ASK" è una proprietà che viene utilizzata per memorizzare una query SPARQL o una query di tipo "ask" per un oggetto di dati. Questa proprietà viene utilizzata per eseguire query complesse sui dati semantici.
+              * INST
+              */
+        return ["_SKEY", "_MDAT", "_ASK"].includes(this.propertyName);
+    }
+    SemanticNodeParse() {
+        this.SetUri();
+        for (let dataitem of this.dataitems) {
+            let node = this.ParsePropertyNode(dataitem);
+            let link = new Link_1.Link(this.nicePropertyName, this.sourceNodeUrl, dataitem.item /*targetId*/, null, null, "");
+            this.nodeAndLinks.push({ node: node, link: link });
+        }
+    }
+    SetUri() {
+        if (!this.dataitems || this.dataitems.length == 0)
+            return;
+        this.firstItem = this.dataitems[0];
+        if (this.firstItem.item === this.sourceNodeUrl)
+            this.firstItem.item = `${this.firstItem.item}_${(this.propertyName)}`;
+    }
+    ParsePropertyNode(dataitem) {
+        //In the original version it was using the firstElement for the last 2 parameters
+        let name = this.parseNodeName(dataitem.item, dataitem.typeStr);
+        let hlink = this.parseHlink(dataitem.item, dataitem.typeStr, this.sourceNodeUrl);
+        let node = new INode_1.INode(dataitem.item, name, "null", 0, 0, hlink);
+        return node;
+    }
+    NicePropertyName() {
+        let p = this.getPropertyNiceName(this.propertyName);
+        return p == "" ? this.propertyName.replace("_", " ") : p;
+    }
+    getPropertyNiceName(propertyName) {
+        switch (propertyName) {
+            case "_boo":
+                return "Boolean";
+            case "_cod":
+                return "Code";
+            case "_dat":
+                return "Date";
+            case "_ema":
+                return "Email";
+            case "_num":
+                return "Number"; //oder Email //oder Telefon
+            case "_qty":
+                return "Quantity";
+            case "_rec":
+                return "Record";
+            case "_tem":
+                return "Temperature";
+            case "_uri":
+                return "URI";
+            case "_wpg":
+                return "Internal Link";
+            case "Monolingual":
+                return "Monolingual Text";
+            case "Telephone":
+                return "Telephone";
+            case "_TEXT":
+                return "Text";
+            case "_INST":
+                return "Category" /*isA*/;
+            default:
+                return "";
+        }
+    }
+    parseNodeName(nameToParse, type) {
+        function parseNodeName() {
+            return nameToParse.split("#")[0].replace("_", " ");
+        }
+        let name;
+        switch (type) {
+            case "URI":
+                name = parseNodeName();
+                break;
+            case "Internal Link":
+                name = parseNodeName();
+                break;
+            case "Date":
+                name = nameToParse.substring(2);
+                break;
+            case "Boolean":
+                name = nameToParse === "t" ? "true" : "false";
+                break;
+            default:
+                name = parseNodeName();
+                break;
+        }
+        return name;
+    }
+    parseHlink(nameToParse, type, url) {
+        let hlink = "";
+        switch (type) {
+            case "URI":
+                hlink = url;
+                break;
+            case "Internal Link":
+                hlink = `./${nameToParse.split("#")[0]}`;
+            default:
+                break;
+        }
+        return hlink;
+    }
+}
+exports.SemanticPropertyAndItems = SemanticPropertyAndItems;
+
+
+/***/ }),
+
 /***/ "./includes/js/semanticWikiApi.ts":
 /*!****************************************!*\
   !*** ./includes/js/semanticWikiApi.ts ***!
@@ -17905,6 +18015,7 @@ const utility_1 = __webpack_require__(/*! ./Ui/utility */ "./includes/js/Ui/util
 const nodeStore_1 = __webpack_require__(/*! ./nodeStore */ "./includes/js/nodeStore.ts");
 const app_1 = __webpack_require__(/*! ./app */ "./includes/js/app.ts");
 const visibilityHandler_1 = __webpack_require__(/*! ./Ui/visibilityHandler */ "./includes/js/Ui/visibilityHandler.ts");
+const mediaWikiArticle_1 = __webpack_require__(/*! ./mediaWikiArticle */ "./includes/js/mediaWikiArticle.ts");
 class SemanticWikiApi {
     static BrowseBySubject(wikiArticleTitle) {
         app_1.MyClass.downloadedArticles = [];
@@ -17927,7 +18038,7 @@ class SemanticWikiApi {
                 // debugger;
             }
             else {
-                SemanticWikiApi.BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle, data);
+                SemanticWikiApi.BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle, new MyData(data));
             }
         }
     }
@@ -17939,8 +18050,7 @@ class SemanticWikiApi {
          */
         app_1.MyClass.resetData();
         app_1.MyClass.downloadedArticles.push(wikiArticleTitle);
-        let mediawikiArticleId = data.query.subject; //'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
-        app_1.MyClass.AddMainArticle_BrowseBySubject(wikiArticleTitle, mediawikiArticleId, data.query.data);
+        data.Parse(wikiArticleTitle);
         // MyClass.force.stop();
         SemanticWikiApi.QueryBackLinks(wikiArticleTitle); //tramite questa chiama → MyClass.InitNodeAndLinks(data.query.backlinks);
         $("#cluster_chart .chart").empty();
@@ -17955,16 +18065,6 @@ class SemanticWikiApi {
         // elem[0].__data__.px = Canvas.width / 2;
         // // @ts-ignore
         // elem[0].__data__.py = Canvas.height / 2;
-    }
-    /*
-        I valori delle property "_SKEY", "_MDAT" e "_ASK" sono proprietà speciali predefinite in Semantic MediaWiki.
-        "_SKEY" è una proprietà che viene utilizzata per memorizzare le chiavi di ricerca per ogni oggetto di dati, che vengono utilizzate per velocizzare le query su quell'oggetto.
-        "_MDAT" è una proprietà che viene utilizzata per memorizzare la data di modifica di un oggetto di dati.
-        "_ASK" è una proprietà che viene utilizzata per memorizzare una query SPARQL o una query di tipo "ask" per un oggetto di dati. Questa proprietà viene utilizzata per eseguire query complesse sui dati semantici.
-        * INST
-        */
-    static IsSpecialProperty(property) {
-        return ["_SKEY", "_MDAT", "_ASK"].includes(property);
     }
     static QueryBackLinks(wikiArticle) {
         $.ajax({
@@ -18017,62 +18117,26 @@ class SemanticWikiApi {
             }
         });
     }
-    static getNodeType(propertyName, type) {
-        switch (propertyName) {
-            case "_boo":
-                return "Boolean";
-            case "_cod":
-                return "Code";
-            case "_dat":
-                return "Date";
-            case "_ema":
-                return "Email";
-            case "_num":
-                return "Number"; //oder Email //oder Telefon
-            case "_qty":
-                return "Quantity";
-            case "_rec":
-                return "Record";
-            case "_tem":
-                return "Temperature";
-            case "_uri":
-                return "URI";
-            case "_wpg":
-                return "Internal Link";
-            case "Monolingual":
-                return "Monolingual Text";
-            case "Telephone":
-                return "Telephone";
-            case "_TEXT":
-                return "Text";
-            case "_INST":
-                return "Category";
-            default:
-                return this.getTypeDescr(type);
-        }
-    }
-    /* This type comes from the wiki interface
-    * */
-    static getTypeDescr(type) {
-        switch (type) {
-            case 1:
-                return "Number";
-            case 2:
-                return "Text";
-            case 4:
-                return "Boolean";
-            case 5:
-                return "URI"; //oder Email //oder Telefon
-            case 6:
-                return "Date";
-            case 9:
-                return "Internal Link";
-            default:
-                return "Unknown Type";
-        }
-    }
 }
 exports.SemanticWikiApi = SemanticWikiApi;
+class MyData {
+    constructor(callback) {
+        this.query = callback.query;
+    }
+    Parse(wikiArticleTitle) {
+        this.mediawikiArticle = new mediaWikiArticle_1.MediaWikiArticle(this.query.subject, this.query.data);
+        let wikiArticle = this.mediawikiArticle;
+        wikiArticle.HandleProperties();
+        app_1.MyClass.nodeSet.push(wikiArticle.node);
+        app_1.MyClass.focalNodeID = wikiArticle.Id;
+    }
+}
+class testUnit {
+    static test() {
+        const jsonString = "{\"query\":{\"subject\":\"Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##\",\"data\":[{\"property\":\"_INST\",\"dataitem\":[{\"type\":9,\"item\":\"Polarizzazione#14##\"},{\"type\":9,\"item\":\"Social_network#14##\"},{\"type\":9,\"item\":\"Cancel_Culture#14##\"},{\"type\":9,\"item\":\"Episodio#14##\"},{\"type\":9,\"item\":\"Razzismo#14##\"}]},{\"property\":\"_MDAT\",\"dataitem\":[{\"type\":6,\"item\":\"1/2022/12/21/9/38/54/0\"}]},{\"property\":\"_SKEY\",\"dataitem\":[{\"type\":2,\"item\":\"Abbandono dei principi giornalistici, nascita delle Fuck News ed episodi vari\"}]}],\"serializer\":\"SMW\\\\Serializers\\\\SemanticDataSerializer\",\"version\":2}}";
+        // const myData = new MyData(jsonString);
+    }
+}
 
 
 /***/ }),

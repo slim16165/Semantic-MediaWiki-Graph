@@ -5,19 +5,13 @@ import {Link} from "../Link";
 import {Canvas} from "./Canvas";
 import {LegendManager} from "./legendManager";
 import {NodeManager} from "./nodeManager";
-import {INode} from "../INode";
 import {NodeStore} from "../nodeStore";
-
-interface Point {
-    x: number
-    y: number
-}
+import {Point} from "../OtherTypes";
 
 export class Utility {
     public static centerNodeSize :number = 50;
     public static nodeSize :number = 10;
     public static scale :number = 1;
-    private static svgCanvas: Selection<SVGGElement, Link, any, any>;
     private static linkText: d3.Selection<SVGTextElement, any, SVGGElement, Link>;
     private static nodes: any;
     private static link: Selection<SVGGElement, Link, SVGGElement, Link>;
@@ -34,9 +28,9 @@ export class Utility {
      */
     public static drawCluster(drawingName: string, focalNode: string): void {
         let canvas = new Canvas();
-        this.svgCanvas = Canvas.svgCanvas;
 
         console.log("N° NodeStore.nodeList: " +NodeStore.nodeList.length);
+        if(NodeStore.nodeList.length == 0) return;
 
         // Create Nodes
         this.nodes = NodeManager.CreateNodes();
@@ -91,7 +85,7 @@ export class Utility {
     }
 
     private static DrawLinesForLinksBetweenNodes() {
-        let link = this.svgCanvas.selectAll(".gLink")
+        let link = Canvas.svgCanvas.selectAll(".gLink")
              // .data(force.links())
             .enter().append("g")
             .attr("class", "gLink")
@@ -113,7 +107,7 @@ export class Utility {
 
     private static AppendTextToLinkEdges() {
 
-        let linkText = this.svgCanvas.selectAll(".gLink")
+        let linkText = Canvas.svgCanvas.selectAll(".gLink")
             .data(NodeStore.linkList)
             .append("text")
             .attr("font-family", "Arial, Helvetica, sans-serif")
@@ -188,7 +182,7 @@ export class Utility {
         L'attributo id viene utilizzato per assegnare un identificatore univoco al marker, che può essere utilizzato per fare riferimento al marker in altri punti del codice o nei fogli di stile CSS. L'attributo viewBox definisce l'area di visualizzazione del marker e il suo contenuto. L'attributo refX e refY vengono utilizzati per specificare le coordinate del punto di riferimento del marker, ovvero il punto del marker che verrà ancorato al percorso o all'elemento che lo utilizza. Gli attributi markerWidth e markerHeight definiscono la dimensione del marker.
         Una volta creato il marker, viene aggiunto un elemento path che definisce la forma del simbolo all'interno del marker. In questo caso, la forma del simbolo è una freccia, definita dal valore "M0,-5L10,0L0,5" dell'attributo d dell'elemento path.*/
 
-        let selection: Selection<SVGGElement, Link, SVGGElement, any> = this.svgCanvas.selectAll('.gLink');
+        let selection: Selection<SVGGElement, Link, SVGGElement, any> = Canvas.svgCanvas.selectAll('.gLink');
 
         selection.append('marker')
             .attr('id', (d: Link, i: number) => `arrow_${i}`)
