@@ -5,14 +5,14 @@ import { IForce } from "./Model/IForce";
 import { SemanticWikiApi } from "./Semantic/semanticWikiApi";
 import { Article } from "./Model/OtherTypes";
 import { NodeType } from "./Model/nodeType";
-
+import { NodeStore } from "./nodeStore";
 
 export class MainEntry {
 
   static downloadedArticles: any[] = [];
+
+  /*Primary Node of Context*/
   static focalNodeID: string = ""; // Esempio  di valore reale: 'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
-  static nodeSet: INode[] = [];
-  static linkSet: Link[] = [];
   static force: IForce;
 
   constructor() {
@@ -69,14 +69,14 @@ export class MainEntry {
       let node = new INode(NodeType.Backlink, article.title, article.title, "Unknown", 0, 0, article.title);
       let link = new Link(NodeType.Backlink,"Unknown", article.title, MainEntry.focalNodeID, null, null, "");
 
-      MainEntry.nodeSet.push(node);
-      MainEntry.linkSet.push(link);
+      NodeStore.nodeList.push(node);
+      NodeStore.linkList.push(link);
     }
   }
 
   static resetData() {
-    MainEntry.nodeSet = [];
-    MainEntry.linkSet = [];
+    NodeStore.nodeList = [];
+    NodeStore.linkList = [];
     MainEntry.downloadedArticles = [];
   }
 }

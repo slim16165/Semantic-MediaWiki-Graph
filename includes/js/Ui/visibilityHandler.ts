@@ -46,5 +46,44 @@ export class VisibilityHandler{
       $(this).toggle();
       this.invisibleEdge.push(`${valSource}_${valTarget}_${link.linkName}`);
     }
-  };
+  }
+
+  static MakeInvisible(el: CustomHTMLElement, typeValue: string) {
+    let node = el.__data__ as INode;
+    if (node.type !== typeValue) {
+      return;
+    }
+    const invIndex = VisibilityHandler.invisibleNode.indexOf(node.id);
+    if (invIndex > -1) {
+      VisibilityHandler.invisibleNode.splice(invIndex, 1);
+    } else {
+      VisibilityHandler.invisibleNode.push(node.id);
+    }
+    $(this).toggle();
+  }
+
+  static MakeInvisible2(el: CustomHTMLElement) {
+    //      debugger;
+    let data = el.__data__ as Link;
+    const valSource = data.sourceId;
+    const valTarget = data.targetId;
+    //if beide
+    const indexSource = VisibilityHandler.invisibleNode.indexOf(valSource);
+    const indexTarget = VisibilityHandler.invisibleNode.indexOf(valTarget);
+    const indexEdge = VisibilityHandler.invisibleEdge.indexOf(`${valSource}_${valTarget}_${data.linkName}`);
+
+    if ((indexSource > -1 || indexTarget > -1) && indexEdge === -1) {
+      //Einer der beiden Knoten ist unsichtbar, aber Kante noch nicht
+      $(this).toggle();
+      VisibilityHandler.invisibleEdge.push(`${valSource}_${valTarget}_${data.linkName}`);
+    } else if (indexSource === -1 && indexTarget === -1 && indexEdge === -1) {
+      //Beide Knoten sind nicht unsichtbar und Kante ist nicht unsichtbar
+    } else if (indexSource === -1 && indexTarget === -1 && indexEdge > -1) {
+      //Knoten sind nicht unsichtbar, aber Kante ist es
+      $(this).toggle();
+      VisibilityHandler.invisibleEdge.splice(indexEdge, 1);
+    }
+  }
+
+
 }

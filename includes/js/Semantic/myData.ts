@@ -1,5 +1,7 @@
 import { MediaWikiArticle } from "./mediaWikiArticle";
 import { MainEntry } from "../app";
+import { NodeManager } from "../Ui/nodeManager";
+import { NodeStore } from "../nodeStore";
 
 export class MyData {
 
@@ -15,8 +17,7 @@ export class MyData {
     let wikiArticle = this.mediawikiArticle;
 
     wikiArticle.HandleProperties();
-    MainEntry.nodeSet.push(wikiArticle.node);
-    MainEntry.focalNodeID = wikiArticle.Id;
+    NodeStore.nodeList.push(wikiArticle.node);
   }
 }
 

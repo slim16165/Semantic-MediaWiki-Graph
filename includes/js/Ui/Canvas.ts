@@ -1,72 +1,91 @@
 import * as d3 from "d3";
-import {Selection} from "d3";
-import {Utility} from "./utility";
+import { Utility } from "./utility";
+
 //import needed
-import * as d3Ext from "./d3Extension";
+import * as D3Ext from "./d3Extension"
+
+export class Chart {
+  public width: number;
+  public height: number;
+
+  constructor() {
+    this.width = $(".chart")[0].clientWidth;
+    this.height = $(".chart")[0].clientHeight;
+  }
+}
+
 
 export class Canvas {
-    public static svgCanvas: d3.Selection<any, any, any, any>;
-    public static width = $(".chart")[0].clientWidth;
-    public static heigth = $(".chart")[0].clientHeight;
-    public static margin = {top: 20, right: 20, bottom: 30, left: 40};
+  public static svgCanvas: d3.Selection<any, any, any, any>;
+  public static width: number;
+  public static heigth: number;
+  public static margin = { top: 120, right: 120, bottom: 120, left: 120 };
 
-    constructor() {
-        Canvas.InitCanvas();
-    }
+  constructor() {
+    Canvas.InitCanvas();
+  }
 
-    /**
-     * Initialize the canvas and create the svg element with all its attributes.
-     * @returns {d3.Selection<any, any, any, any>} svgCanvas - The svg canvas element
-     */
-    public static InitCanvas(){
-        //outer = .chart
-        //inner = svgCanvas
-        //inner = .focalNodeCanvas
+  /**
+   * Initialize the canvas and create the svg element with all its attributes.
+   * @returns {d3.Selection<any, any, any, any>} svgCanvas - The svg canvas element
+   */
+  public static InitCanvas() {
+    //outer = .chart
+    //inner = svgCanvas
+    //inner = .focalNodeCanvas
 
-        this.svgCanvas = d3.select("#cluster_chart .chart")
-            .append("svg:svg")
-            .call((selection: any, ...args: any[]) => {
-                d3.zoom().on("zoom", (event: any) => {
-                    Utility.scale = event.transform.k;
-                    selection.attr("transform", event.transform);
-                })(selection, ...args);
-            })
-            .setWidthAndHeight(this.width, this.heigth)
-            .attr("id", "svgCanvas")
-            .append("svg:g")
-            .attr("class", "focalNodeCanvas");
+    let chart = new Chart();
 
-        Canvas.setCanvasSize();
-    }
+    d3.selection.prototype.setWidthAndHeight = function(width: number, height: number) {
+      this.attr("width", width)
+        .attr("height", height);
+      return this;
+    };
 
-    // public static setWidthAndHeight(width: number, heigth: number) {
-    //     this.width = width;
-    //     this.heigth = heigth;
-    //
-    //     this.svgCanvas
-    //       .attr("width", this.width + this.margin.left + this.margin.right)
-    //       .attr("height", this.heigth + this.margin.top + this.margin.bottom);
-    // }
+    this.svgCanvas = d3.select("#cluster_chart .chart")
+      .append("svg:svg")
+      .call((selection: any, ...args: any[]) => {
+        d3.zoom().on("zoom", (event: any) => {
+          Utility.scale = event.transform.k;
+          selection.attr("transform", event.transform);
+        })(selection, ...args);
+      })
+      .setWidthAndHeight(this.width, this.heigth)
+      .attr("id", "svgCanvas")
+      .append("svg:g")
+      .attr("class", "focalNodeCanvas");
 
-    public static updateWindowSize() {
-        console.log("Called method updateWindow");
+    Canvas.setCanvasSize();
+  }
 
-        let c = $(".chart")[0];
-        this.setCanvasSize(c.clientWidth - 60, c.clientHeight - 60);
+  public static updateWindowSize() {
+    console.log("Called method updateWindow");
 
-        $('#svgCanvas').width(Canvas.width + 90);
-        $('#svgCanvas').height(Canvas.heigth + 60);
-    }
+    // let c = new Chart()
+    // this.setCanvasSize(c.width - 60, c.height - 60);
+    let width = $(".chart")[0].clientWidth - 60;
+    let height = $(".chart")[0].clientHeight - 60;
 
-    private static setCanvasSize(canvasWidth : number = $(".chart")[0].clientWidth,
-                                 canvasHeigth : number = $(".chart")[0].clientHeight)
-    {
-        this.width = canvasWidth;
-        this.heigth = canvasHeigth;
+    Canvas.svgCanvas.attr("width", width).attr("height", height);
+    $("#svgCanvas").width(width + 90);
+    $("#svgCanvas").height(height + 60);
+  }
 
-        if(!Canvas.svgCanvas)
-            console.log("svgCanvas not set");
+  private static setCanvasSize(canvasWidth: number = $(".chart")[0].clientWidth,
+                               canvasHeigth: number = $(".chart")[0].clientHeight) {
+    this.width = canvasWidth + this.margin.left + this.margin.right;
+    this.heigth = canvasHeigth + this.margin.top + this.margin.bottom;
 
-        Canvas.svgCanvas.setWidthAndHeight(Canvas.width, Canvas.heigth)
-    }
+    if (!Canvas.svgCanvas)
+      console.log("svgCanvas not set");
+
+    this.svgCanvas
+      .attr("width", this.width)
+      .attr("height", this.heigth);
+
+    console.log("Canvas width: " + this.width);
+    console.log("Canvas height: " + this.heigth);
+
+    // Canvas.svgCanvas.setWidthAndHeight(Canvas.width, Canvas.heigth)
+  }
 }

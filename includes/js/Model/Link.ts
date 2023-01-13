@@ -1,6 +1,8 @@
 import {INode} from "./INode";
 import { NodeType } from "./nodeType";
 import { Point } from "./OtherTypes";
+import { MainEntry } from "../app";
+import { NodeStore } from "../nodeStore";
 
 /* Connection between two Nodes
 * */
@@ -8,6 +10,7 @@ export class Link {
     public linkName: string;
     public sourceId: string;
     public targetId: string;
+    public pointsFocalNode : boolean;
     public source!: INode;
     public target!: INode;
     public direction!: string;
@@ -18,11 +21,28 @@ export class Link {
         this.linkName = linkName;
         this.targetId = targetId;
         this.direction = direction;
+        this.UpdateSourceAndTarget(source, target);
+
+        this.nodetype = nodetype;
+        this.pointsFocalNode = targetId === MainEntry.focalNodeID;
+    }
+
+    UpdateSourceAndTarget(source: INode | null, target: INode | null) {
+        try{
         if(source)
             this.source = source;
+        // else
+        //     this.source = NodeStore.getNodeById(this.sourceId);
         if(target)
             this.target = target;
-        this.nodetype = nodetype;
+        // else
+        //     this.target = NodeStore.getNodeById(this.targetId);
+        }
+        catch(e){
+            console.log("Early link initialization error: " + e);
+        }
+
+        this.direction = this.sourceId === MainEntry.focalNodeID ? "OUT" : "IN";
     }
 
     // noinspection JSUnusedGlobalSymbols

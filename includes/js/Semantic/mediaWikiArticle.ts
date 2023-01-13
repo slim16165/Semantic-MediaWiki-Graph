@@ -2,6 +2,7 @@ import { INode } from "../Model/INode";
 import { MainEntry } from "../app";
 import { SemanticPropertyAndItems } from "./semanticPropertyAndItems";
 import { NodeType } from "../Model/nodeType";
+import { NodeStore } from "../nodeStore";
 
 export class MediaWikiArticle {
   node: INode;
@@ -10,6 +11,7 @@ export class MediaWikiArticle {
 
   constructor(id: string, semanticNodeList: any[]) {
     this.Id = id; //'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
+    MainEntry.focalNodeID = id;
     this.node = this.ParseNodeBrowseBySubject();
 
     this.semanticNodeList = [];
@@ -35,8 +37,8 @@ export class MediaWikiArticle {
       semanticNode.SemanticNodeParse();
 
       for (let dataitem of semanticNode.nodeAndLinks) {
-        MainEntry.nodeSet.push(dataitem.node);
-        MainEntry.linkSet.push(dataitem.link);
+        NodeStore.nodeList.push(dataitem.node);
+        NodeStore.linkList.push(dataitem.link);
       }
     }
   }

@@ -7,7 +7,7 @@ export class INode {
     id: string;
     name: string;
     type: string;
-    fixed?: boolean;
+    fixed: boolean; //è il focal node?
     x: number;
     y: number;
     hlink?: string;
@@ -21,6 +21,7 @@ export class INode {
         this.hlink = hlink;
         this.type = type;
         this.notetype = nodeType;
+        this.fixed = this.id === MainEntry.focalNodeID;
     }
 
 
@@ -43,7 +44,7 @@ export class INode {
     }
 
     public IsFocalNode() : boolean {
-        return this.id === MainEntry.focalNodeID;
+        return this.fixed;
     }
 
     public updatePositions() {

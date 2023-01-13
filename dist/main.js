@@ -1,6 +1,1432 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
+/***/ "./includes/js/Helpers/ColorHelper.ts":
+/*!********************************************!*\
+  !*** ./includes/js/Helpers/ColorHelper.ts ***!
+  \********************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.ColorHelper = void 0;
+const d3_scale_chromatic_1 = __importDefault(__webpack_require__(/*! d3-scale-chromatic */ "./node_modules/d3-scale-chromatic/src/index.js"));
+class ColorHelper {
+  static colorScaleMW(type) {
+    const colorArray = Object.entries(this.color).map(([name, color]) => ({
+      name,
+      color
+    }));
+    const colorObject = colorArray.find(c => c.name === type);
+    return colorObject ? colorObject.color : "undefined";
+  }
+  static GetColor(colors) {
+    let colorScale;
+    switch (colors) {
+      // case "colorScale10":
+      //     colorScale = d3.schemeSet1;
+      //     break;
+      // case "colorScale20":
+      //     colorScale = d3.schemeSet2;
+      //     break;
+      // case "colorScale20b":
+      //     colorScale = d3.schemeSet3;
+      //     break;
+      default:
+        colorScale = d3_scale_chromatic_1.default.schemeSet1;
+    }
+    return colorScale;
+  }
+  static GetColors(colors, nodeSetApp) {
+    // Color Scale Handling...
+    //ColorHelper.GetColor(colors);
+    // Create a hash that maps colors to types...
+    nodeSetApp.forEach(d => {
+      this.color_hash[d.type] = d.type;
+    });
+    const sortedColors = ColorHelper.keys(this.color_hash).sort();
+    sortedColors.forEach(d => {
+      this.color_hash[d] = ColorHelper.colorScaleMW(d);
+      //document.writeln(color_hash[d]);
+    });
+    // Add colors to original node records...
+    nodeSetApp.forEach(d => {
+      d.color = this.color_hash[d.type];
+      //document.writeln(d.type);
+    });
+
+    return sortedColors;
+  }
+  static keys(obj) {
+    const keys = [];
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        keys.push(key);
+      }
+    }
+    return keys;
+  }
+}
+exports.ColorHelper = ColorHelper;
+ColorHelper.color = {
+  "InternalLink": '#1f77b4',
+  "Category": '#071f55',
+  "URI": '#17a8cf',
+  "Telephone": '#13d1e3',
+  "Email": '#75d3dd',
+  "Number": '#2ca02c',
+  "Quantity": '#114911',
+  "Temperature": '#b6e75a',
+  "MonolingualText": '#f2cd0c',
+  "Text": '#ff7f0e',
+  "Code": '#b37845',
+  "Boolean": '#d62728',
+  "Date": '#d62790',
+  "Record": '#8927d6'
+};
+ColorHelper.color_hash = {};
+
+/***/ }),
+
+/***/ "./includes/js/Model/INode.ts":
+/*!************************************!*\
+  !*** ./includes/js/Model/INode.ts ***!
+  \************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.INode = void 0;
+const utility_1 = __webpack_require__(/*! ../Ui/utility */ "./includes/js/Ui/utility.ts");
+const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
+const Canvas_1 = __webpack_require__(/*! ../Ui/Canvas */ "./includes/js/Ui/Canvas.ts");
+class INode {
+  constructor(nodeType, id, name, type, x, y, hlink) {
+    this.id = id;
+    this.name = name;
+    this.x = 0;
+    this.y = 0;
+    this.hlink = hlink;
+    this.type = type;
+    this.notetype = nodeType;
+    this.fixed = this.id === app_1.MainEntry.focalNodeID;
+  }
+  // noinspection JSUnusedGlobalSymbols
+  static cloneNode(array) {
+    const newArr = [];
+    array.forEach(node => {
+      let newNode = new INode(node.notetype, node.id, node.name, node.type, node.x, node.y, "");
+      if (typeof node.hlink !== "undefined") {
+        newNode.hlink = node.hlink;
+      }
+      newArr.push(newNode);
+    });
+    return newArr;
+  }
+  IsFocalNode() {
+    return this.fixed;
+  }
+  updatePositions() {
+    this.x = this.calcNewPosition(Canvas_1.Canvas.width, this.x);
+    this.y = this.calcNewPosition(Canvas_1.Canvas.heigth, this.y);
+  }
+  calcNewPosition(containerSize, currentPos) {
+    const minDistFromBorder = this.IsFocalNode() ? 60 : 20;
+    const maxDistFromBorder = (containerSize - minDistFromBorder) / utility_1.Utility.scale;
+    return Math.max(minDistFromBorder, Math.min(maxDistFromBorder, currentPos));
+  }
+}
+exports.INode = INode;
+
+/***/ }),
+
+/***/ "./includes/js/Model/Link.ts":
+/*!***********************************!*\
+  !*** ./includes/js/Model/Link.ts ***!
+  \***********************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.Link = void 0;
+const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
+/* Connection between two Nodes
+* */
+class Link {
+  constructor(nodetype, linkName, sourceId, targetId, source, target, direction) {
+    this.sourceId = sourceId;
+    this.linkName = linkName;
+    this.targetId = targetId;
+    this.direction = direction;
+    this.UpdateSourceAndTarget(source, target);
+    this.nodetype = nodetype;
+    this.pointsFocalNode = targetId === app_1.MainEntry.focalNodeID;
+  }
+  UpdateSourceAndTarget(source, target) {
+    try {
+      if (source) this.source = source;
+      // else
+      //     this.source = NodeStore.getNodeById(this.sourceId);
+      if (target) this.target = target;
+      // else
+      //     this.target = NodeStore.getNodeById(this.targetId);
+    } catch (e) {
+      console.log("Early link initialization error: " + e);
+    }
+    this.direction = this.sourceId === app_1.MainEntry.focalNodeID ? "OUT" : "IN";
+  }
+  // noinspection JSUnusedGlobalSymbols
+  static cloneEdge(array) {
+    const newArr = [];
+    array.forEach(item => {
+      newArr.push(new Link(item.nodetype, item.linkName, item.sourceId, item.targetId, item.source, item.target, item.direction));
+    });
+    return newArr;
+  }
+  /**
+   Calculates the x-y coordinates for the midpoint of a link.
+   */
+  CalculateMidpoint() {
+    let source = this.source;
+    let target = this.target;
+    let x = this.CalcMiddlePoint(source.x, target.x);
+    let y = this.CalcMiddlePoint(source.y, target.y);
+    return {
+      x,
+      y
+    };
+  }
+  CalcMiddlePoint(x, y) {
+    return Math.min(x, y) + Math.abs(y - x) / 2;
+  }
+}
+exports.Link = Link;
+
+/***/ }),
+
+/***/ "./includes/js/Model/nodeType.ts":
+/*!***************************************!*\
+  !*** ./includes/js/Model/nodeType.ts ***!
+  \***************************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.NodeType = void 0;
+var NodeType;
+(function (NodeType) {
+  NodeType[NodeType["Backlink"] = 0] = "Backlink";
+  NodeType[NodeType["Article"] = 1] = "Article";
+  NodeType[NodeType["Property"] = 2] = "Property";
+})(NodeType = exports.NodeType || (exports.NodeType = {}));
+
+/***/ }),
+
+/***/ "./includes/js/Semantic/mediaWikiArticle.ts":
+/*!**************************************************!*\
+  !*** ./includes/js/Semantic/mediaWikiArticle.ts ***!
+  \**************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.MediaWikiArticle = void 0;
+const INode_1 = __webpack_require__(/*! ../Model/INode */ "./includes/js/Model/INode.ts");
+const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
+const semanticPropertyAndItems_1 = __webpack_require__(/*! ./semanticPropertyAndItems */ "./includes/js/Semantic/semanticPropertyAndItems.ts");
+const nodeType_1 = __webpack_require__(/*! ../Model/nodeType */ "./includes/js/Model/nodeType.ts");
+const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
+class MediaWikiArticle {
+  constructor(id, semanticNodeList) {
+    this.Id = id; //'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
+    app_1.MainEntry.focalNodeID = id;
+    this.node = this.ParseNodeBrowseBySubject();
+    this.semanticNodeList = [];
+    for (const data of semanticNodeList) {
+      let item = new semanticPropertyAndItems_1.SemanticPropertyAndItems(data.property, data.dataitem, data.subject, this);
+      this.semanticNodeList.push(item);
+    }
+  }
+  ParseNodeBrowseBySubject() {
+    let nameDoslike = this.Id.split("#")[0];
+    let nodeName = nameDoslike.replace("_", " ");
+    let node = new INode_1.INode(nodeType_1.NodeType.Article, this.Id, nodeName, "Internal Link", 10, 0, `./${nameDoslike}`);
+    node.fixed = true;
+    return node;
+  }
+  HandleProperties() {
+    for (const semanticNode of this.semanticNodeList) {
+      if (semanticNode.IsSpecialProperty()) continue; // Non fare nulla se la proprietà è una delle proprietà speciali "_SKEY", "_MDAT" o "_ASK"
+      semanticNode.SemanticNodeParse();
+      for (let dataitem of semanticNode.nodeAndLinks) {
+        nodeStore_1.NodeStore.nodeList.push(dataitem.node);
+        nodeStore_1.NodeStore.linkList.push(dataitem.link);
+      }
+    }
+  }
+}
+exports.MediaWikiArticle = MediaWikiArticle;
+
+/***/ }),
+
+/***/ "./includes/js/Semantic/myData.ts":
+/*!****************************************!*\
+  !*** ./includes/js/Semantic/myData.ts ***!
+  \****************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.MyData = void 0;
+const mediaWikiArticle_1 = __webpack_require__(/*! ./mediaWikiArticle */ "./includes/js/Semantic/mediaWikiArticle.ts");
+const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
+class MyData {
+  constructor(callback) {
+    this.query = callback.query;
+  }
+  Parse() {
+    this.mediawikiArticle = new mediaWikiArticle_1.MediaWikiArticle(this.query.subject, this.query.data);
+    let wikiArticle = this.mediawikiArticle;
+    wikiArticle.HandleProperties();
+    nodeStore_1.NodeStore.nodeList.push(wikiArticle.node);
+  }
+}
+exports.MyData = MyData;
+
+/***/ }),
+
+/***/ "./includes/js/Semantic/propertyDataItem.ts":
+/*!**************************************************!*\
+  !*** ./includes/js/Semantic/propertyDataItem.ts ***!
+  \**************************************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.PropertyDataItem = void 0;
+class PropertyDataItem {
+  constructor(item, type, parentSemantProp) {
+    this.type = type;
+    this.item = item;
+    this.parentSemantProp = parentSemantProp;
+    this.typeStr = this.getTypeDescr(this.type);
+    this.NiceTypeName = this.getNodeType();
+  }
+  getNodeType() {
+    let p = this.parentSemantProp.getPropertyNiceName(this.parentSemantProp.propertyName);
+    if (!p || p === "") return this.typeStr;else return p;
+  }
+  getTypeDescr(type) {
+    switch (type) {
+      case 1:
+        return "Number";
+      case 2:
+        return "Text";
+      case 4:
+        return "Boolean";
+      case 5:
+        return "URI";
+      //oder Email //oder Telefon
+      case 6:
+        return "Date";
+      case 9:
+        return "Internal Link";
+      default:
+        return "Unknown Type";
+    }
+  }
+}
+exports.PropertyDataItem = PropertyDataItem;
+
+/***/ }),
+
+/***/ "./includes/js/Semantic/semanticPropertyAndItems.ts":
+/*!**********************************************************!*\
+  !*** ./includes/js/Semantic/semanticPropertyAndItems.ts ***!
+  \**********************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.SemanticPropertyAndItems = void 0;
+const INode_1 = __webpack_require__(/*! ../Model/INode */ "./includes/js/Model/INode.ts");
+const Link_1 = __webpack_require__(/*! ../Model/Link */ "./includes/js/Model/Link.ts");
+const propertyDataItem_1 = __webpack_require__(/*! ./propertyDataItem */ "./includes/js/Semantic/propertyDataItem.ts");
+const nodeType_1 = __webpack_require__(/*! ../Model/nodeType */ "./includes/js/Model/nodeType.ts");
+// noinspection UnnecessaryLocalVariableJS
+class SemanticPropertyAndItems {
+  constructor(property, dataitems, subject, parentArticle) {
+    this.propertyName = property;
+    this.nicePropertyName = this.NicePropertyName();
+    //Solo per alcune proprietà sono presenti dataitems e subject
+    this.dataitems = [];
+    for (const data of dataitems) {
+      let item = new propertyDataItem_1.PropertyDataItem(data.item, data.type, this);
+      this.dataitems.push(item);
+    }
+    this.subject = subject;
+    this.parentArticle = parentArticle;
+    this.sourceNodeUrl = parentArticle.Id;
+    this.nodeAndLinks = [];
+  }
+  IsSpecialProperty() {
+    /*
+          I valori delle property "_SKEY", "_MDAT" e "_ASK" sono proprietà speciali predefinite in Semantic MediaWiki.
+          "_SKEY" è una proprietà che viene utilizzata per memorizzare le chiavi di ricerca per ogni oggetto di dati, che vengono utilizzate per velocizzare le query su quell'oggetto.
+          "_MDAT" è una proprietà che viene utilizzata per memorizzare la data di modifica di un oggetto di dati.
+          "_ASK" è una proprietà che viene utilizzata per memorizzare una query SPARQL o una query di tipo "ask" per un oggetto di dati. Questa proprietà viene utilizzata per eseguire query complesse sui dati semantici.
+          * INST
+          */
+    return ["_SKEY", "_MDAT", "_ASK"].includes(this.propertyName);
+  }
+  SemanticNodeParse() {
+    this.SetUri();
+    for (let dataitem of this.dataitems) {
+      let node = this.ParsePropertyNode(dataitem);
+      let link = new Link_1.Link(nodeType_1.NodeType.Property, this.nicePropertyName, this.sourceNodeUrl, dataitem.item /*targetId*/, null, null, "");
+      this.nodeAndLinks.push({
+        node: node,
+        link: link
+      });
+    }
+  }
+  SetUri() {
+    if (!this.dataitems || this.dataitems.length == 0) return;
+    this.firstItem = this.dataitems[0];
+    if (this.firstItem.item === this.sourceNodeUrl) this.firstItem.item = `${this.firstItem.item}_${this.propertyName}`;
+  }
+  ParsePropertyNode(dataitem) {
+    //In the original version it was using the firstElement for the last 2 parameters
+    let name = this.parseNodeName(dataitem.item, dataitem.typeStr);
+    let hlink = this.parseHlink(dataitem.item, dataitem.typeStr, this.sourceNodeUrl);
+    let node = new INode_1.INode(nodeType_1.NodeType.Property, dataitem.item, name, "null", 0, 0, hlink);
+    return node;
+  }
+  NicePropertyName() {
+    let p = this.getPropertyNiceName(this.propertyName);
+    return p == "" ? this.propertyName.replace("_", " ") : p;
+  }
+  getPropertyNiceName(propertyName) {
+    switch (propertyName) {
+      case "_boo":
+        return "Boolean";
+      case "_cod":
+        return "Code";
+      case "_dat":
+        return "Date";
+      case "_ema":
+        return "Email";
+      case "_num":
+        return "Number";
+      //oder Email //oder Telefon
+      case "_qty":
+        return "Quantity";
+      case "_rec":
+        return "Record";
+      case "_tem":
+        return "Temperature";
+      case "_uri":
+        return "URI";
+      case "_wpg":
+        return "Internal Link";
+      case "Monolingual":
+        return "Monolingual Text";
+      case "Telephone":
+        return "Telephone";
+      case "_TEXT":
+        return "Text";
+      case "_INST":
+        return "Category" /*isA*/;
+      default:
+        return "";
+    }
+  }
+  parseNodeName(nameToParse, type) {
+    function parseNodeName() {
+      return nameToParse.split("#")[0].replace("_", " ");
+    }
+    let name;
+    switch (type) {
+      case "URI":
+        name = parseNodeName();
+        break;
+      case "Internal Link":
+        name = parseNodeName();
+        break;
+      case "Date":
+        name = nameToParse.substring(2);
+        break;
+      case "Boolean":
+        name = nameToParse === "t" ? "true" : "false";
+        break;
+      default:
+        name = parseNodeName();
+        break;
+    }
+    return name;
+  }
+  parseHlink(nameToParse, type, url) {
+    return type === "URI" ? url : type === "Internal Link" ? `./${nameToParse.split("#")[0]}` : "";
+  }
+}
+exports.SemanticPropertyAndItems = SemanticPropertyAndItems;
+
+/***/ }),
+
+/***/ "./includes/js/Semantic/semanticWikiApi.ts":
+/*!*************************************************!*\
+  !*** ./includes/js/Semantic/semanticWikiApi.ts ***!
+  \*************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.SemanticWikiApi = void 0;
+const utility_1 = __webpack_require__(/*! ../Ui/utility */ "./includes/js/Ui/utility.ts");
+const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
+const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
+const visibilityHandler_1 = __webpack_require__(/*! ../Ui/visibilityHandler */ "./includes/js/Ui/visibilityHandler.ts");
+const myData_1 = __webpack_require__(/*! ./myData */ "./includes/js/Semantic/myData.ts");
+class SemanticWikiApi {
+  static BrowseBySubject(wikiArticleTitle) {
+    app_1.MainEntry.downloadedArticles = [];
+    $.ajax({
+      url: mw.util.wikiScript("api"),
+      data: {
+        action: "browsebysubject",
+        subject: wikiArticleTitle,
+        format: "json"
+      },
+      type: "GET",
+      success: execSuccessCallback
+    });
+    function execSuccessCallback(data) {
+      if ((data === null || data === void 0 ? void 0 : data.edit) && data.edit.result === "Success") {
+        // debugger;
+      } else if (data === null || data === void 0 ? void 0 : data.error) {
+        alert(data);
+        // debugger;
+      } else {
+        SemanticWikiApi.BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle, new myData_1.MyData(data));
+      }
+    }
+  }
+  static BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle, data) {
+    /**
+     *  }
+     * JSON.stringify(data)
+     * https://jsonformatter.org/json-parser/5e9d52
+     */
+    app_1.MainEntry.resetData();
+    app_1.MainEntry.downloadedArticles.push(wikiArticleTitle);
+    data.Parse();
+    // MyClass.force.stop();
+    SemanticWikiApi.QueryBackLinks(wikiArticleTitle); //tramite questa chiama → MyClass.InitNodeAndLinks(data.query.backlinks);
+    $("#cluster_chart .chart").empty();
+    //  var k = cloneNode(nodeSet);
+    //  var m = cloneEdge(linkSet);
+    console.log("BrowseBySubject");
+    utility_1.Utility.drawCluster("Drawing1");
+    //drawCluster.update();
+    visibilityHandler_1.VisibilityHandler.hideElements();
+    // const elem: JQuery<HTMLElement> = $(`[id=${MyClass.focalNodeID}] a`);
+    // // @ts-ignore
+    // elem[0].__data__.px = Canvas.width / 2;
+    // // @ts-ignore
+    // elem[0].__data__.py = Canvas.height / 2;
+  }
+
+  static QueryBackLinks(wikiArticle) {
+    $.ajax({
+      url: mw.util.wikiScript("api"),
+      data: {
+        action: "query",
+        list: "backlinks",
+        bltitle: wikiArticle,
+        format: "json"
+      },
+      type: "GET",
+      success: BacklinksCallback
+    });
+    function BacklinksCallback(data) {
+      if ((data === null || data === void 0 ? void 0 : data.edit) && data.edit.result === "Success") {
+        // debugger;
+      } else if (data === null || data === void 0 ? void 0 : data.error) {
+        alert(data);
+        // debugger;
+      } else {
+        app_1.MainEntry.InitNodeAndLinks_Backlinks(data.query.backlinks);
+      }
+      $("#cluster_chart .chart").empty();
+      //  var k = cloneNode(nodeSet);
+      //  var m = cloneEdge(linkSet);
+      nodeStore_1.NodeStore.UpdateSourceAndTarget2();
+      console.log("BacklinksCallback");
+      utility_1.Utility.drawCluster("Drawing1");
+      //drawCluster.update();
+      visibilityHandler_1.VisibilityHandler.hideElements();
+    }
+  }
+  static AllPagesCall() {
+    $.ajax({
+      url: mw.util.wikiScript("api"),
+      data: {
+        action: "query",
+        list: "allpages",
+        aplimit: 1000,
+        format: "json"
+      },
+      type: "GET",
+      success(data) {
+        if (!(!((data === null || data === void 0 ? void 0 : data.edit) && data.edit.result === "Success") && !(data === null || data === void 0 ? void 0 : data.error))) {
+          return;
+        }
+        app_1.MainEntry.PopulateSelectorWithWikiArticleUi(data.query.allpages);
+      }
+    });
+  }
+}
+exports.SemanticWikiApi = SemanticWikiApi;
+class testUnit {
+  static test() {
+    const jsonString = "{\"query\":{\"subject\":\"Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##\",\"data\":[{\"property\":\"_INST\",\"dataitem\":[{\"type\":9,\"item\":\"Polarizzazione#14##\"},{\"type\":9,\"item\":\"Social_network#14##\"},{\"type\":9,\"item\":\"Cancel_Culture#14##\"},{\"type\":9,\"item\":\"Episodio#14##\"},{\"type\":9,\"item\":\"Razzismo#14##\"}]},{\"property\":\"_MDAT\",\"dataitem\":[{\"type\":6,\"item\":\"1/2022/12/21/9/38/54/0\"}]},{\"property\":\"_SKEY\",\"dataitem\":[{\"type\":2,\"item\":\"Abbandono dei principi giornalistici, nascita delle Fuck News ed episodi vari\"}]}],\"serializer\":\"SMW\\\\Serializers\\\\SemanticDataSerializer\",\"version\":2}}";
+    // const myData = new MyData(jsonString);
+  }
+}
+
+/***/ }),
+
+/***/ "./includes/js/Ui/Canvas.ts":
+/*!**********************************!*\
+  !*** ./includes/js/Ui/Canvas.ts ***!
+  \**********************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  var desc = Object.getOwnPropertyDescriptor(m, k);
+  if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+    desc = {
+      enumerable: true,
+      get: function () {
+        return m[k];
+      }
+    };
+  }
+  Object.defineProperty(o, k2, desc);
+} : function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  o[k2] = m[k];
+});
+var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
+  Object.defineProperty(o, "default", {
+    enumerable: true,
+    value: v
+  });
+} : function (o, v) {
+  o["default"] = v;
+});
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+  __setModuleDefault(result, mod);
+  return result;
+};
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.Canvas = exports.Chart = void 0;
+const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
+const utility_1 = __webpack_require__(/*! ./utility */ "./includes/js/Ui/utility.ts");
+class Chart {
+  constructor() {
+    this.width = $(".chart")[0].clientWidth;
+    this.height = $(".chart")[0].clientHeight;
+  }
+}
+exports.Chart = Chart;
+class Canvas {
+  constructor() {
+    Canvas.InitCanvas();
+  }
+  /**
+   * Initialize the canvas and create the svg element with all its attributes.
+   * @returns {d3.Selection<any, any, any, any>} svgCanvas - The svg canvas element
+   */
+  static InitCanvas() {
+    //outer = .chart
+    //inner = svgCanvas
+    //inner = .focalNodeCanvas
+    let chart = new Chart();
+    d3.selection.prototype.setWidthAndHeight = function (width, height) {
+      this.attr("width", width).attr("height", height);
+      return this;
+    };
+    this.svgCanvas = d3.select("#cluster_chart .chart").append("svg:svg").call((selection, ...args) => {
+      d3.zoom().on("zoom", event => {
+        utility_1.Utility.scale = event.transform.k;
+        selection.attr("transform", event.transform);
+      })(selection, ...args);
+    }).setWidthAndHeight(this.width, this.heigth).attr("id", "svgCanvas").append("svg:g").attr("class", "focalNodeCanvas");
+    Canvas.setCanvasSize();
+  }
+  static updateWindowSize() {
+    console.log("Called method updateWindow");
+    // let c = new Chart()
+    // this.setCanvasSize(c.width - 60, c.height - 60);
+    let width = $(".chart")[0].clientWidth - 60;
+    let height = $(".chart")[0].clientHeight - 60;
+    Canvas.svgCanvas.attr("width", width).attr("height", height);
+    $("#svgCanvas").width(width + 90);
+    $("#svgCanvas").height(height + 60);
+  }
+  static setCanvasSize(canvasWidth = $(".chart")[0].clientWidth, canvasHeigth = $(".chart")[0].clientHeight) {
+    this.width = canvasWidth + this.margin.left + this.margin.right;
+    this.heigth = canvasHeigth + this.margin.top + this.margin.bottom;
+    if (!Canvas.svgCanvas) console.log("svgCanvas not set");
+    this.svgCanvas.attr("width", this.width).attr("height", this.heigth);
+    console.log("Canvas width: " + this.width);
+    console.log("Canvas height: " + this.heigth);
+    // Canvas.svgCanvas.setWidthAndHeight(Canvas.width, Canvas.heigth)
+  }
+}
+
+exports.Canvas = Canvas;
+Canvas.margin = {
+  top: 120,
+  right: 120,
+  bottom: 120,
+  left: 120
+};
+
+/***/ }),
+
+/***/ "./includes/js/Ui/UiEventHandler.ts":
+/*!******************************************!*\
+  !*** ./includes/js/Ui/UiEventHandler.ts ***!
+  \******************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.UiEventHandler = void 0;
+const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
+const semanticWikiApi_1 = __webpack_require__(/*! ../Semantic/semanticWikiApi */ "./includes/js/Semantic/semanticWikiApi.ts");
+const legendManager_1 = __webpack_require__(/*! ./legendManager */ "./includes/js/Ui/legendManager.ts");
+const utility_1 = __webpack_require__(/*! ./utility */ "./includes/js/Ui/utility.ts");
+const TRANSACTION_DURATION = 250;
+class UiEventHandler {
+  static mouseClickNode(selector, clickText) {
+    //TODO: clickText è di tipo capture? Devo mettere i ... sul chiamante?
+    const thisObject = selector;
+    const typeValue = thisObject.attr("type_value");
+    if (!clickText && typeValue === 'Internal Link') {
+      const nodeName = thisObject.node().__data__.name;
+      if (!app_1.MainEntry.downloadedArticles.includes(nodeName)) {
+        semanticWikiApi_1.SemanticWikiApi.BrowseBySubject(nodeName);
+      }
+    }
+    clickText = false;
+  }
+  static mouseClickNodeText(selector, clickText) {
+    const typeValue = selector.attr("type_value");
+    let node = selector.datum();
+    if (typeValue === "Internal Link" || typeValue === "URI") {
+      if (node) {
+        window.open(node.hlink);
+      }
+    }
+    clickText = true;
+  }
+  static nodeMouseOver(selector) {
+    const typeValue = selector.attr("type_value");
+    const strippedTypeValue = typeValue.replace(/ /g, "_");
+    selector.select("circle").transition().duration(TRANSACTION_DURATION).attr("r", d => d.IsFocalNode() ? 65 : 15);
+    selector.select("text").transition().duration(TRANSACTION_DURATION).style("font", "bold 20px Arial").attr("fill", "Blue");
+    legendManager_1.LegendManager.setLegendStyles(strippedTypeValue, "Maroon", 1.2 * 6);
+  }
+  static nodeMouseOut(selector) {
+    const typeValue = selector.attr("type_value");
+    const colorValue = selector.attr("color_value");
+    const strippedTypeValue = typeValue.replace(/ /g, "_");
+    selector.select("circle").transition().duration(TRANSACTION_DURATION).attr("r", d => {
+      return d.IsFocalNode() ? utility_1.Utility.centerNodeSize : utility_1.Utility.nodeSize;
+    });
+    selector.select("text").transition().duration(TRANSACTION_DURATION).style("font", "normal 16px Arial").attr("fill", "Blue");
+    legendManager_1.LegendManager.setLegendStyles(strippedTypeValue, colorValue, 6);
+  }
+}
+exports.UiEventHandler = UiEventHandler;
+
+/***/ }),
+
+/***/ "./includes/js/Ui/legendManager.ts":
+/*!*****************************************!*\
+  !*** ./includes/js/Ui/legendManager.ts ***!
+  \*****************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  var desc = Object.getOwnPropertyDescriptor(m, k);
+  if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+    desc = {
+      enumerable: true,
+      get: function () {
+        return m[k];
+      }
+    };
+  }
+  Object.defineProperty(o, k2, desc);
+} : function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  o[k2] = m[k];
+});
+var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
+  Object.defineProperty(o, "default", {
+    enumerable: true,
+    value: v
+  });
+} : function (o, v) {
+  o["default"] = v;
+});
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+  __setModuleDefault(result, mod);
+  return result;
+};
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.LegendManager = void 0;
+const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
+const ColorHelper_1 = __webpack_require__(/*! ../Helpers/ColorHelper */ "./includes/js/Helpers/ColorHelper.ts");
+const nodeManager_1 = __webpack_require__(/*! ./nodeManager */ "./includes/js/Ui/nodeManager.ts");
+const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
+const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts");
+const visibilityHandler_1 = __webpack_require__(/*! ./visibilityHandler */ "./includes/js/Ui/visibilityHandler.ts");
+class LegendManager {
+  static DrawLegend() {
+    const sortedColors = ColorHelper_1.ColorHelper.GetColors("colorScale20", nodeStore_1.NodeStore.nodeList);
+    // Plot the bullet circles...
+    // Print Legend Title...
+    LegendManager.PrintLegendTitle();
+    LegendManager.PlotTheBulletCircles(sortedColors);
+    // Create legend text that acts as label keys...
+    LegendManager.CreateLegendTextThatActsAsLabelKeys(sortedColors);
+  }
+  static clickLegend(selector) {
+    const typeValue = selector.attr("type_value");
+    let invisibleType = [];
+    const invIndexType = invisibleType.indexOf(typeValue);
+    if (invIndexType > -1) {
+      invisibleType.splice(Number(typeValue), 1);
+    } else {
+      invisibleType.push(typeValue);
+    }
+    $(".node").each((index, el) => visibilityHandler_1.VisibilityHandler.MakeInvisible(el, typeValue));
+    $(".gLink").each((index, el) => visibilityHandler_1.VisibilityHandler.MakeInvisible2(el));
+  }
+  static setLegendStyles(strippedTypeValue, colorValue, radius) {
+    const legendBulletSelector = `.legendBullet-${strippedTypeValue}`;
+    const selectedBullet = d3.selectAll(legendBulletSelector);
+    selectedBullet.style("fill", colorValue);
+    selectedBullet.attr("r", radius);
+    const legendTextSelector = `.legendText-${strippedTypeValue}`;
+    const selectedLegendText = d3.selectAll(legendTextSelector);
+    selectedLegendText.style("font", colorValue === "Maroon" ? "bold 14px Arial" : "normal 14px Arial");
+    selectedLegendText.style("fill", colorValue === "Maroon" ? "Maroon" : "Black");
+  }
+  static PlotTheBulletCircles(sortedColors) {
+    Canvas_1.Canvas.svgCanvas.selectAll("focalNodeCanvas").data(sortedColors).enter().append("svg:circle") // Append circle elements
+    .attr("cx", 20).attr("cy", (d, i) => 45 + i * 20).attr("stroke-width", ".5").style("fill", d => ColorHelper_1.ColorHelper.color_hash[d]).attr("r", 6).attr("color_value", d => ColorHelper_1.ColorHelper.color_hash[d]).attr("type_value", d => d).attr("index_value", (d, i) => `index-${i}`).attr("class", d => {
+      const strippedString = d.replace(/ /g, "_");
+      return `legendBullet-${strippedString}`;
+    }).on("mouseover", function (d) {
+      LegendManager.typeMouseOver(d3.select(this), d.nodeSize);
+    }).on("mouseout", function (d) {
+      LegendManager.typeMouseOut(d3.select(this), d.nodeSize);
+    }).on("click", function () {
+      LegendManager.clickLegend(d3.select(this));
+    });
+  }
+  static typeMouseOver(selector, nodeSize) {
+    const typeValue = selector.attr("type_value");
+    const strippedTypeValue = typeValue.replace(/ /g, "_");
+    LegendManager.setLegendStyles("strippedTypeValue", "Maroon", 1.2 * 6);
+    nodeManager_1.NodeManager.setNodeStyles(strippedTypeValue, "Maroon", "bold", nodeSize, false);
+  }
+  static typeMouseOut(selector, nodeSize) {
+    const typeValue = selector.attr("type_value");
+    const colorValue = selector.attr("color_value");
+    const strippedTypeValue = typeValue.replace(/ /g, "_");
+    LegendManager.setLegendStyles(strippedTypeValue, colorValue, 6);
+    nodeManager_1.NodeManager.setNodeStyles(strippedTypeValue, "Blue", "normal", nodeSize, false);
+  }
+  static CreateLegendTextThatActsAsLabelKeys(sortedColors) {
+    Canvas_1.Canvas.svgCanvas.selectAll("a.legend_link").data(sortedColors) // Instruct to bind dataSet to text elements
+    .enter().append("svg:a") // Append legend elements
+    .append("text").attr("text-anchor", "center").attr("x", 40).attr("y", (d, i) => 45 + i * 20).attr("dx", 0).attr("dy", "4px") // Controls padding to place text in alignment with bullets
+    .text(d => d).attr("color_value", d => ColorHelper_1.ColorHelper.color_hash[d]).attr("type_value", d => d).attr("index_value", (d, i) => `index-${i}`).attr("class", d => {
+      const strippedString = d.replace(/ /g, "_");
+      return `legendText-${strippedString}`;
+    }).style("fill", "Black").style("font", "normal 14px Arial").on("mouseover", LegendManager.typeMouseOver).on("mouseout", LegendManager.typeMouseOut);
+  }
+  static PrintLegendTitle() {
+    Canvas_1.Canvas.svgCanvas.append("text").attr("class", "region").text("Color Keys for Data Types...").attr("x", 15).attr("y", 25).style("fill", "Black").style("font", "bold 16px Arial").attr("text-anchor", "start");
+  }
+}
+exports.LegendManager = LegendManager;
+
+/***/ }),
+
+/***/ "./includes/js/Ui/nodeManager.ts":
+/*!***************************************!*\
+  !*** ./includes/js/Ui/nodeManager.ts ***!
+  \***************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  var desc = Object.getOwnPropertyDescriptor(m, k);
+  if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+    desc = {
+      enumerable: true,
+      get: function () {
+        return m[k];
+      }
+    };
+  }
+  Object.defineProperty(o, k2, desc);
+} : function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  o[k2] = m[k];
+});
+var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
+  Object.defineProperty(o, "default", {
+    enumerable: true,
+    value: v
+  });
+} : function (o, v) {
+  o["default"] = v;
+});
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+  __setModuleDefault(result, mod);
+  return result;
+};
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.NodeManager = void 0;
+const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
+const ColorHelper_1 = __webpack_require__(/*! ../Helpers/ColorHelper */ "./includes/js/Helpers/ColorHelper.ts");
+const utility_1 = __webpack_require__(/*! ./utility */ "./includes/js/Ui/utility.ts");
+const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts");
+const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
+const UiEventHandler_1 = __webpack_require__(/*! ./UiEventHandler */ "./includes/js/Ui/UiEventHandler.ts");
+class NodeManager {
+  /*
+  They are initially invisible
+  * */
+  static CreateNodes() {
+    /*
+    In the provided code, the enter() function is used to create a new g group for each element in the NodeStore.nodeList
+    dataset that does not yet have a corresponding element in the HTML. The "node" class attribute and several other attributes
+    are then assigned to the created group. Additionally, the events on("mouseover", (d)=> this.nodeMouseOver),
+    on("click", () => this.mouseClickNode), on("mouseout", () => this.nodeMouseOut) are associated with the created group.
+    In summary enter() allows to select and operate on data elements that haven't been associated yet to DOM elements.
+    * */
+    console.log(nodeStore_1.NodeStore.nodeList.length);
+    const node = Canvas_1.Canvas.svgCanvas.selectAll(".node");
+    let x1 = node.data(nodeStore_1.NodeStore.nodeList);
+    let x2 = x1.enter();
+    let x3 = x2.append("g").attr("class", "node").attr("id", node => node.id).attr("type_value", d => d.type).attr("color_value", d => ColorHelper_1.ColorHelper.color_hash[d.type]).attr("xlink:href", d => d.hlink).attr("fixed", function (d) {
+      return d.fixed;
+    }).on("mouseover", () => UiEventHandler_1.UiEventHandler.nodeMouseOver).on("click", () => UiEventHandler_1.UiEventHandler.mouseClickNode).on("mouseout", () => UiEventHandler_1.UiEventHandler.nodeMouseOut)
+    //TODO: controllare qui
+    // .call(Utility.force.drag)
+    .attr("transform", function (d) {
+      return `translate(${d.x},${d.y})`;
+    }).append("a");
+    return x3;
+  }
+  static setNodeStyles(strippedTypeValue, colorValue, fontWeight, nodeSize, focalNode) {
+    d3.selectAll(`.nodeText-${strippedTypeValue}`).style("font", `${fontWeight} 16px Arial`).style("fill", colorValue);
+    d3.selectAll(`.nodeCircle-${strippedTypeValue}`).style("fill", colorValue).style("stroke", colorValue).attr("r", focalNode ? nodeSize : 1.2 * nodeSize);
+    if (focalNode) {
+      d3.selectAll(".focalNodeCircle").style("stroke", colorValue).style("fill", "White");
+      d3.selectAll(".focalNodeText").style("fill", colorValue).style("font", `${fontWeight} 16px Arial`);
+    }
+  }
+  static updateNodePositions(node) {
+    node.datum().updatePositions();
+    node.attr("cx", d => d.x).attr("cy", d => d.y);
+  }
+  static AppendTextToNodes(node) {
+    node.append("text").attr("x", d => d.IsFocalNode() ? 0 : 20).attr("y", d => {
+      return d.IsFocalNode() ? 0 : -10;
+    }).attr("text-anchor", d => d.IsFocalNode() ? "middle" : "start").on("click", function () {
+      UiEventHandler_1.UiEventHandler.mouseClickNodeText(d3.select(this), false);
+    }).attr("font-family", "Arial, Helvetica, sans-serif").style("font", "normal 16px Arial").attr("fill", "Blue").style("fill", d => ColorHelper_1.ColorHelper.color_hash[d.type]).attr("type_value", d => d.type).attr("color_value", d => ColorHelper_1.ColorHelper.color_hash[d.type]).attr("class", d => {
+      const type_string = d.type.replace(/ /g, "_");
+      //return "nodeText-" + type_string; })
+      return d.IsFocalNode() ? "focalNodeText" : `nodeText-${type_string}`;
+    }).attr("dy", ".35em").text(d => d.name);
+  }
+  static AppendCirclesToNodes(node) {
+    node.append("circle").attr("x", function (d) {
+      return d.x;
+    }).attr("y", function (d) {
+      return d.y;
+    }).attr("r", d => d.IsFocalNode() ? utility_1.Utility.centerNodeSize : utility_1.Utility.nodeSize).style("fill", "White") // Make the nodes hollow looking
+    .style("fill", "Blue").attr("type_value", d => d.type).attr("color_value", d => ColorHelper_1.ColorHelper.color_hash[d.type]).attr("fixed", function (d) {
+      return d.fixed;
+    }).attr("x", function (d) {
+      return d.fixed ? Canvas_1.Canvas.width / 2 : d.x;
+    }).attr("y", function (d) {
+      return d.fixed ? Canvas_1.Canvas.heigth / 2 : d.y;
+    }).attr("class", d => {
+      const strippedString = d.type.replace(/ /g, "_");
+      // return "nodeCircle-" + strippedString; })
+      return d.fixed ? "focalNodeCircle" : `nodeCircle-${strippedString}`;
+    }).style("stroke-width", 5) // Give the node strokes some thickness
+    .style("stroke", d => ColorHelper_1.ColorHelper.color_hash[d.type]); // Node stroke colors
+    // .call(force.drag);
+  }
+}
+
+exports.NodeManager = NodeManager;
+
+/***/ }),
+
+/***/ "./includes/js/Ui/utility.ts":
+/*!***********************************!*\
+  !*** ./includes/js/Ui/utility.ts ***!
+  \***********************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  var desc = Object.getOwnPropertyDescriptor(m, k);
+  if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+    desc = {
+      enumerable: true,
+      get: function () {
+        return m[k];
+      }
+    };
+  }
+  Object.defineProperty(o, k2, desc);
+} : function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  o[k2] = m[k];
+});
+var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
+  Object.defineProperty(o, "default", {
+    enumerable: true,
+    value: v
+  });
+} : function (o, v) {
+  o["default"] = v;
+});
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+  __setModuleDefault(result, mod);
+  return result;
+};
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.Utility = void 0;
+const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
+const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts");
+const legendManager_1 = __webpack_require__(/*! ./legendManager */ "./includes/js/Ui/legendManager.ts");
+const nodeManager_1 = __webpack_require__(/*! ./nodeManager */ "./includes/js/Ui/nodeManager.ts");
+const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
+// noinspection UnnecessaryLocalVariableJS
+class Utility {
+  /**
+   * Draws a cluster using the provided data.
+   *
+   * @param {string} drawingName - A unique drawing identifier that has no spaces, no "." and no "#" characters.
+   *
+   *              0 = No Sort.  Maintain original order.
+   *              1 = Sort by arc value size.
+   */
+  static drawCluster(drawingName) {
+    new Canvas_1.Canvas();
+    console.log("N° NodeStore.nodeList: " + nodeStore_1.NodeStore.nodeList.length);
+    if (nodeStore_1.NodeStore.nodeList.length == 0) return;
+    // Create Nodes
+    this.nodes = nodeManager_1.NodeManager.CreateNodes();
+    // Append circles to Nodes
+    nodeManager_1.NodeManager.AppendCirclesToNodes(this.nodes);
+    // Append text to Nodes
+    nodeManager_1.NodeManager.AppendTextToNodes(this.nodes);
+    // Append text to Link edges
+    this.linkText = this.AppendTextToLinkEdges();
+    // Draw lines for Links between Nodes
+    this.DrawLinesForLinksBetweenNodes();
+    let clickText = false;
+    // Create a force layout and bind Nodes and Links
+    this.force = this.CreateAForceLayoutAndBindNodesAndLinks().on("tick", () => {
+      this.Tick();
+    });
+    //Build the Arrows
+    this.buildArrows();
+    legendManager_1.LegendManager.DrawLegend();
+    d3.select(window).on('resize.updatesvg', Canvas_1.Canvas.updateWindowSize);
+  }
+  static CreateAForceLayoutAndBindNodesAndLinks() {
+    let force = d3.forceSimulation().nodes(nodeStore_1.NodeStore.nodeList).force("link", d3.forceLink(nodeStore_1.NodeStore.linkList)).force("charge", d3.forceManyBody().strength(-1000)).force("gravity", d3.forceManyBody().strength(.01)).force("friction", d3.forceManyBody().strength(.2)).force("link", d3.forceLink().id(d => d.id).distance(100).strength(1)) //=> d.id).strength(9))
+    .force("link", d3.forceLink().id(d => d.id).distance(d => $(".chart")[0].clientWidth < $(".chart")[0].clientHeight ? $(".chart")[0].clientWidth * 1 / 3 : $(".chart")[0].clientHeight * 1 / 3)).force("center", d3.forceCenter(Canvas_1.Canvas.width / 2, Canvas_1.Canvas.heigth / 2)).restart();
+    return force;
+  }
+  static DrawLinesForLinksBetweenNodes() {
+    this.link = Canvas_1.Canvas.svgCanvas.selectAll(".gLink").data(nodeStore_1.NodeStore.linkList /*force.links()*/).enter().append("g").attr("class", "gLink").attr("class", "link").attr("endNode", d => d.targetId).attr("startNode", d => d.sourceId).attr("targetType", d => d.target.type).attr("sourceType", d => d.source.type).append("line").style("stroke", "#ccc").style("stroke-width", "1.5px").attr("marker-end", (d, i) => `url(#arrow_${i})`).attr("x1", l => l.source.x).attr("y1", l => l.source.y).attr("x2", l => l.target.x).attr("y2", l => l.target.y);
+  }
+  static AppendTextToLinkEdges() {
+    let linkText = Canvas_1.Canvas.svgCanvas.selectAll(".gLink").data(nodeStore_1.NodeStore.linkList).append("text").attr("font-family", "Arial, Helvetica, sans-serif")
+    // .call(this.setLinkTextInMiddle, ink)
+    .attr("fill", "Black").style("font", "normal 12px Arial").attr("dy", ".35em").text(link => link.linkName);
+    if (linkText.empty()) {
+      console.log("linkText is empty");
+    } else {
+      this.setLinkTextInMiddle(linkText);
+    }
+    return linkText;
+  }
+  static updateLinkPositions(linkText) {
+    linkText.attr("x1", link => link.source.x).attr("y1", link => link.source.y).attr("x2", link => link.target.x).attr("y2", link => link.target.y);
+  }
+  static Tick() {
+    Utility.updateLinkPositions(this.link);
+    nodeManager_1.NodeManager.updateNodePositions(this.nodes);
+    Utility.updateLinkPositions(this.link);
+    this.nodes.attr("transform", d => `translate(${d.x},${d.y})`);
+    // Questo pezzo di codice si occupa di aggiungere del testo ai link e di posizionarlo nella parte centrale del link stesso.
+    // Il testo viene posizionato in modo che sia metà strada tra il nodo di partenza e quello di destinazione. Se il nodo di destinazione ha una coordinata x maggiore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y). Se invece il nodo di destinazione ha una coordinata x minore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y).
+    this.setLinkTextInMiddle(Utility.linkText);
+  }
+  /**
+   Calculates and sets the position of the text element for the given link.
+   @param linkText
+   @returns {void}
+   */
+  static setLinkTextInMiddle(linkText) {
+    let center = linkText.datum().CalculateMidpoint();
+    linkText.attr("x", center.x).attr("y", center.y);
+    return linkText;
+  }
+  /**
+   * Builds the arrows for the specified SVG canvas.
+   */
+  static buildArrows() {
+    /*
+    * Il tipo marker è un tipo di elemento SVG (Scalable Vector Graphics). Viene utilizzato per definire un segno o un simbolo da inserire in un altro elemento SVG, ad esempio una linea o un percorso. In questo caso, il codice sta creando un marker che verrà inserito come "punta di freccia" in tutti gli elementi di classe gLink.
+    Il marker viene creato con l'elemento marker di SVG, che ha un insieme di attributi che ne definiscono l'aspetto e il comportamento. Gli attributi id, viewBox, refX, refY, markerWidth e markerHeight sono tutti attributi standard del tag marker di SVG, mentre l'attributo orient è un attributo non standard che viene utilizzato per specificare l'orientamento del simbolo all'interno del marker.
+    L'attributo id viene utilizzato per assegnare un identificatore univoco al marker, che può essere utilizzato per fare riferimento al marker in altri punti del codice o nei fogli di stile CSS. L'attributo viewBox definisce l'area di visualizzazione del marker e il suo contenuto. L'attributo refX e refY vengono utilizzati per specificare le coordinate del punto di riferimento del marker, ovvero il punto del marker che verrà ancorato al percorso o all'elemento che lo utilizza. Gli attributi markerWidth e markerHeight definiscono la dimensione del marker.
+    Una volta creato il marker, viene aggiunto un elemento path che definisce la forma del simbolo all'interno del marker. In questo caso, la forma del simbolo è una freccia, definita dal valore "M0,-5L10,0L0,5" dell'attributo d dell'elemento path.*/
+    let selection = Canvas_1.Canvas.svgCanvas.selectAll('.gLink');
+    selection.append('marker').attr('id', (d, i) => `arrow_${i}`).attr('viewBox', '0 -5 10 10').attr('refX', d => d.pointsFocalNode ? 55 : 20).attr('refY', 0).attr('markerWidth', 8).attr('markerHeight', 8).attr('orient', 'auto').append('svg:path').attr('d', 'M0,-5L10,0L0,5');
+  }
+}
+exports.Utility = Utility;
+Utility.centerNodeSize = 50;
+Utility.nodeSize = 10;
+Utility.scale = 1;
+
+/***/ }),
+
+/***/ "./includes/js/Ui/visibilityHandler.ts":
+/*!*********************************************!*\
+  !*** ./includes/js/Ui/visibilityHandler.ts ***!
+  \*********************************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.VisibilityHandler = void 0;
+class VisibilityHandler {
+  static hideElements() {
+    $(".node").each((index, element) => this.HideEach(element));
+    $(".gLink").each((index, element) => this.SomethingRelatedToNodeVisibility(element));
+  }
+  static HideEach(element) {
+    let el = element;
+    let node = el.__data__;
+    const invIndex = this.invisibleType.indexOf(node.type);
+    if (!(invIndex > -1)) {
+      return;
+    }
+    $(el).toggle();
+    const invIndexNode = this.invisibleNode.indexOf(node.id);
+    if (invIndexNode === -1) {
+      this.invisibleNode.push(node.id);
+    }
+  }
+  static SomethingRelatedToNodeVisibility(el) {
+    let link = el.__data__;
+    const valSource = link.sourceId;
+    const valTarget = link.targetId;
+    let indexEdge;
+    const indexSource = this.invisibleNode.indexOf(valSource);
+    const indexTarget = this.invisibleNode.indexOf(valTarget);
+    indexEdge = this.invisibleEdge.indexOf(`${valSource}_${valTarget}_${link.linkName}`);
+    if (indexEdge > -1) {
+      //Einer der beiden Knoten ist unsichtbar, aber Kante noch nicht
+      $(this).toggle();
+      //    invisibleEdge.push(valSource + "_" + valTarget + "_" + el.__data__.linkName);
+    } else if (indexSource > -1 || indexTarget > -1) {
+      //Knoten sind nicht unsichtbar, aber Kante ist es
+      $(this).toggle();
+      this.invisibleEdge.push(`${valSource}_${valTarget}_${link.linkName}`);
+    }
+  }
+  static MakeInvisible(el, typeValue) {
+    let node = el.__data__;
+    if (node.type !== typeValue) {
+      return;
+    }
+    const invIndex = VisibilityHandler.invisibleNode.indexOf(node.id);
+    if (invIndex > -1) {
+      VisibilityHandler.invisibleNode.splice(invIndex, 1);
+    } else {
+      VisibilityHandler.invisibleNode.push(node.id);
+    }
+    $(this).toggle();
+  }
+  static MakeInvisible2(el) {
+    //      debugger;
+    let data = el.__data__;
+    const valSource = data.sourceId;
+    const valTarget = data.targetId;
+    //if beide
+    const indexSource = VisibilityHandler.invisibleNode.indexOf(valSource);
+    const indexTarget = VisibilityHandler.invisibleNode.indexOf(valTarget);
+    const indexEdge = VisibilityHandler.invisibleEdge.indexOf(`${valSource}_${valTarget}_${data.linkName}`);
+    if ((indexSource > -1 || indexTarget > -1) && indexEdge === -1) {
+      //Einer der beiden Knoten ist unsichtbar, aber Kante noch nicht
+      $(this).toggle();
+      VisibilityHandler.invisibleEdge.push(`${valSource}_${valTarget}_${data.linkName}`);
+    } else if (indexSource === -1 && indexTarget === -1 && indexEdge === -1) {
+      //Beide Knoten sind nicht unsichtbar und Kante ist nicht unsichtbar
+    } else if (indexSource === -1 && indexTarget === -1 && indexEdge > -1) {
+      //Knoten sind nicht unsichtbar, aber Kante ist es
+      $(this).toggle();
+      VisibilityHandler.invisibleEdge.splice(indexEdge, 1);
+    }
+  }
+}
+exports.VisibilityHandler = VisibilityHandler;
+VisibilityHandler.invisibleNode = [];
+VisibilityHandler.invisibleEdge = [];
+VisibilityHandler.invisibleType = [];
+
+/***/ }),
+
+/***/ "./includes/js/app.ts":
+/*!****************************!*\
+  !*** ./includes/js/app.ts ***!
+  \****************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.MainEntry = void 0;
+const Link_1 = __webpack_require__(/*! ./Model/Link */ "./includes/js/Model/Link.ts");
+__webpack_require__(/*! select2 */ "./node_modules/select2/dist/js/select2.js");
+const INode_1 = __webpack_require__(/*! ./Model/INode */ "./includes/js/Model/INode.ts");
+const semanticWikiApi_1 = __webpack_require__(/*! ./Semantic/semanticWikiApi */ "./includes/js/Semantic/semanticWikiApi.ts");
+const nodeType_1 = __webpack_require__(/*! ./Model/nodeType */ "./includes/js/Model/nodeType.ts");
+const nodeStore_1 = __webpack_require__(/*! ./nodeStore */ "./includes/js/nodeStore.ts");
+class MainEntry {
+  constructor() {
+    MainEntry.InitialPageLoad();
+  }
+  static InitialPageLoad() {
+    //
+    semanticWikiApi_1.SemanticWikiApi.AllPagesCall();
+    $(() => {
+      this.HandleOnClick();
+    });
+  }
+  static PopulateSelectorWithWikiArticleUi(articles) {
+    MainEntry.downloadedArticles = [];
+    for (const article of articles) {
+      $("#wikiArticle").append(`<option value="${article.title}">${article.title}</option>`);
+    }
+    // require("select2");
+    //
+    // $("#wikiArticle").select2({
+    //     placeholder: "Select a Wiki Article",
+    //     allowClear: true
+    // });
+  }
+
+  static HandleOnClick() {
+    $("#visualiseSite").on("click", () => {
+      //Get the selected article in the combobox
+      let wikiArticleTitle = $("#wikiArticle").val();
+      if (wikiArticleTitle === "") {
+        // Error Message
+        $("#error_msg").show();
+      } else {
+        $("#error_msg").hide();
+        semanticWikiApi_1.SemanticWikiApi.BrowseBySubject(wikiArticleTitle);
+      }
+    });
+  }
+  static InitNodeAndLinks_Backlinks(backlinks) {
+    for (let article of backlinks) {
+      let node = new INode_1.INode(nodeType_1.NodeType.Backlink, article.title, article.title, "Unknown", 0, 0, article.title);
+      let link = new Link_1.Link(nodeType_1.NodeType.Backlink, "Unknown", article.title, MainEntry.focalNodeID, null, null, "");
+      nodeStore_1.NodeStore.nodeList.push(node);
+      nodeStore_1.NodeStore.linkList.push(link);
+    }
+  }
+  static resetData() {
+    nodeStore_1.NodeStore.nodeList = [];
+    nodeStore_1.NodeStore.linkList = [];
+    MainEntry.downloadedArticles = [];
+  }
+}
+exports.MainEntry = MainEntry;
+MainEntry.downloadedArticles = [];
+/*Primary Node of Context*/
+MainEntry.focalNodeID = ""; // Esempio  di valore reale: 'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
+new MainEntry();
+
+/***/ }),
+
+/***/ "./includes/js/nodeStore.ts":
+/*!**********************************!*\
+  !*** ./includes/js/nodeStore.ts ***!
+  \**********************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.NodeStore = void 0;
+const INode_1 = __webpack_require__(/*! ./Model/INode */ "./includes/js/Model/INode.ts");
+const app_1 = __webpack_require__(/*! ./app */ "./includes/js/app.ts");
+class NodeStore {
+  // private constructor() {
+  //     NodeStore.nodeList = [];
+  //     NodeStore.linkList = [];
+  // }
+  /*
+      @param {INode[]} nodeSetApp - Set of nodes and their relevant data.
+      @param {Link[]} linkSetApp - Set of links and their relevant data.
+   */
+  static UpdateSourceAndTarget2() {
+    console.log("Updating Source and Target of " + this.linkList.length + " links");
+    // Append the source Node and the target Node to each Link
+    for (const link of this.linkList) {
+      NodeStore.UpdateSourceAndTarget(link);
+    }
+  }
+  static UpdateSourceAndTarget(link) {
+    link.source = NodeStore.getNodeById(link.sourceId);
+    link.target = NodeStore.getNodeById(link.targetId);
+    link.direction = link.sourceId === app_1.MainEntry.focalNodeID ? "OUT" : "IN";
+  }
+  static getNodeById(sourceId) {
+    let p = NodeStore.nodeList.find(node => node.id === sourceId);
+    if (p instanceof INode_1.INode) {
+      return p;
+    } else {
+      console.log("N° of nodes " + NodeStore.nodeList.length);
+      console.log("N° of links " + NodeStore.linkList.length);
+      console.log("sourceId " + sourceId);
+      console.log(NodeStore.nodeList.map(node => node.id));
+      throw new DOMException("Node not found");
+    }
+  }
+}
+exports.NodeStore = NodeStore;
+NodeStore.nodeList = [];
+NodeStore.linkList = [];
+
+/***/ }),
+
 /***/ "./node_modules/jquery/dist/jquery.js":
 /*!********************************************!*\
   !*** ./node_modules/jquery/dist/jquery.js ***!
@@ -16733,1445 +18159,6 @@ S2.define('jquery.select2',[
   // Return the Select2 instance for anyone who is importing it.
   return select2;
 }));
-
-
-/***/ }),
-
-/***/ "./includes/js/Helpers/ColorHelper.ts":
-/*!********************************************!*\
-  !*** ./includes/js/Helpers/ColorHelper.ts ***!
-  \********************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ColorHelper = void 0;
-const d3_scale_chromatic_1 = __importDefault(__webpack_require__(/*! d3-scale-chromatic */ "./node_modules/d3-scale-chromatic/src/index.js"));
-class ColorHelper {
-    static colorScaleMW(type) {
-        const colorArray = Object.entries(this.color).map(([name, color]) => ({ name, color }));
-        const colorObject = colorArray.find(c => c.name === type);
-        return colorObject ? colorObject.color : "undefined";
-    }
-    static GetColor(colors) {
-        let colorScale;
-        switch (colors) {
-            // case "colorScale10":
-            //     colorScale = d3.schemeSet1;
-            //     break;
-            // case "colorScale20":
-            //     colorScale = d3.schemeSet2;
-            //     break;
-            // case "colorScale20b":
-            //     colorScale = d3.schemeSet3;
-            //     break;
-            default:
-                colorScale = d3_scale_chromatic_1.default.schemeSet1;
-        }
-        return colorScale;
-    }
-    static GetColors(colors, nodeSetApp) {
-        // Color Scale Handling...
-        //ColorHelper.GetColor(colors);
-        // Create a hash that maps colors to types...
-        nodeSetApp.forEach((d) => {
-            this.color_hash[d.type] = d.type;
-        });
-        const sortedColors = ColorHelper.keys(this.color_hash).sort();
-        sortedColors.forEach((d) => {
-            this.color_hash[d] = ColorHelper.colorScaleMW(d);
-            //document.writeln(color_hash[d]);
-        });
-        // Add colors to original node records...
-        nodeSetApp.forEach((d) => {
-            d.color = this.color_hash[d.type];
-            //document.writeln(d.type);
-        });
-        return sortedColors;
-    }
-    static keys(obj) {
-        const keys = [];
-        for (const key in obj) {
-            if (obj.hasOwnProperty(key)) {
-                keys.push((key));
-            }
-        }
-        return keys;
-    }
-}
-exports.ColorHelper = ColorHelper;
-ColorHelper.color = {
-    "InternalLink": '#1f77b4',
-    "Category": '#071f55',
-    "URI": '#17a8cf',
-    "Telephone": '#13d1e3',
-    "Email": '#75d3dd',
-    "Number": '#2ca02c',
-    "Quantity": '#114911',
-    "Temperature": '#b6e75a',
-    "MonolingualText": '#f2cd0c',
-    "Text": '#ff7f0e',
-    "Code": '#b37845',
-    "Boolean": '#d62728',
-    "Date": '#d62790',
-    "Record": '#8927d6'
-};
-ColorHelper.color_hash = {};
-
-
-/***/ }),
-
-/***/ "./includes/js/Model/INode.ts":
-/*!************************************!*\
-  !*** ./includes/js/Model/INode.ts ***!
-  \************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.INode = void 0;
-const utility_1 = __webpack_require__(/*! ../Ui/utility */ "./includes/js/Ui/utility.ts");
-const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
-const Canvas_1 = __webpack_require__(/*! ../Ui/Canvas */ "./includes/js/Ui/Canvas.ts");
-class INode {
-    constructor(nodeType, id, name, type, x, y, hlink) {
-        this.id = id;
-        this.name = name;
-        this.x = 0;
-        this.y = 0;
-        this.hlink = hlink;
-        this.type = type;
-        this.notetype = nodeType;
-    }
-    // noinspection JSUnusedGlobalSymbols
-    static cloneNode(array) {
-        const newArr = [];
-        array.forEach((node) => {
-            let newNode = new INode(node.notetype, node.id, node.name, node.type, node.x, node.y, "");
-            if (typeof node.hlink !== "undefined") {
-                newNode.hlink = node.hlink;
-            }
-            newArr.push(newNode);
-        });
-        return newArr;
-    }
-    IsFocalNode() {
-        return this.id === app_1.MainEntry.focalNodeID;
-    }
-    updatePositions() {
-        this.x = this.calcNewPosition(Canvas_1.Canvas.width, this.x);
-        this.y = this.calcNewPosition(Canvas_1.Canvas.heigth, this.y);
-    }
-    calcNewPosition(containerSize, currentPos) {
-        const minDistFromBorder = this.IsFocalNode() ? 60 : 20;
-        const maxDistFromBorder = (containerSize - minDistFromBorder) / utility_1.Utility.scale;
-        return Math.max(minDistFromBorder, Math.min(maxDistFromBorder, currentPos));
-    }
-}
-exports.INode = INode;
-
-
-/***/ }),
-
-/***/ "./includes/js/Model/Link.ts":
-/*!***********************************!*\
-  !*** ./includes/js/Model/Link.ts ***!
-  \***********************************/
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Link = void 0;
-/* Connection between two Nodes
-* */
-class Link {
-    constructor(nodetype, linkName, sourceId, targetId, source, target, direction) {
-        this.sourceId = sourceId;
-        this.linkName = linkName;
-        this.targetId = targetId;
-        this.direction = direction;
-        if (source)
-            this.source = source;
-        if (target)
-            this.target = target;
-        this.nodetype = nodetype;
-    }
-    // noinspection JSUnusedGlobalSymbols
-    static cloneEdge(array) {
-        const newArr = [];
-        array.forEach((item) => {
-            newArr.push(new Link(item.nodetype, item.linkName, item.sourceId, item.targetId, item.source, item.target, item.direction));
-        });
-        return newArr;
-    }
-    /**
-     Calculates the x-y coordinates for the midpoint of a link.
-     */
-    CalculateMidpoint() {
-        let source = this.source;
-        let target = this.target;
-        let x = this.CalcMiddlePoint(source.x, target.x);
-        let y = this.CalcMiddlePoint(source.y, target.y);
-        return { x, y };
-    }
-    CalcMiddlePoint(x, y) {
-        return Math.min(x, y) + Math.abs(y - x) / 2;
-    }
-}
-exports.Link = Link;
-
-
-/***/ }),
-
-/***/ "./includes/js/Model/nodeStore.ts":
-/*!****************************************!*\
-  !*** ./includes/js/Model/nodeStore.ts ***!
-  \****************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.NodeStore = void 0;
-const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
-class NodeStore {
-    constructor(nodeList, linkList) {
-        NodeStore.nodeList = nodeList;
-        NodeStore.linkList = linkList;
-    }
-    /*
-        @param {INode[]} nodeSetApp - Set of nodes and their relevant data.
-        @param {Link[]} linkSetApp - Set of links and their relevant data.
-     */
-    static InitialSetup(nodeSetApp, linkSetApp) {
-        new NodeStore(nodeSetApp, linkSetApp);
-        // Append the source Node and the target Node to each Link
-        for (const link of linkSetApp) {
-            NodeStore.LinkInit(link);
-        }
-    }
-    static LinkInit(link) {
-        link.source = NodeStore.getNodeById(link.sourceId);
-        link.target = NodeStore.getNodeById(link.targetId);
-        link.direction = link.sourceId === app_1.MainEntry.focalNodeID ? "OUT" : "IN";
-    }
-    static getNodeById(sourceId) {
-        return NodeStore.nodeList[sourceId];
-    }
-}
-exports.NodeStore = NodeStore;
-NodeStore.nodeList = [];
-NodeStore.linkList = [];
-
-
-/***/ }),
-
-/***/ "./includes/js/Model/nodeType.ts":
-/*!***************************************!*\
-  !*** ./includes/js/Model/nodeType.ts ***!
-  \***************************************/
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.NodeType = void 0;
-var NodeType;
-(function (NodeType) {
-    NodeType[NodeType["Backlink"] = 0] = "Backlink";
-    NodeType[NodeType["Article"] = 1] = "Article";
-    NodeType[NodeType["Property"] = 2] = "Property";
-})(NodeType = exports.NodeType || (exports.NodeType = {}));
-
-
-/***/ }),
-
-/***/ "./includes/js/Semantic/mediaWikiArticle.ts":
-/*!**************************************************!*\
-  !*** ./includes/js/Semantic/mediaWikiArticle.ts ***!
-  \**************************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.MediaWikiArticle = void 0;
-const INode_1 = __webpack_require__(/*! ../Model/INode */ "./includes/js/Model/INode.ts");
-const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
-const semanticPropertyAndItems_1 = __webpack_require__(/*! ./semanticPropertyAndItems */ "./includes/js/Semantic/semanticPropertyAndItems.ts");
-const nodeType_1 = __webpack_require__(/*! ../Model/nodeType */ "./includes/js/Model/nodeType.ts");
-class MediaWikiArticle {
-    constructor(id, semanticNodeList) {
-        this.Id = id; //'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
-        this.node = this.ParseNodeBrowseBySubject();
-        this.semanticNodeList = [];
-        for (const data of semanticNodeList) {
-            let item = new semanticPropertyAndItems_1.SemanticPropertyAndItems(data.property, data.dataitem, data.subject, this);
-            this.semanticNodeList.push(item);
-        }
-    }
-    ParseNodeBrowseBySubject() {
-        let nameDoslike = this.Id.split("#")[0];
-        let nodeName = nameDoslike.replace("_", " ");
-        let node = new INode_1.INode(nodeType_1.NodeType.Article, this.Id, nodeName, "Internal Link", 10, 0, `./${nameDoslike}`);
-        node.fixed = true;
-        return node;
-    }
-    HandleProperties() {
-        for (const semanticNode of this.semanticNodeList) {
-            if (semanticNode.IsSpecialProperty())
-                continue; // Non fare nulla se la proprietà è una delle proprietà speciali "_SKEY", "_MDAT" o "_ASK"
-            semanticNode.SemanticNodeParse();
-            for (let dataitem of semanticNode.nodeAndLinks) {
-                app_1.MainEntry.nodeSet.push(dataitem.node);
-                app_1.MainEntry.linkSet.push(dataitem.link);
-            }
-        }
-    }
-}
-exports.MediaWikiArticle = MediaWikiArticle;
-
-
-/***/ }),
-
-/***/ "./includes/js/Semantic/myData.ts":
-/*!****************************************!*\
-  !*** ./includes/js/Semantic/myData.ts ***!
-  \****************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.MyData = void 0;
-const mediaWikiArticle_1 = __webpack_require__(/*! ./mediaWikiArticle */ "./includes/js/Semantic/mediaWikiArticle.ts");
-const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
-class MyData {
-    constructor(callback) {
-        this.query = callback.query;
-    }
-    Parse() {
-        this.mediawikiArticle = new mediaWikiArticle_1.MediaWikiArticle(this.query.subject, this.query.data);
-        let wikiArticle = this.mediawikiArticle;
-        wikiArticle.HandleProperties();
-        app_1.MainEntry.nodeSet.push(wikiArticle.node);
-        app_1.MainEntry.focalNodeID = wikiArticle.Id;
-    }
-}
-exports.MyData = MyData;
-
-
-/***/ }),
-
-/***/ "./includes/js/Semantic/propertyDataItem.ts":
-/*!**************************************************!*\
-  !*** ./includes/js/Semantic/propertyDataItem.ts ***!
-  \**************************************************/
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.PropertyDataItem = void 0;
-class PropertyDataItem {
-    constructor(item, type, parentSemantProp) {
-        this.type = type;
-        this.item = item;
-        this.parentSemantProp = parentSemantProp;
-        this.typeStr = this.getTypeDescr(this.type);
-        this.NiceTypeName = this.getNodeType();
-    }
-    getNodeType() {
-        let p = this.parentSemantProp.getPropertyNiceName(this.parentSemantProp.propertyName);
-        if (!p || p === "")
-            return this.typeStr;
-        else
-            return p;
-    }
-    getTypeDescr(type) {
-        switch (type) {
-            case 1:
-                return "Number";
-            case 2:
-                return "Text";
-            case 4:
-                return "Boolean";
-            case 5:
-                return "URI"; //oder Email //oder Telefon
-            case 6:
-                return "Date";
-            case 9:
-                return "Internal Link";
-            default:
-                return "Unknown Type";
-        }
-    }
-}
-exports.PropertyDataItem = PropertyDataItem;
-
-
-/***/ }),
-
-/***/ "./includes/js/Semantic/semanticPropertyAndItems.ts":
-/*!**********************************************************!*\
-  !*** ./includes/js/Semantic/semanticPropertyAndItems.ts ***!
-  \**********************************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SemanticPropertyAndItems = void 0;
-const INode_1 = __webpack_require__(/*! ../Model/INode */ "./includes/js/Model/INode.ts");
-const Link_1 = __webpack_require__(/*! ../Model/Link */ "./includes/js/Model/Link.ts");
-const propertyDataItem_1 = __webpack_require__(/*! ./propertyDataItem */ "./includes/js/Semantic/propertyDataItem.ts");
-const nodeType_1 = __webpack_require__(/*! ../Model/nodeType */ "./includes/js/Model/nodeType.ts");
-// noinspection UnnecessaryLocalVariableJS
-class SemanticPropertyAndItems {
-    constructor(property, dataitems, subject, parentArticle) {
-        this.propertyName = property;
-        this.nicePropertyName = this.NicePropertyName();
-        //Solo per alcune proprietà sono presenti dataitems e subject
-        this.dataitems = [];
-        for (const data of dataitems) {
-            let item = new propertyDataItem_1.PropertyDataItem(data.item, data.type, this);
-            this.dataitems.push(item);
-        }
-        this.subject = subject;
-        this.parentArticle = parentArticle;
-        this.sourceNodeUrl = parentArticle.Id;
-        this.nodeAndLinks = [];
-    }
-    IsSpecialProperty() {
-        /*
-              I valori delle property "_SKEY", "_MDAT" e "_ASK" sono proprietà speciali predefinite in Semantic MediaWiki.
-              "_SKEY" è una proprietà che viene utilizzata per memorizzare le chiavi di ricerca per ogni oggetto di dati, che vengono utilizzate per velocizzare le query su quell'oggetto.
-              "_MDAT" è una proprietà che viene utilizzata per memorizzare la data di modifica di un oggetto di dati.
-              "_ASK" è una proprietà che viene utilizzata per memorizzare una query SPARQL o una query di tipo "ask" per un oggetto di dati. Questa proprietà viene utilizzata per eseguire query complesse sui dati semantici.
-              * INST
-              */
-        return ["_SKEY", "_MDAT", "_ASK"].includes(this.propertyName);
-    }
-    SemanticNodeParse() {
-        this.SetUri();
-        for (let dataitem of this.dataitems) {
-            let node = this.ParsePropertyNode(dataitem);
-            let link = new Link_1.Link(nodeType_1.NodeType.Property, this.nicePropertyName, this.sourceNodeUrl, dataitem.item /*targetId*/, null, null, "");
-            this.nodeAndLinks.push({ node: node, link: link });
-        }
-    }
-    SetUri() {
-        if (!this.dataitems || this.dataitems.length == 0)
-            return;
-        this.firstItem = this.dataitems[0];
-        if (this.firstItem.item === this.sourceNodeUrl)
-            this.firstItem.item = `${this.firstItem.item}_${(this.propertyName)}`;
-    }
-    ParsePropertyNode(dataitem) {
-        //In the original version it was using the firstElement for the last 2 parameters
-        let name = this.parseNodeName(dataitem.item, dataitem.typeStr);
-        let hlink = this.parseHlink(dataitem.item, dataitem.typeStr, this.sourceNodeUrl);
-        let node = new INode_1.INode(nodeType_1.NodeType.Property, dataitem.item, name, "null", 0, 0, hlink);
-        return node;
-    }
-    NicePropertyName() {
-        let p = this.getPropertyNiceName(this.propertyName);
-        return p == "" ? this.propertyName.replace("_", " ") : p;
-    }
-    getPropertyNiceName(propertyName) {
-        switch (propertyName) {
-            case "_boo":
-                return "Boolean";
-            case "_cod":
-                return "Code";
-            case "_dat":
-                return "Date";
-            case "_ema":
-                return "Email";
-            case "_num":
-                return "Number"; //oder Email //oder Telefon
-            case "_qty":
-                return "Quantity";
-            case "_rec":
-                return "Record";
-            case "_tem":
-                return "Temperature";
-            case "_uri":
-                return "URI";
-            case "_wpg":
-                return "Internal Link";
-            case "Monolingual":
-                return "Monolingual Text";
-            case "Telephone":
-                return "Telephone";
-            case "_TEXT":
-                return "Text";
-            case "_INST":
-                return "Category" /*isA*/;
-            default:
-                return "";
-        }
-    }
-    parseNodeName(nameToParse, type) {
-        function parseNodeName() {
-            return nameToParse.split("#")[0].replace("_", " ");
-        }
-        let name;
-        switch (type) {
-            case "URI":
-                name = parseNodeName();
-                break;
-            case "Internal Link":
-                name = parseNodeName();
-                break;
-            case "Date":
-                name = nameToParse.substring(2);
-                break;
-            case "Boolean":
-                name = nameToParse === "t" ? "true" : "false";
-                break;
-            default:
-                name = parseNodeName();
-                break;
-        }
-        return name;
-    }
-    parseHlink(nameToParse, type, url) {
-        return type === "URI" ? url : type === "Internal Link" ? `./${nameToParse.split("#")[0]}` : "";
-    }
-}
-exports.SemanticPropertyAndItems = SemanticPropertyAndItems;
-
-
-/***/ }),
-
-/***/ "./includes/js/Semantic/semanticWikiApi.ts":
-/*!*************************************************!*\
-  !*** ./includes/js/Semantic/semanticWikiApi.ts ***!
-  \*************************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SemanticWikiApi = void 0;
-const utility_1 = __webpack_require__(/*! ../Ui/utility */ "./includes/js/Ui/utility.ts");
-const nodeStore_1 = __webpack_require__(/*! ../Model/nodeStore */ "./includes/js/Model/nodeStore.ts");
-const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
-const visibilityHandler_1 = __webpack_require__(/*! ../Ui/visibilityHandler */ "./includes/js/Ui/visibilityHandler.ts");
-const myData_1 = __webpack_require__(/*! ./myData */ "./includes/js/Semantic/myData.ts");
-class SemanticWikiApi {
-    static BrowseBySubject(wikiArticleTitle) {
-        app_1.MainEntry.downloadedArticles = [];
-        $.ajax({
-            url: mw.util.wikiScript("api"),
-            data: {
-                action: "browsebysubject",
-                subject: wikiArticleTitle,
-                format: "json"
-            },
-            type: "GET",
-            success: execSuccessCallback
-        });
-        function execSuccessCallback(data) {
-            if ((data === null || data === void 0 ? void 0 : data.edit) && data.edit.result === "Success") {
-                // debugger;
-            }
-            else if (data === null || data === void 0 ? void 0 : data.error) {
-                alert(data);
-                // debugger;
-            }
-            else {
-                SemanticWikiApi.BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle, new myData_1.MyData(data));
-            }
-        }
-    }
-    static BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle, data) {
-        /**
-         *  }
-         * JSON.stringify(data)
-         * https://jsonformatter.org/json-parser/5e9d52
-         */
-        app_1.MainEntry.resetData();
-        app_1.MainEntry.downloadedArticles.push(wikiArticleTitle);
-        data.Parse();
-        // MyClass.force.stop();
-        SemanticWikiApi.QueryBackLinks(wikiArticleTitle); //tramite questa chiama → MyClass.InitNodeAndLinks(data.query.backlinks);
-        $("#cluster_chart .chart").empty();
-        //  var k = cloneNode(nodeSet);
-        //  var m = cloneEdge(linkSet);
-        console.log("BrowseBySubject");
-        utility_1.Utility.drawCluster("Drawing1", app_1.MainEntry.focalNodeID);
-        //drawCluster.update();
-        visibilityHandler_1.VisibilityHandler.hideElements();
-        // const elem: JQuery<HTMLElement> = $(`[id=${MyClass.focalNodeID}] a`);
-        // // @ts-ignore
-        // elem[0].__data__.px = Canvas.width / 2;
-        // // @ts-ignore
-        // elem[0].__data__.py = Canvas.height / 2;
-    }
-    static QueryBackLinks(wikiArticle) {
-        $.ajax({
-            url: mw.util.wikiScript("api"),
-            data: {
-                action: "query",
-                list: "backlinks",
-                bltitle: wikiArticle,
-                format: "json"
-            },
-            type: "GET",
-            success: BacklinksCallback
-        });
-        function BacklinksCallback(data) {
-            if ((data === null || data === void 0 ? void 0 : data.edit) && data.edit.result === "Success") {
-                // debugger;
-            }
-            else if (data === null || data === void 0 ? void 0 : data.error) {
-                alert((data));
-                // debugger;
-            }
-            else {
-                app_1.MainEntry.InitNodeAndLinks_Backlinks(data.query.backlinks);
-            }
-            $("#cluster_chart .chart").empty();
-            //  var k = cloneNode(nodeSet);
-            //  var m = cloneEdge(linkSet);
-            nodeStore_1.NodeStore.InitialSetup(app_1.MainEntry.nodeSet, app_1.MainEntry.linkSet);
-            console.log("BacklinksCallback");
-            utility_1.Utility.drawCluster("Drawing1", app_1.MainEntry.focalNodeID);
-            //drawCluster.update();
-            visibilityHandler_1.VisibilityHandler.hideElements();
-        }
-    }
-    static AllPagesCall() {
-        $.ajax({
-            url: mw.util.wikiScript("api"),
-            data: {
-                action: "query",
-                list: "allpages",
-                aplimit: 1000,
-                format: "json"
-            },
-            type: "GET",
-            success(data) {
-                if (!(!((data === null || data === void 0 ? void 0 : data.edit) && data.edit.result === "Success") && !(data === null || data === void 0 ? void 0 : data.error))) {
-                    return;
-                }
-                app_1.MainEntry.PopulateSelectorWithWikiArticleUi(data.query.allpages);
-            }
-        });
-    }
-}
-exports.SemanticWikiApi = SemanticWikiApi;
-class testUnit {
-    static test() {
-        const jsonString = "{\"query\":{\"subject\":\"Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##\",\"data\":[{\"property\":\"_INST\",\"dataitem\":[{\"type\":9,\"item\":\"Polarizzazione#14##\"},{\"type\":9,\"item\":\"Social_network#14##\"},{\"type\":9,\"item\":\"Cancel_Culture#14##\"},{\"type\":9,\"item\":\"Episodio#14##\"},{\"type\":9,\"item\":\"Razzismo#14##\"}]},{\"property\":\"_MDAT\",\"dataitem\":[{\"type\":6,\"item\":\"1/2022/12/21/9/38/54/0\"}]},{\"property\":\"_SKEY\",\"dataitem\":[{\"type\":2,\"item\":\"Abbandono dei principi giornalistici, nascita delle Fuck News ed episodi vari\"}]}],\"serializer\":\"SMW\\\\Serializers\\\\SemanticDataSerializer\",\"version\":2}}";
-        // const myData = new MyData(jsonString);
-    }
-}
-
-
-/***/ }),
-
-/***/ "./includes/js/Ui/Canvas.ts":
-/*!**********************************!*\
-  !*** ./includes/js/Ui/Canvas.ts ***!
-  \**********************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Canvas = void 0;
-const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
-const utility_1 = __webpack_require__(/*! ./utility */ "./includes/js/Ui/utility.ts");
-class Canvas {
-    constructor() {
-        Canvas.InitCanvas();
-    }
-    /**
-     * Initialize the canvas and create the svg element with all its attributes.
-     * @returns {d3.Selection<any, any, any, any>} svgCanvas - The svg canvas element
-     */
-    static InitCanvas() {
-        //outer = .chart
-        //inner = svgCanvas
-        //inner = .focalNodeCanvas
-        this.svgCanvas = d3.select("#cluster_chart .chart")
-            .append("svg:svg")
-            .call((selection, ...args) => {
-            d3.zoom().on("zoom", (event) => {
-                utility_1.Utility.scale = event.transform.k;
-                selection.attr("transform", event.transform);
-            })(selection, ...args);
-        })
-            .setWidthAndHeight(this.width, this.heigth)
-            .attr("id", "svgCanvas")
-            .append("svg:g")
-            .attr("class", "focalNodeCanvas");
-        Canvas.setCanvasSize();
-    }
-    // public static setWidthAndHeight(width: number, heigth: number) {
-    //     this.width = width;
-    //     this.heigth = heigth;
-    //
-    //     this.svgCanvas
-    //       .attr("width", this.width + this.margin.left + this.margin.right)
-    //       .attr("height", this.heigth + this.margin.top + this.margin.bottom);
-    // }
-    static updateWindowSize() {
-        console.log("Called method updateWindow");
-        let c = $(".chart")[0];
-        this.setCanvasSize(c.clientWidth - 60, c.clientHeight - 60);
-        $('#svgCanvas').width(Canvas.width + 90);
-        $('#svgCanvas').height(Canvas.heigth + 60);
-    }
-    static setCanvasSize(canvasWidth = $(".chart")[0].clientWidth, canvasHeigth = $(".chart")[0].clientHeight) {
-        this.width = canvasWidth;
-        this.heigth = canvasHeigth;
-        if (!Canvas.svgCanvas)
-            console.log("svgCanvas not set");
-        Canvas.svgCanvas.setWidthAndHeight(Canvas.width, Canvas.heigth);
-    }
-}
-exports.Canvas = Canvas;
-Canvas.width = $(".chart")[0].clientWidth;
-Canvas.heigth = $(".chart")[0].clientHeight;
-Canvas.margin = { top: 20, right: 20, bottom: 30, left: 40 };
-
-
-/***/ }),
-
-/***/ "./includes/js/Ui/legendManager.ts":
-/*!*****************************************!*\
-  !*** ./includes/js/Ui/legendManager.ts ***!
-  \*****************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.LegendManager = void 0;
-const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
-const ColorHelper_1 = __webpack_require__(/*! ../Helpers/ColorHelper */ "./includes/js/Helpers/ColorHelper.ts");
-const nodeManager_1 = __webpack_require__(/*! ./nodeManager */ "./includes/js/Ui/nodeManager.ts");
-const nodeStore_1 = __webpack_require__(/*! ../Model/nodeStore */ "./includes/js/Model/nodeStore.ts");
-const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts");
-const visibilityHandler_1 = __webpack_require__(/*! ./visibilityHandler */ "./includes/js/Ui/visibilityHandler.ts");
-class LegendManager {
-    static DrawLegend() {
-        const sortedColors = ColorHelper_1.ColorHelper.GetColors('colorScale20', nodeStore_1.NodeStore.nodeList);
-        // Plot the bullet circles...
-        // Print Legend Title...
-        LegendManager.PrintLegendTitle(Canvas_1.Canvas.svgCanvas);
-        LegendManager.PlotTheBulletCircles(Canvas_1.Canvas.svgCanvas, sortedColors);
-        // Create legend text that acts as label keys...
-        LegendManager.CreateLegendTextThatActsAsLabelKeys(Canvas_1.Canvas.svgCanvas, sortedColors);
-    }
-    static CreateLegendTextThatActsAsLabelKeys(svgCanvas, sortedColors) {
-        svgCanvas.selectAll("a.legend_link")
-            .data(sortedColors) // Instruct to bind dataSet to text elements
-            .enter().append("svg:a") // Append legend elements
-            .append("text")
-            .attr("text-anchor", "center")
-            .attr("x", 40)
-            .attr("y", (d, i) => (45 + (i * 20)))
-            .attr("dx", 0)
-            .attr("dy", "4px") // Controls padding to place text in alignment with bullets
-            .text((d) => d)
-            .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d])
-            .attr("type_value", (d) => d)
-            .attr("index_value", (d, i) => `index-${i}`)
-            .attr("class", (d) => {
-            const strippedString = d.replace(/ /g, "_");
-            return `legendText-${strippedString}`;
-        })
-            .style("fill", "Black")
-            .style("font", "normal 14px Arial")
-            .on('mouseover', LegendManager.typeMouseOver)
-            .on("mouseout", LegendManager.typeMouseOut);
-    }
-    static PrintLegendTitle(svgCanvas) {
-        svgCanvas.append("text").attr("class", "region")
-            .text("Color Keys for Data Types...")
-            .attr("x", 15)
-            .attr("y", 25)
-            .style("fill", "Black")
-            .style("font", "bold 16px Arial")
-            .attr("text-anchor", "start");
-    }
-    static clickLegend(selector) {
-        // let selector = this.this1;
-        const thisObject = Array.isArray(selector) ? d3.select(selector[0]) : d3.select(selector /*vuole una stringa*/);
-        const typeValue = thisObject.attr("type_value");
-        let invisibleType = [];
-        const invIndexType = invisibleType.indexOf(typeValue);
-        if (invIndexType > -1) {
-            invisibleType.splice(Number(typeValue), 1);
-        }
-        else {
-            invisibleType.push(typeValue);
-        }
-        $(".node").each((index, el) => this.MakeInvisible(el, typeValue));
-        $(".gLink").each((index, el) => this.MakeInvisible2(el));
-    }
-    ;
-    static setLegendStyles(strippedTypeValue, colorValue, radius) {
-        const legendBulletSelector = `.legendBullet-${strippedTypeValue}`;
-        const selectedBullet = d3.selectAll(legendBulletSelector);
-        selectedBullet.style("fill", colorValue);
-        selectedBullet.attr("r", radius);
-        const legendTextSelector = `.legendText-${strippedTypeValue}`;
-        const selectedLegendText = d3.selectAll(legendTextSelector);
-        selectedLegendText.style("font", colorValue === "Maroon" ? "bold 14px Arial" : "normal 14px Arial");
-        selectedLegendText.style("fill", colorValue === "Maroon" ? "Maroon" : "Black");
-    }
-    static MakeInvisible(el, typeValue) {
-        let node = el.__data__;
-        if (node.type !== typeValue) {
-            return;
-        }
-        const invIndex = visibilityHandler_1.VisibilityHandler.invisibleNode.indexOf(node.id);
-        if (invIndex > -1) {
-            visibilityHandler_1.VisibilityHandler.invisibleNode.splice(invIndex, 1);
-        }
-        else {
-            visibilityHandler_1.VisibilityHandler.invisibleNode.push(node.id);
-        }
-        $(this).toggle();
-    }
-    static MakeInvisible2(el) {
-        //      debugger;
-        let data = el.__data__;
-        const valSource = data.sourceId;
-        const valTarget = data.targetId;
-        //if beide
-        const indexSource = visibilityHandler_1.VisibilityHandler.invisibleNode.indexOf(valSource);
-        const indexTarget = visibilityHandler_1.VisibilityHandler.invisibleNode.indexOf(valTarget);
-        const indexEdge = visibilityHandler_1.VisibilityHandler.invisibleEdge.indexOf(`${valSource}_${valTarget}_${data.linkName}`);
-        if ((indexSource > -1 || indexTarget > -1) && indexEdge === -1) {
-            //Einer der beiden Knoten ist unsichtbar, aber Kante noch nicht
-            $(this).toggle();
-            visibilityHandler_1.VisibilityHandler.invisibleEdge.push(`${valSource}_${valTarget}_${data.linkName}`);
-        }
-        else if (indexSource === -1 && indexTarget === -1 && indexEdge === -1) {
-            //Beide Knoten sind nicht unsichtbar und Kante ist nicht unsichtbar
-        }
-        else if (indexSource === -1 && indexTarget === -1 && indexEdge > -1) {
-            //Knoten sind nicht unsichtbar, aber Kante ist es
-            $(this).toggle();
-            visibilityHandler_1.VisibilityHandler.invisibleEdge.splice(indexEdge, 1);
-        }
-    }
-    static PlotTheBulletCircles(svgCanvas, sortedColors) {
-        svgCanvas.selectAll("focalNodeCanvas")
-            .data(sortedColors).enter().append("svg:circle") // Append circle elements
-            .attr("cx", 20)
-            .attr("cy", (d, i) => (45 + (i * 20)))
-            .attr("stroke-width", ".5")
-            .style("fill", (d) => ColorHelper_1.ColorHelper.color_hash[d])
-            .attr("r", 6)
-            .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d])
-            .attr("type_value", (d) => d)
-            .attr("index_value", (d, i) => `index-${i}`)
-            .attr("class", (d) => {
-            const strippedString = d.replace(/ /g, "_");
-            return `legendBullet-${strippedString}`;
-        })
-            .on('mouseover', LegendManager.typeMouseOver)
-            .on("mouseout", LegendManager.typeMouseOut)
-            .on('click', LegendManager.clickLegend);
-    }
-    static typeMouseOver(selector, nodeSize) {
-        const thisObject = d3.select(selector);
-        const typeValue = thisObject.attr("type_value");
-        const strippedTypeValue = typeValue.replace(/ /g, "_");
-        LegendManager.setLegendStyles("strippedTypeValue", "Maroon", 1.2 * 6);
-        nodeManager_1.NodeManager.setNodeStyles(strippedTypeValue, "Maroon", "bold", nodeSize, false);
-    }
-    static typeMouseOut(selector, nodeSize) {
-        const thisObject = d3.select(selector);
-        const typeValue = thisObject.attr("type_value");
-        const colorValue = thisObject.attr("color_value");
-        const strippedTypeValue = typeValue.replace(/ /g, "_");
-        LegendManager.setLegendStyles(strippedTypeValue, colorValue, 6);
-        nodeManager_1.NodeManager.setNodeStyles(strippedTypeValue, "Blue", "normal", nodeSize, false);
-    }
-}
-exports.LegendManager = LegendManager;
-
-
-/***/ }),
-
-/***/ "./includes/js/Ui/nodeManager.ts":
-/*!***************************************!*\
-  !*** ./includes/js/Ui/nodeManager.ts ***!
-  \***************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.NodeManager = void 0;
-const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
-const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
-const legendManager_1 = __webpack_require__(/*! ./legendManager */ "./includes/js/Ui/legendManager.ts");
-const ColorHelper_1 = __webpack_require__(/*! ../Helpers/ColorHelper */ "./includes/js/Helpers/ColorHelper.ts");
-const utility_1 = __webpack_require__(/*! ./utility */ "./includes/js/Ui/utility.ts");
-const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts");
-const nodeStore_1 = __webpack_require__(/*! ../Model/nodeStore */ "./includes/js/Model/nodeStore.ts");
-const semanticWikiApi_1 = __webpack_require__(/*! ../Semantic/semanticWikiApi */ "./includes/js/Semantic/semanticWikiApi.ts");
-const TRANSACTION_DURATION = 250;
-class NodeManager {
-    static mouseClickNode(selector, clickText) {
-        const thisObject = d3.select(selector);
-        const typeValue = thisObject.attr("type_value");
-        if (!clickText && typeValue === 'Internal Link') {
-            const nodeName = thisObject.node().__data__.name;
-            if (!app_1.MainEntry.downloadedArticles.includes(nodeName)) {
-                semanticWikiApi_1.SemanticWikiApi.BrowseBySubject(nodeName);
-            }
-        }
-        clickText = false;
-    }
-    ;
-    static mouseClickNodeText(selector, clickText) {
-        const thisObject = d3.select(selector);
-        const typeValue = thisObject.attr("type_value");
-        let node = thisObject.datum();
-        if (typeValue === "Internal Link" || typeValue === "URI") {
-            if (node) {
-                window.open(node.__data__.hlink);
-            }
-        }
-        clickText = true;
-    }
-    ;
-    static nodeMouseOver(selector) {
-        // let selector = this.this1;
-        const thisObject = d3.select(selector);
-        const typeValue = thisObject.attr("type_value");
-        const strippedTypeValue = typeValue.replace(/ /g, "_");
-        d3.select(selector).select("circle").transition()
-            .duration(TRANSACTION_DURATION)
-            .attr("r", (d) => d.IsFocalNode() ? 65 : 15);
-        d3.select(selector).select("text").transition()
-            .duration(TRANSACTION_DURATION)
-            .style("font", "bold 20px Arial")
-            .attr("fill", "Blue");
-        legendManager_1.LegendManager.setLegendStyles(strippedTypeValue, "Maroon", 1.2 * 6);
-    }
-    ;
-    static nodeMouseOut(selector) {
-        // let selector = this.this1;
-        const thisObject = d3.select(selector);
-        const typeValue = thisObject.attr("type_value");
-        const colorValue = thisObject.attr("color_value");
-        const strippedTypeValue = typeValue.replace(/ /g, "_");
-        d3.select(selector).select("circle")
-            .transition()
-            .duration(TRANSACTION_DURATION)
-            .attr("r", (d) => { return d.IsFocalNode() ? utility_1.Utility.centerNodeSize : utility_1.Utility.nodeSize; });
-        d3.select(selector).select("text")
-            .transition()
-            .duration(TRANSACTION_DURATION)
-            .style("font", "normal 16px Arial")
-            .attr("fill", "Blue");
-        legendManager_1.LegendManager.setLegendStyles(strippedTypeValue, colorValue, 6);
-    }
-    ;
-    /*
-    They are initially invisible
-    * */
-    static CreateNodes() {
-        /*
-        In the provided code, the enter() function is used to create a new g group for each element in the NodeStore.nodeList
-        dataset that does not yet have a corresponding element in the HTML. The "node" class attribute and several other attributes
-        are then assigned to the created group. Additionally, the events on("mouseover", (d)=> this.nodeMouseOver),
-        on("click", () => this.mouseClickNode), on("mouseout", () => this.nodeMouseOut) are associated with the created group.
-        In summary enter() allows to select and operate on data elements that haven't been associated yet to DOM elements.
-        * */
-        console.log(nodeStore_1.NodeStore.nodeList.length);
-        const node = Canvas_1.Canvas.svgCanvas.selectAll(".node");
-        let x1 = node.data(nodeStore_1.NodeStore.nodeList);
-        let x2 = x1.enter();
-        let x3 = x2.append("g")
-            .attr("class", "node")
-            .attr("id", (node) => node.id)
-            .attr("type_value", (d) => d.type)
-            .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
-            .attr("xlink:href", (d) => d.hlink)
-            .attr("fixed", function (d) { return d.id == app_1.MainEntry.focalNodeID; })
-            .on("mouseover", (d) => this.nodeMouseOver)
-            .on("click", () => this.mouseClickNode)
-            .on("mouseout", () => this.nodeMouseOut)
-            // .call(force.drag)
-            // .attr("transform", function(d) {
-            //     return `translate(${d.x},${d.y})`;
-            // })
-            .append("a");
-        return x3;
-    }
-    static setNodeStyles(strippedTypeValue, colorValue, fontWeight, nodeSize, focalNode) {
-        const selectedNodeText = d3.selectAll(`.nodeText-${strippedTypeValue}`);
-        selectedNodeText.style("font", `${fontWeight} 16px Arial`);
-        selectedNodeText.style("fill", colorValue);
-        const selectedCircle = d3.selectAll(`.nodeCircle-${strippedTypeValue}`);
-        selectedCircle.style("fill", colorValue);
-        selectedCircle.style("stroke", colorValue);
-        selectedCircle.attr("r", focalNode ? nodeSize : 1.2 * nodeSize);
-        if (focalNode) {
-            const selectedFocalNodeCircle = d3.selectAll(".focalNodeCircle");
-            selectedFocalNodeCircle.style("stroke", colorValue);
-            selectedFocalNodeCircle.style("fill", "White");
-            const selectedFocalNodeText = d3.selectAll(".focalNodeText");
-            selectedFocalNodeText.style("fill", colorValue);
-            selectedFocalNodeText.style("font", `${fontWeight} 16px Arial`);
-        }
-    }
-    static updateNodePositions(node) {
-        node.datum().updatePositions();
-        node.attr("cx", (d) => d.x)
-            .attr("cy", (d) => d.y);
-    }
-    static AppendTextToNodes(node) {
-        node.append("text")
-            .attr("x", (d) => d.IsFocalNode() ? 0 : 20)
-            .attr("y", (d) => {
-            return d.IsFocalNode() ? 0 : -10;
-        })
-            .attr("text-anchor", (d) => d.IsFocalNode() ? "middle" : "start")
-            // .on("click", this.mouseClickNodeText)
-            .attr("font-family", "Arial, Helvetica, sans-serif")
-            .style("font", "normal 16px Arial")
-            .attr("fill", "Blue")
-            .style("fill", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
-            .attr("type_value", (d) => d.type)
-            .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
-            .attr("class", (d) => {
-            const type_string = d.type.replace(/ /g, "_");
-            //return "nodeText-" + type_string; })
-            return d.IsFocalNode() ? "focalNodeText" : `nodeText-${type_string}`;
-        })
-            .attr("dy", ".35em")
-            .text((d) => d.name);
-    }
-    static AppendCirclesToNodes(node) {
-        node.append("circle")
-            .attr("x", function (d) { return d.x; })
-            .attr("y", function (d) { return d.y; })
-            .attr("r", (d) => d.IsFocalNode() ? utility_1.Utility.centerNodeSize : utility_1.Utility.nodeSize)
-            .style("fill", "White") // Make the nodes hollow looking
-            .style("fill", "transparent")
-            .attr("type_value", (d) => d.type)
-            .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
-            .attr("fixed", function (d) { return d.id == app_1.MainEntry.focalNodeID; })
-            .attr("x", function (d) { return d.id == app_1.MainEntry.focalNodeID ? Canvas_1.Canvas.width / 2 : d.x; })
-            .attr("y", function (d) { return d.id == app_1.MainEntry.focalNodeID ? Canvas_1.Canvas.heigth / 2 : d.y; })
-            .attr("class", (d) => {
-            const str = d.type;
-            const strippedString = str.replace(/ /g, "_");
-            //return "nodeCircle-" + strippedString; })
-            return d.IsFocalNode() ? "focalNodeCircle" : `nodeCircle-${strippedString}`;
-        })
-            .style("stroke-width", 5) // Give the node strokes some thickness
-            .style("stroke", (d) => ColorHelper_1.ColorHelper.color_hash[d.type]); // Node stroke colors
-        // .call(force.drag);
-    }
-}
-exports.NodeManager = NodeManager;
-
-
-/***/ }),
-
-/***/ "./includes/js/Ui/utility.ts":
-/*!***********************************!*\
-  !*** ./includes/js/Ui/utility.ts ***!
-  \***********************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Utility = void 0;
-const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
-const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
-const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts");
-const legendManager_1 = __webpack_require__(/*! ./legendManager */ "./includes/js/Ui/legendManager.ts");
-const nodeManager_1 = __webpack_require__(/*! ./nodeManager */ "./includes/js/Ui/nodeManager.ts");
-const nodeStore_1 = __webpack_require__(/*! ../Model/nodeStore */ "./includes/js/Model/nodeStore.ts");
-// noinspection UnnecessaryLocalVariableJS
-class Utility {
-    /**
-     * Draws a cluster using the provided data.
-     *
-     * @param {string} drawingName - A unique drawing identifier that has no spaces, no "." and no "#" characters.
-     * @param {string} focalNode - Primary Node of Context.
-     *
-     *              0 = No Sort.  Maintain original order.
-     *              1 = Sort by arc value size.
-     */
-    static drawCluster(drawingName, focalNode) {
-        new Canvas_1.Canvas();
-        console.log("N° NodeStore.nodeList: " + nodeStore_1.NodeStore.nodeList.length);
-        if (nodeStore_1.NodeStore.nodeList.length == 0)
-            return;
-        // Create Nodes
-        this.nodes = nodeManager_1.NodeManager.CreateNodes();
-        // Append circles to Nodes
-        nodeManager_1.NodeManager.AppendCirclesToNodes(this.nodes);
-        // Append text to Nodes
-        nodeManager_1.NodeManager.AppendTextToNodes(this.nodes);
-        // Append text to Link edges
-        this.linkText = this.AppendTextToLinkEdges();
-        // Draw lines for Links between Nodes
-        // this.link = this.DrawLinesForLinksBetweenNodes();
-        // let clickText = false;
-        // Create a force layout and bind Nodes and Links
-        // this.force = this.CreateAForceLayoutAndBindNodesAndLinks()
-        //     .on("tick", () => {
-        //         this.Tick();
-        //     });
-        //Build the Arrows
-        this.buildArrows();
-        legendManager_1.LegendManager.DrawLegend();
-        d3.select(window).on('resize.updatesvg', Canvas_1.Canvas.updateWindowSize);
-    }
-    static CreateAForceLayoutAndBindNodesAndLinks() {
-        let force = d3.forceSimulation()
-            .nodes(nodeStore_1.NodeStore.nodeList)
-            .force("link", d3.forceLink(nodeStore_1.NodeStore.linkList))
-            .force("charge", d3.forceManyBody().strength(-1000))
-            .force("gravity", d3.forceManyBody().strength(.01))
-            .force("friction", d3.forceManyBody().strength(.2))
-            .force("link", d3.forceLink().id((d) => d.id).distance(100).strength(1)) //=> d.id).strength(9))
-            //.force("link", d3.forceLink().id((d: any) => d.id).distance(d => width < height ? width * 1 / 3 : height * 1 / 3))
-            .force("center", d3.forceCenter(Canvas_1.Canvas.width / 2, Canvas_1.Canvas.heigth / 2));
-        // .start();
-        return force;
-    }
-    static DrawLinesForLinksBetweenNodes() {
-        let link = Canvas_1.Canvas.svgCanvas.selectAll(".gLink")
-            // .data(force.links())
-            .enter().append("g")
-            .attr("class", "gLink");
-        //    .attr("class", "link")
-        // .attr("endNode", (d: Link) => d.targetId)
-        // .attr("startNode", (d: Link) => d.sourceId)
-        // .attr("targetType", (d: any) => d.target.type)
-        // .attr("sourceType", (d: any) => d.source.type)
-        // .append("line")
-        // .style("stroke", "#ccc")
-        // .style("stroke-width", "1.5px")
-        // .attr("marker-end", (d: any, i: any) => `url(#arrow_${i})`)
-        // .attr("x1", (l: Link) => l.Source.x)
-        // .attr("y1", (l: Link) => l.Source.y)
-        // .attr("x2", (l: Link) => l.Target.x)
-        // .attr("y2", (l: Link) => l.Target.y);
-        return link;
-    }
-    static AppendTextToLinkEdges() {
-        let linkText = Canvas_1.Canvas.svgCanvas.selectAll(".gLink")
-            .data(nodeStore_1.NodeStore.linkList)
-            .append("text")
-            .attr("font-family", "Arial, Helvetica, sans-serif")
-            // .call(this.setLinkTextInMiddle, ink)
-            .attr("fill", "Black")
-            .style("font", "normal 12px Arial")
-            .attr("dy", ".35em")
-            .text((link) => link.linkName);
-        if (linkText.empty()) {
-            console.log("linkText is empty");
-        }
-        else {
-            this.setLinkTextInMiddle(linkText);
-        }
-        return linkText;
-    }
-    static updateLinkPositions(linkText) {
-        linkText.attr("x1", (link) => link.source.x)
-            .attr("y1", (link) => link.source.y)
-            .attr("x2", (link) => link.target.x)
-            .attr("y2", (link) => link.target.y);
-    }
-    static Tick() {
-        Utility.updateLinkPositions(this.link);
-        nodeManager_1.NodeManager.updateNodePositions(this.nodes);
-        Utility.updateLinkPositions(this.link);
-        this.nodes.attr("transform", (d) => `translate(${d.x},${d.y})`);
-        // Questo pezzo di codice si occupa di aggiungere del testo ai link e di posizionarlo nella parte centrale del link stesso.
-        // Il testo viene posizionato in modo che sia metà strada tra il nodo di partenza e quello di destinazione. Se il nodo di destinazione ha una coordinata x maggiore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y). Se invece il nodo di destinazione ha una coordinata x minore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y).
-        this.setLinkTextInMiddle(Utility.linkText);
-    }
-    /**
-
-     Calculates and sets the position of the text element for the given link.
-     @param linkText
-     @returns {void}
-     */
-    static setLinkTextInMiddle(linkText) {
-        let center = linkText.datum().CalculateMidpoint();
-        linkText.attr("x", center.x)
-            .attr("y", center.y);
-        return linkText;
-    }
-    /**
-     * Builds the arrows for the specified SVG canvas.
-     */
-    static buildArrows() {
-        /*
-        * Il tipo marker è un tipo di elemento SVG (Scalable Vector Graphics). Viene utilizzato per definire un segno o un simbolo da inserire in un altro elemento SVG, ad esempio una linea o un percorso. In questo caso, il codice sta creando un marker che verrà inserito come "punta di freccia" in tutti gli elementi di classe gLink.
-        Il marker viene creato con l'elemento marker di SVG, che ha un insieme di attributi che ne definiscono l'aspetto e il comportamento. Gli attributi id, viewBox, refX, refY, markerWidth e markerHeight sono tutti attributi standard del tag marker di SVG, mentre l'attributo orient è un attributo non standard che viene utilizzato per specificare l'orientamento del simbolo all'interno del marker.
-        L'attributo id viene utilizzato per assegnare un identificatore univoco al marker, che può essere utilizzato per fare riferimento al marker in altri punti del codice o nei fogli di stile CSS. L'attributo viewBox definisce l'area di visualizzazione del marker e il suo contenuto. L'attributo refX e refY vengono utilizzati per specificare le coordinate del punto di riferimento del marker, ovvero il punto del marker che verrà ancorato al percorso o all'elemento che lo utilizza. Gli attributi markerWidth e markerHeight definiscono la dimensione del marker.
-        Una volta creato il marker, viene aggiunto un elemento path che definisce la forma del simbolo all'interno del marker. In questo caso, la forma del simbolo è una freccia, definita dal valore "M0,-5L10,0L0,5" dell'attributo d dell'elemento path.*/
-        let selection = Canvas_1.Canvas.svgCanvas.selectAll('.gLink');
-        selection.append('marker')
-            .attr('id', (d, i) => `arrow_${i}`)
-            .attr('viewBox', '0 -5 10 10')
-            .attr('refX', (d) => d.targetId === app_1.MainEntry.focalNodeID ? 55 : 20)
-            .attr('refY', 0)
-            .attr('markerWidth', 8)
-            .attr('markerHeight', 8)
-            .attr('orient', 'auto')
-            .append('svg:path')
-            .attr('d', 'M0,-5L10,0L0,5');
-    }
-}
-exports.Utility = Utility;
-Utility.centerNodeSize = 50;
-Utility.nodeSize = 10;
-Utility.scale = 1;
-
-
-/***/ }),
-
-/***/ "./includes/js/Ui/visibilityHandler.ts":
-/*!*********************************************!*\
-  !*** ./includes/js/Ui/visibilityHandler.ts ***!
-  \*********************************************/
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.VisibilityHandler = void 0;
-class VisibilityHandler {
-    static hideElements() {
-        $(".node").each((index, element) => this.HideEach(element));
-        $(".gLink").each((index, element) => this.SomethingRelatedToNodeVisibility(element));
-    }
-    static HideEach(element) {
-        let el = element;
-        let node = el.__data__;
-        const invIndex = this.invisibleType.indexOf(node.type);
-        if (!(invIndex > -1)) {
-            return;
-        }
-        $(el).toggle();
-        const invIndexNode = this.invisibleNode.indexOf(node.id);
-        if (invIndexNode === -1) {
-            this.invisibleNode.push(node.id);
-        }
-    }
-    static SomethingRelatedToNodeVisibility(el) {
-        let link = el.__data__;
-        const valSource = link.sourceId;
-        const valTarget = link.targetId;
-        let indexEdge;
-        const indexSource = this.invisibleNode.indexOf(valSource);
-        const indexTarget = this.invisibleNode.indexOf(valTarget);
-        indexEdge = this.invisibleEdge.indexOf(`${valSource}_${valTarget}_${link.linkName}`);
-        if (indexEdge > -1) {
-            //Einer der beiden Knoten ist unsichtbar, aber Kante noch nicht
-            $(this).toggle();
-            //    invisibleEdge.push(valSource + "_" + valTarget + "_" + el.__data__.linkName);
-        }
-        else if ((indexSource > -1 || indexTarget > -1)) {
-            //Knoten sind nicht unsichtbar, aber Kante ist es
-            $(this).toggle();
-            this.invisibleEdge.push(`${valSource}_${valTarget}_${link.linkName}`);
-        }
-    }
-    ;
-}
-exports.VisibilityHandler = VisibilityHandler;
-VisibilityHandler.invisibleNode = [];
-VisibilityHandler.invisibleEdge = [];
-VisibilityHandler.invisibleType = [];
-
-
-/***/ }),
-
-/***/ "./includes/js/app.ts":
-/*!****************************!*\
-  !*** ./includes/js/app.ts ***!
-  \****************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.MainEntry = void 0;
-const Link_1 = __webpack_require__(/*! ./Model/Link */ "./includes/js/Model/Link.ts");
-__webpack_require__(/*! select2 */ "./node_modules/select2/dist/js/select2.js");
-const INode_1 = __webpack_require__(/*! ./Model/INode */ "./includes/js/Model/INode.ts");
-const semanticWikiApi_1 = __webpack_require__(/*! ./Semantic/semanticWikiApi */ "./includes/js/Semantic/semanticWikiApi.ts");
-const nodeType_1 = __webpack_require__(/*! ./Model/nodeType */ "./includes/js/Model/nodeType.ts");
-class MainEntry {
-    constructor() {
-        MainEntry.InitialPageLoad();
-    }
-    static InitialPageLoad() {
-        //
-        semanticWikiApi_1.SemanticWikiApi.AllPagesCall();
-        $(() => {
-            this.HandleOnClick();
-        });
-    }
-    static PopulateSelectorWithWikiArticleUi(articles) {
-        MainEntry.downloadedArticles = [];
-        for (const article of articles) {
-            $("#wikiArticle").append(`<option value="${article.title}">${article.title}</option>`);
-        }
-        // require("select2");
-        //
-        // $("#wikiArticle").select2({
-        //     placeholder: "Select a Wiki Article",
-        //     allowClear: true
-        // });
-    }
-    static HandleOnClick() {
-        $("#visualiseSite").on("click", () => {
-            //Get the selected article in the combobox
-            let wikiArticleTitle = $("#wikiArticle").val();
-            if (wikiArticleTitle === "") {
-                // Error Message
-                $("#error_msg").show();
-            }
-            else {
-                $("#error_msg").hide();
-                semanticWikiApi_1.SemanticWikiApi.BrowseBySubject(wikiArticleTitle);
-            }
-        });
-    }
-    static InitNodeAndLinks_Backlinks(backlinks) {
-        for (let article of backlinks) {
-            let node = new INode_1.INode(nodeType_1.NodeType.Backlink, article.title, article.title, "Unknown", 0, 0, article.title);
-            let link = new Link_1.Link(nodeType_1.NodeType.Backlink, "Unknown", article.title, MainEntry.focalNodeID, null, null, "");
-            MainEntry.nodeSet.push(node);
-            MainEntry.linkSet.push(link);
-        }
-    }
-    static resetData() {
-        MainEntry.nodeSet = [];
-        MainEntry.linkSet = [];
-        MainEntry.downloadedArticles = [];
-    }
-}
-exports.MainEntry = MainEntry;
-MainEntry.downloadedArticles = [];
-MainEntry.focalNodeID = ""; // Esempio  di valore reale: 'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
-MainEntry.nodeSet = [];
-MainEntry.linkSet = [];
-new MainEntry();
 
 
 /***/ }),
