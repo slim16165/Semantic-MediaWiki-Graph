@@ -61,16 +61,11 @@ export class MainEntry {
     console.log("Called drawCluster; N° NodeStore.nodeList: " + NodeStore.nodeList.length);
     if (NodeStore.nodeList.length == 0) return;
 
-    //Init links svg
-    LinkAndForcesManager.svgLinks = Canvas.svgCanvas.selectAll(".gLink")
-      .data(NodeStore.linkList)
-      .enter().append("g")
-
     NodeManager.DrawNodes();
 
-    // LinkAndForcesManager.DrawLinks();
+    LinkAndForcesManager.DrawLinks();
 
-    // LegendManager.DrawLegend();
+    LegendManager.DrawLegend();
 
     d3.select(window).on("resize.updatesvg", Canvas.updateWindowSize);
   }

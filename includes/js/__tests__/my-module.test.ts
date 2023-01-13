@@ -1,10 +1,25 @@
 import { SemanticWikiApi } from "../Semantic/semanticWikiApi";
 import { MyData } from "../Semantic/myData";
+import { INode } from "../Model/INode";
+import { NodeType } from "../Model/nodeType";
 
 // @ts-ignore
 test('Contact MW server trying to load  data', () => {
   let p = SemanticWikiApi.BrowseBySubject("Abbandono dei principi giornalistici, nascita delle Fuck News ed episodi vari");
   // expect(p).toBe(3);
+});
+
+
+
+
+test('Contact MW server trying to load  data', () => {
+  let rand = function(min: number, max: number) : number {
+    return Math.floor(Math.random() * (max - min + 1) + min);
+  }
+  let node = new INode(NodeType.Article, "id", "name", "type", rand(1, 1000), rand(1, 5000), "hlink");
+  node.fixed = true;
+  node.calcNewPosition(1000, node.x)
+  expect(node.x).toBeGreaterThan(20);
 });
 
 

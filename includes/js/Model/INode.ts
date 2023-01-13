@@ -15,8 +15,9 @@ export class INode {
     public constructor(nodeType : NodeType, id: string, name: string, type: string, x: number, y: number, hlink: string) {
         this.id = id;
         this.name = name;
-        this.x = 0;
-        this.y = 0;
+        //Randomize initial position
+        this.x = Math.floor(Math.random() * (500 - 20 + 1) + 20);
+        this.y = Math.floor(Math.random() * (500 - 20 + 1) + 20);
         this.hlink = hlink;
         this.type = type;
         this.notetype = nodeType;

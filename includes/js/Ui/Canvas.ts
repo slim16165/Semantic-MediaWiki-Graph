@@ -35,10 +35,23 @@ export class Canvas {
     //inner = .focalNodeCanvas
 
     let chart = new Chart();
+    this.width = $(".chart")[0].clientWidth;
+    this.heigth = $(".chart")[0].clientHeight;
 
-    d3.selection.prototype.setWidthAndHeight = function(width: number, height: number) {
-      this.attr("width", width)
-        .attr("height", height);
+    d3.selection.prototype.setWidthAndHeight = function(width: number, heigth: number) {
+      // if (!Canvas.svgCanvas)
+      //   throw new DOMException("svgCanvas not set");
+      // console.log("Canvas width: " + this.width);
+      // console.log("Canvas height: " + this.heigth);
+
+      // this.AddMargin(width, height);
+
+      if (isNaN(width) || isNaN(heigth))
+        throw new DOMException("width or heigth is not a number");
+
+      this
+        .attr("width", width)
+        .attr("height", heigth);
       return this;
     };
 

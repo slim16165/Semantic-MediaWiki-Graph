@@ -76,9 +76,6 @@ export class LinkAndForcesManager {
   }
 
   private static DrawLinesForLinksBetweenNodes() {
-    let p = Canvas.svgCanvas.selectAll(".gLink")
-      .data(NodeStore.linkList);
-
     this.svgLinks = Canvas.svgCanvas.selectAll(".gLink")
       .data(NodeStore.linkList)
       .enter().append("g")
