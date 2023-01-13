@@ -1,4 +1,3 @@
-import { Utility } from "../Ui/utility";
 import { MainEntry } from "../app";
 import { Canvas } from "../Ui/Canvas";
 import { NodeType } from "./nodeType";
@@ -54,7 +53,7 @@ export class INode {
 
     public calcNewPosition(containerSize: number, currentPos: number) {
         const minDistFromBorder = this.IsFocalNode() ? 60 : 20;
-        const maxDistFromBorder = (containerSize - minDistFromBorder) / Utility.scale;
+        const maxDistFromBorder = (containerSize - minDistFromBorder) / MainEntry.scale;
         return Math.max(minDistFromBorder, Math.min(maxDistFromBorder, currentPos));
     }
 }

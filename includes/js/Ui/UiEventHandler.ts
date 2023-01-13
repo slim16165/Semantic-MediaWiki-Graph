@@ -3,7 +3,6 @@ import { MainEntry } from "../app";
 import { SemanticWikiApi } from "../Semantic/semanticWikiApi";
 import { INode } from "../Model/INode";
 import { LegendManager } from "./legendManager";
-import { Utility } from "./utility";
 
 const TRANSACTION_DURATION : number = 250;
 
@@ -62,7 +61,7 @@ export class UiEventHandler {
     selector.select("circle")
       .transition()
       .duration(TRANSACTION_DURATION)
-      .attr("r", (d: any) => {return d.IsFocalNode() ? Utility.centerNodeSize : Utility.nodeSize});
+      .attr("r", (d: any) => {return d.IsFocalNode() ? MainEntry.centerNodeSize : MainEntry.nodeSize});
 
     selector.select("text")
       .transition()

@@ -1,8 +1,8 @@
 import * as d3 from "d3";
-import { Utility } from "./utility";
 
 //import needed
 import * as D3Ext from "./d3Extension"
+import { MainEntry } from "../app";
 
 export class Chart {
   public width: number;
@@ -46,7 +46,7 @@ export class Canvas {
       .append("svg:svg")
       .call((selection: any, ...args: any[]) => {
         d3.zoom().on("zoom", (event: any) => {
-          Utility.scale = event.transform.k;
+          MainEntry.scale = event.transform.k;
           selection.attr("transform", event.transform);
         })(selection, ...args);
       })

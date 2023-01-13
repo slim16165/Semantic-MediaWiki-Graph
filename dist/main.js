@@ -110,7 +110,6 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.INode = void 0;
-const utility_1 = __webpack_require__(/*! ../Ui/utility */ "./includes/js/Ui/utility.ts");
 const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
 const Canvas_1 = __webpack_require__(/*! ../Ui/Canvas */ "./includes/js/Ui/Canvas.ts");
 class INode {
@@ -145,7 +144,7 @@ class INode {
   }
   calcNewPosition(containerSize, currentPos) {
     const minDistFromBorder = this.IsFocalNode() ? 60 : 20;
-    const maxDistFromBorder = (containerSize - minDistFromBorder) / utility_1.Utility.scale;
+    const maxDistFromBorder = (containerSize - minDistFromBorder) / app_1.MainEntry.scale;
     return Math.max(minDistFromBorder, Math.min(maxDistFromBorder, currentPos));
   }
 }
@@ -523,7 +522,6 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.SemanticWikiApi = void 0;
-const utility_1 = __webpack_require__(/*! ../Ui/utility */ "./includes/js/Ui/utility.ts");
 const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
 const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
 const visibilityHandler_1 = __webpack_require__(/*! ../Ui/visibilityHandler */ "./includes/js/Ui/visibilityHandler.ts");
@@ -567,7 +565,7 @@ class SemanticWikiApi {
     //  var k = cloneNode(nodeSet);
     //  var m = cloneEdge(linkSet);
     console.log("BrowseBySubject");
-    utility_1.Utility.drawCluster("Drawing1");
+    app_1.MainEntry.drawCluster("Drawing1");
     //drawCluster.update();
     visibilityHandler_1.VisibilityHandler.hideElements();
     // const elem: JQuery<HTMLElement> = $(`[id=${MyClass.focalNodeID}] a`);
@@ -603,7 +601,7 @@ class SemanticWikiApi {
       //  var m = cloneEdge(linkSet);
       nodeStore_1.NodeStore.UpdateSourceAndTarget2();
       console.log("BacklinksCallback");
-      utility_1.Utility.drawCluster("Drawing1");
+      app_1.MainEntry.drawCluster("Drawing1");
       //drawCluster.update();
       visibilityHandler_1.VisibilityHandler.hideElements();
     }
@@ -682,7 +680,7 @@ Object.defineProperty(exports, "__esModule", ({
 }));
 exports.Canvas = exports.Chart = void 0;
 const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
-const utility_1 = __webpack_require__(/*! ./utility */ "./includes/js/Ui/utility.ts");
+const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
 class Chart {
   constructor() {
     this.width = $(".chart")[0].clientWidth;
@@ -709,7 +707,7 @@ class Canvas {
     };
     this.svgCanvas = d3.select("#cluster_chart .chart").append("svg:svg").call((selection, ...args) => {
       d3.zoom().on("zoom", event => {
-        utility_1.Utility.scale = event.transform.k;
+        app_1.MainEntry.scale = event.transform.k;
         selection.attr("transform", event.transform);
       })(selection, ...args);
     }).setWidthAndHeight(this.width, this.heigth).attr("id", "svgCanvas").append("svg:g").attr("class", "focalNodeCanvas");
@@ -746,6 +744,129 @@ Canvas.margin = {
 
 /***/ }),
 
+/***/ "./includes/js/Ui/LinkManager.ts":
+/*!***************************************!*\
+  !*** ./includes/js/Ui/LinkManager.ts ***!
+  \***************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  var desc = Object.getOwnPropertyDescriptor(m, k);
+  if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+    desc = {
+      enumerable: true,
+      get: function () {
+        return m[k];
+      }
+    };
+  }
+  Object.defineProperty(o, k2, desc);
+} : function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  o[k2] = m[k];
+});
+var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
+  Object.defineProperty(o, "default", {
+    enumerable: true,
+    value: v
+  });
+} : function (o, v) {
+  o["default"] = v;
+});
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+  __setModuleDefault(result, mod);
+  return result;
+};
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.LinkManager = void 0;
+const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
+const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
+const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts");
+const nodeManager_1 = __webpack_require__(/*! ./nodeManager */ "./includes/js/Ui/nodeManager.ts");
+class LinkManager {
+  static DrawLinks() {
+    nodeStore_1.NodeStore.isThereAnyUncompleteLink();
+    // Append text to Link edges
+    this.AppendTextToLinkEdges();
+    // Draw lines for Links between Nodes
+    this.DrawLinesForLinksBetweenNodes();
+    this.clickText = false;
+    // Create a force layout and bind Nodes and Links
+    this.CreateAForceLayoutAndBindNodesAndLinks().on("tick", () => {
+      this.Tick();
+    });
+    //Build the Arrows
+    this.buildArrows();
+  }
+  static CreateAForceLayoutAndBindNodesAndLinks() {
+    let force = d3.forceSimulation().nodes(nodeStore_1.NodeStore.nodeList).force("link", d3.forceLink(nodeStore_1.NodeStore.linkList)).force("charge", d3.forceManyBody().strength(-1000)).force("gravity", d3.forceManyBody().strength(.01)).force("friction", d3.forceManyBody().strength(.2)).force("link", d3.forceLink().id(d => d.id).distance(100).strength(1)) //=> d.id).strength(9))
+    .force("link", d3.forceLink().id(d => d.id).distance(d => $(".chart")[0].clientWidth < $(".chart")[0].clientHeight ? $(".chart")[0].clientWidth * 1 / 3 : $(".chart")[0].clientHeight * 1 / 3)).force("center", d3.forceCenter(Canvas_1.Canvas.width / 2, Canvas_1.Canvas.heigth / 2)).restart();
+    return force;
+  }
+  static DrawLinesForLinksBetweenNodes() {
+    this.link = Canvas_1.Canvas.svgCanvas.selectAll(".gLink").data(nodeStore_1.NodeStore.linkList /*force.links()*/).enter().append("g").attr("class", "gLink").attr("class", "link").attr("endNode", d => d.targetId).attr("startNode", d => d.sourceId).attr("targetType", d => d.target.type).attr("sourceType", d => d.source.type).append("line").style("stroke", "#ccc").style("stroke-width", "1.5px").attr("marker-end", (d, i) => `url(#arrow_${i})`).attr("x1", l => l.source.x).attr("y1", l => l.source.y).attr("x2", l => l.target.x).attr("y2", l => l.target.y);
+  }
+  static AppendTextToLinkEdges() {
+    this.linkText = Canvas_1.Canvas.svgCanvas.selectAll(".gLink").data(nodeStore_1.NodeStore.linkList).append("text").attr("font-family", "Arial, Helvetica, sans-serif")
+    // .call(this.setLinkTextInMiddle, ink)
+    .attr("fill", "Black").style("font", "normal 12px Arial").attr("dy", ".35em").text(link => link.linkName);
+    if (this.linkText.empty()) {
+      console.log("linkText is empty");
+    } else {
+      this.setLinkTextInMiddle();
+    }
+  }
+  static updateLinkPositions() {
+    this.linkText.attr("x1", link => link.source.x).attr("y1", link => link.source.y).attr("x2", link => link.target.x).attr("y2", link => link.target.y);
+  }
+  static Tick() {
+    this.updateLinkPositions();
+    nodeManager_1.NodeManager.updateNodePositions();
+    this.updateLinkPositions();
+    nodeManager_1.NodeManager.svgNodes.attr("transform", d => `translate(${d.x},${d.y})`);
+    // Questo pezzo di codice si occupa di aggiungere del testo ai link e di posizionarlo nella parte centrale del link stesso.
+    // Il testo viene posizionato in modo che sia metà strada tra il nodo di partenza e quello di destinazione. Se il nodo di destinazione ha una coordinata x maggiore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y). Se invece il nodo di destinazione ha una coordinata x minore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y).
+    this.setLinkTextInMiddle();
+  }
+  /**
+   Calculates and sets the position of the text element for the given link.
+   @param linkText
+   @returns {void}
+   */
+  static setLinkTextInMiddle() {
+    if (this.linkText.empty()) {
+      console.log("linkText is empty");
+      return;
+    }
+    let center = this.linkText.datum().CalculateMidpoint();
+    this.linkText.attr("x", center.x).attr("y", center.y);
+  }
+  /**
+   * Builds the arrows for the specified SVG canvas.
+   */
+  static buildArrows() {
+    /*
+    * Il tipo marker è un tipo di elemento SVG (Scalable Vector Graphics). Viene utilizzato per definire un segno o un simbolo da inserire in un altro elemento SVG, ad esempio una linea o un percorso. In questo caso, il codice sta creando un marker che verrà inserito come "punta di freccia" in tutti gli elementi di classe gLink.
+    Il marker viene creato con l'elemento marker di SVG, che ha un insieme di attributi che ne definiscono l'aspetto e il comportamento. Gli attributi id, viewBox, refX, refY, markerWidth e markerHeight sono tutti attributi standard del tag marker di SVG, mentre l'attributo orient è un attributo non standard che viene utilizzato per specificare l'orientamento del simbolo all'interno del marker.
+    L'attributo id viene utilizzato per assegnare un identificatore univoco al marker, che può essere utilizzato per fare riferimento al marker in altri punti del codice o nei fogli di stile CSS. L'attributo viewBox definisce l'area di visualizzazione del marker e il suo contenuto. L'attributo refX e refY vengono utilizzati per specificare le coordinate del punto di riferimento del marker, ovvero il punto del marker che verrà ancorato al percorso o all'elemento che lo utilizza. Gli attributi markerWidth e markerHeight definiscono la dimensione del marker.
+    Una volta creato il marker, viene aggiunto un elemento path che definisce la forma del simbolo all'interno del marker. In questo caso, la forma del simbolo è una freccia, definita dal valore "M0,-5L10,0L0,5" dell'attributo d dell'elemento path.*/
+    let selection = Canvas_1.Canvas.svgCanvas.selectAll('.gLink');
+    selection.append('marker').attr('id', (d, i) => `arrow_${i}`).attr('viewBox', '0 -5 10 10').attr('refX', d => d.pointsFocalNode ? 55 : 20).attr('refY', 0).attr('markerWidth', 8).attr('markerHeight', 8).attr('orient', 'auto').append('svg:path').attr('d', 'M0,-5L10,0L0,5');
+  }
+}
+exports.LinkManager = LinkManager;
+
+/***/ }),
+
 /***/ "./includes/js/Ui/UiEventHandler.ts":
 /*!******************************************!*\
   !*** ./includes/js/Ui/UiEventHandler.ts ***!
@@ -762,7 +883,6 @@ exports.UiEventHandler = void 0;
 const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
 const semanticWikiApi_1 = __webpack_require__(/*! ../Semantic/semanticWikiApi */ "./includes/js/Semantic/semanticWikiApi.ts");
 const legendManager_1 = __webpack_require__(/*! ./legendManager */ "./includes/js/Ui/legendManager.ts");
-const utility_1 = __webpack_require__(/*! ./utility */ "./includes/js/Ui/utility.ts");
 const TRANSACTION_DURATION = 250;
 class UiEventHandler {
   static mouseClickNode(selector, clickText) {
@@ -799,7 +919,7 @@ class UiEventHandler {
     const colorValue = selector.attr("color_value");
     const strippedTypeValue = typeValue.replace(/ /g, "_");
     selector.select("circle").transition().duration(TRANSACTION_DURATION).attr("r", d => {
-      return d.IsFocalNode() ? utility_1.Utility.centerNodeSize : utility_1.Utility.nodeSize;
+      return d.IsFocalNode() ? app_1.MainEntry.centerNodeSize : app_1.MainEntry.nodeSize;
     });
     selector.select("text").transition().duration(TRANSACTION_DURATION).style("font", "normal 16px Arial").attr("fill", "Blue");
     legendManager_1.LegendManager.setLegendStyles(strippedTypeValue, colorValue, 6);
@@ -986,11 +1106,19 @@ Object.defineProperty(exports, "__esModule", ({
 exports.NodeManager = void 0;
 const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
 const ColorHelper_1 = __webpack_require__(/*! ../Helpers/ColorHelper */ "./includes/js/Helpers/ColorHelper.ts");
-const utility_1 = __webpack_require__(/*! ./utility */ "./includes/js/Ui/utility.ts");
 const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts");
 const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
 const UiEventHandler_1 = __webpack_require__(/*! ./UiEventHandler */ "./includes/js/Ui/UiEventHandler.ts");
+const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
 class NodeManager {
+  static DrawNodes() {
+    // Create Nodes
+    NodeManager.CreateNodes();
+    // Append circles to Nodes
+    NodeManager.AppendCirclesToNodes();
+    // Append text to Nodes
+    NodeManager.AppendTextToNodes();
+  }
   /*
   They are initially invisible
   * */
@@ -1040,7 +1168,7 @@ class NodeManager {
   static AppendCirclesToNodes() {
     this.svgNodes.append("circle").attr("x", d => d.x).attr("y", function (d) {
       return d.y;
-    }).attr("r", d => d.IsFocalNode() ? utility_1.Utility.centerNodeSize : utility_1.Utility.nodeSize).style("fill", "White") // Make the nodes hollow looking
+    }).attr("r", d => d.IsFocalNode() ? app_1.MainEntry.centerNodeSize : app_1.MainEntry.nodeSize).style("fill", "White") // Make the nodes hollow looking
     .style("fill", "Blue").attr("type_value", d => d.type).attr("color_value", d => ColorHelper_1.ColorHelper.color_hash[d.type]).attr("fixed", function (d) {
       return d.fixed;
     }).attr("x", function (d) {
@@ -1058,152 +1186,6 @@ class NodeManager {
 }
 
 exports.NodeManager = NodeManager;
-
-/***/ }),
-
-/***/ "./includes/js/Ui/utility.ts":
-/*!***********************************!*\
-  !*** ./includes/js/Ui/utility.ts ***!
-  \***********************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  var desc = Object.getOwnPropertyDescriptor(m, k);
-  if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-    desc = {
-      enumerable: true,
-      get: function () {
-        return m[k];
-      }
-    };
-  }
-  Object.defineProperty(o, k2, desc);
-} : function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  o[k2] = m[k];
-});
-var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
-  Object.defineProperty(o, "default", {
-    enumerable: true,
-    value: v
-  });
-} : function (o, v) {
-  o["default"] = v;
-});
-var __importStar = this && this.__importStar || function (mod) {
-  if (mod && mod.__esModule) return mod;
-  var result = {};
-  if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-  __setModuleDefault(result, mod);
-  return result;
-};
-Object.defineProperty(exports, "__esModule", ({
-  value: true
-}));
-exports.Utility = void 0;
-const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
-const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts");
-const legendManager_1 = __webpack_require__(/*! ./legendManager */ "./includes/js/Ui/legendManager.ts");
-const nodeManager_1 = __webpack_require__(/*! ./nodeManager */ "./includes/js/Ui/nodeManager.ts");
-const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
-// noinspection UnnecessaryLocalVariableJS
-class Utility {
-  /**
-   * Draws a cluster using the provided data.
-   *
-   * @param {string} drawingName - A unique drawing identifier that has no spaces, no "." and no "#" characters.
-   *
-   *              0 = No Sort.  Maintain original order.
-   *              1 = Sort by arc value size.
-   */
-  static drawCluster(drawingName) {
-    new Canvas_1.Canvas();
-    console.log("N° NodeStore.nodeList: " + nodeStore_1.NodeStore.nodeList.length);
-    if (nodeStore_1.NodeStore.nodeList.length == 0) return;
-    // Create Nodes
-    nodeManager_1.NodeManager.CreateNodes();
-    // Append circles to Nodes
-    nodeManager_1.NodeManager.AppendCirclesToNodes();
-    // Append text to Nodes
-    nodeManager_1.NodeManager.AppendTextToNodes();
-    // Append text to Link edges
-    this.AppendTextToLinkEdges();
-    // Draw lines for Links between Nodes
-    this.DrawLinesForLinksBetweenNodes();
-    let clickText = false;
-    // Create a force layout and bind Nodes and Links
-    this.CreateAForceLayoutAndBindNodesAndLinks().on("tick", () => {
-      this.Tick();
-    });
-    //Build the Arrows
-    this.buildArrows();
-    legendManager_1.LegendManager.DrawLegend();
-    d3.select(window).on('resize.updatesvg', Canvas_1.Canvas.updateWindowSize);
-  }
-  static CreateAForceLayoutAndBindNodesAndLinks() {
-    let force = d3.forceSimulation().nodes(nodeStore_1.NodeStore.nodeList).force("link", d3.forceLink(nodeStore_1.NodeStore.linkList)).force("charge", d3.forceManyBody().strength(-1000)).force("gravity", d3.forceManyBody().strength(.01)).force("friction", d3.forceManyBody().strength(.2)).force("link", d3.forceLink().id(d => d.id).distance(100).strength(1)) //=> d.id).strength(9))
-    .force("link", d3.forceLink().id(d => d.id).distance(d => $(".chart")[0].clientWidth < $(".chart")[0].clientHeight ? $(".chart")[0].clientWidth * 1 / 3 : $(".chart")[0].clientHeight * 1 / 3)).force("center", d3.forceCenter(Canvas_1.Canvas.width / 2, Canvas_1.Canvas.heigth / 2)).restart();
-    return force;
-  }
-  static DrawLinesForLinksBetweenNodes() {
-    this.link = Canvas_1.Canvas.svgCanvas.selectAll(".gLink").data(nodeStore_1.NodeStore.linkList /*force.links()*/).enter().append("g").attr("class", "gLink").attr("class", "link").attr("endNode", d => d.targetId).attr("startNode", d => d.sourceId).attr("targetType", d => d.target.type).attr("sourceType", d => d.source.type).append("line").style("stroke", "#ccc").style("stroke-width", "1.5px").attr("marker-end", (d, i) => `url(#arrow_${i})`).attr("x1", l => l.source.x).attr("y1", l => l.source.y).attr("x2", l => l.target.x).attr("y2", l => l.target.y);
-  }
-  static AppendTextToLinkEdges() {
-    this.linkText = Canvas_1.Canvas.svgCanvas.selectAll(".gLink").data(nodeStore_1.NodeStore.linkList).append("text").attr("font-family", "Arial, Helvetica, sans-serif")
-    // .call(this.setLinkTextInMiddle, ink)
-    .attr("fill", "Black").style("font", "normal 12px Arial").attr("dy", ".35em").text(link => link.linkName);
-    if (this.linkText.empty()) {
-      console.log("linkText is empty");
-    } else {
-      this.setLinkTextInMiddle();
-    }
-  }
-  static updateLinkPositions() {
-    this.linkText.attr("x1", link => link.source.x).attr("y1", link => link.source.y).attr("x2", link => link.target.x).attr("y2", link => link.target.y);
-  }
-  static Tick() {
-    Utility.updateLinkPositions();
-    nodeManager_1.NodeManager.updateNodePositions();
-    Utility.updateLinkPositions();
-    nodeManager_1.NodeManager.svgNodes.attr("transform", d => `translate(${d.x},${d.y})`);
-    // Questo pezzo di codice si occupa di aggiungere del testo ai link e di posizionarlo nella parte centrale del link stesso.
-    // Il testo viene posizionato in modo che sia metà strada tra il nodo di partenza e quello di destinazione. Se il nodo di destinazione ha una coordinata x maggiore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y). Se invece il nodo di destinazione ha una coordinata x minore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y).
-    this.setLinkTextInMiddle();
-  }
-  /**
-   Calculates and sets the position of the text element for the given link.
-   @param linkText
-   @returns {void}
-   */
-  static setLinkTextInMiddle() {
-    if (this.linkText.empty()) {
-      console.log("linkText is empty");
-      return;
-    }
-    let center = this.linkText.datum().CalculateMidpoint();
-    this.linkText.attr("x", center.x).attr("y", center.y);
-  }
-  /**
-   * Builds the arrows for the specified SVG canvas.
-   */
-  static buildArrows() {
-    /*
-    * Il tipo marker è un tipo di elemento SVG (Scalable Vector Graphics). Viene utilizzato per definire un segno o un simbolo da inserire in un altro elemento SVG, ad esempio una linea o un percorso. In questo caso, il codice sta creando un marker che verrà inserito come "punta di freccia" in tutti gli elementi di classe gLink.
-    Il marker viene creato con l'elemento marker di SVG, che ha un insieme di attributi che ne definiscono l'aspetto e il comportamento. Gli attributi id, viewBox, refX, refY, markerWidth e markerHeight sono tutti attributi standard del tag marker di SVG, mentre l'attributo orient è un attributo non standard che viene utilizzato per specificare l'orientamento del simbolo all'interno del marker.
-    L'attributo id viene utilizzato per assegnare un identificatore univoco al marker, che può essere utilizzato per fare riferimento al marker in altri punti del codice o nei fogli di stile CSS. L'attributo viewBox definisce l'area di visualizzazione del marker e il suo contenuto. L'attributo refX e refY vengono utilizzati per specificare le coordinate del punto di riferimento del marker, ovvero il punto del marker che verrà ancorato al percorso o all'elemento che lo utilizza. Gli attributi markerWidth e markerHeight definiscono la dimensione del marker.
-    Una volta creato il marker, viene aggiunto un elemento path che definisce la forma del simbolo all'interno del marker. In questo caso, la forma del simbolo è una freccia, definita dal valore "M0,-5L10,0L0,5" dell'attributo d dell'elemento path.*/
-    let selection = Canvas_1.Canvas.svgCanvas.selectAll('.gLink');
-    selection.append('marker').attr('id', (d, i) => `arrow_${i}`).attr('viewBox', '0 -5 10 10').attr('refX', d => d.pointsFocalNode ? 55 : 20).attr('refY', 0).attr('markerWidth', 8).attr('markerHeight', 8).attr('orient', 'auto').append('svg:path').attr('d', 'M0,-5L10,0L0,5');
-  }
-}
-exports.Utility = Utility;
-Utility.centerNodeSize = 50;
-Utility.nodeSize = 10;
-Utility.scale = 1;
 
 /***/ }),
 
@@ -1302,11 +1284,42 @@ VisibilityHandler.invisibleType = [];
 /*!****************************!*\
   !*** ./includes/js/app.ts ***!
   \****************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
 
 
+var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  var desc = Object.getOwnPropertyDescriptor(m, k);
+  if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+    desc = {
+      enumerable: true,
+      get: function () {
+        return m[k];
+      }
+    };
+  }
+  Object.defineProperty(o, k2, desc);
+} : function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  o[k2] = m[k];
+});
+var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
+  Object.defineProperty(o, "default", {
+    enumerable: true,
+    value: v
+  });
+} : function (o, v) {
+  o["default"] = v;
+});
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+  __setModuleDefault(result, mod);
+  return result;
+};
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
@@ -1317,6 +1330,11 @@ const INode_1 = __webpack_require__(/*! ./Model/INode */ "./includes/js/Model/IN
 const semanticWikiApi_1 = __webpack_require__(/*! ./Semantic/semanticWikiApi */ "./includes/js/Semantic/semanticWikiApi.ts");
 const nodeType_1 = __webpack_require__(/*! ./Model/nodeType */ "./includes/js/Model/nodeType.ts");
 const nodeStore_1 = __webpack_require__(/*! ./nodeStore */ "./includes/js/nodeStore.ts");
+const Canvas_1 = __webpack_require__(/*! ./Ui/Canvas */ "./includes/js/Ui/Canvas.ts");
+const nodeManager_1 = __webpack_require__(/*! ./Ui/nodeManager */ "./includes/js/Ui/nodeManager.ts");
+const legendManager_1 = __webpack_require__(/*! ./Ui/legendManager */ "./includes/js/Ui/legendManager.ts");
+const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
+const LinkManager_1 = __webpack_require__(/*! ./Ui/LinkManager */ "./includes/js/Ui/LinkManager.ts");
 class MainEntry {
   constructor() {
     MainEntry.InitialPageLoad();
@@ -1340,19 +1358,22 @@ class MainEntry {
     //     allowClear: true
     // });
   }
-
-  static HandleOnClick() {
-    $("#visualiseSite").on("click", () => {
-      //Get the selected article in the combobox
-      let wikiArticleTitle = $("#wikiArticle").val();
-      if (wikiArticleTitle === "") {
-        // Error Message
-        $("#error_msg").show();
-      } else {
-        $("#error_msg").hide();
-        semanticWikiApi_1.SemanticWikiApi.BrowseBySubject(wikiArticleTitle);
-      }
-    });
+  /**
+   * Draws a cluster using the provided data.
+   *
+   * @param {string} drawingName - A unique drawing identifier that has no spaces, no "." and no "#" characters.
+   *
+   *              0 = No Sort.  Maintain original order.
+   *              1 = Sort by arc value size.
+   */
+  static drawCluster(drawingName) {
+    new Canvas_1.Canvas();
+    console.log("N° NodeStore.nodeList: " + nodeStore_1.NodeStore.nodeList.length);
+    if (nodeStore_1.NodeStore.nodeList.length == 0) return;
+    nodeManager_1.NodeManager.DrawNodes();
+    LinkManager_1.LinkManager.DrawLinks();
+    legendManager_1.LegendManager.DrawLegend();
+    d3.select(window).on("resize.updatesvg", Canvas_1.Canvas.updateWindowSize);
   }
   static InitNodeAndLinks_Backlinks(backlinks) {
     for (let article of backlinks) {
@@ -1367,9 +1388,25 @@ class MainEntry {
     nodeStore_1.NodeStore.linkList = [];
     MainEntry.downloadedArticles = [];
   }
+  static HandleOnClick() {
+    $("#visualiseSite").on("click", () => {
+      //Get the selected article in the combobox
+      let wikiArticleTitle = $("#wikiArticle").val();
+      if (wikiArticleTitle === "") {
+        // Error Message
+        $("#error_msg").show();
+      } else {
+        $("#error_msg").hide();
+        semanticWikiApi_1.SemanticWikiApi.BrowseBySubject(wikiArticleTitle);
+      }
+    });
+  }
 }
 exports.MainEntry = MainEntry;
 MainEntry.downloadedArticles = [];
+MainEntry.centerNodeSize = 50;
+MainEntry.nodeSize = 10;
+MainEntry.scale = 1;
 /*Primary Node of Context*/
 MainEntry.focalNodeID = ""; // Esempio  di valore reale: 'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
 new MainEntry();
@@ -1422,6 +1459,18 @@ class NodeStore {
       console.log("sourceId " + sourceId);
       console.log(NodeStore.nodeList.map(node => node.id));
       throw new DOMException("Node not found");
+    }
+  }
+  static isThereAnyUncompleteLink() {
+    for (const link of NodeStore.linkList) {
+      if (!link.source) {
+        console.log("SourceId missing " + link.sourceId);
+        debugger;
+      }
+      if (!link.target) {
+        console.log("SourceId missing " + link.targetId);
+        debugger;
+      }
     }
   }
 }

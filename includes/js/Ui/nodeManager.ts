@@ -1,14 +1,25 @@
 import * as d3 from "d3";
 import { Selection } from "d3";
 import { ColorHelper } from "../Helpers/ColorHelper";
-import { Utility } from "./utility";
 import { Canvas } from "./Canvas";
 import { NodeStore } from "../nodeStore";
 import { INode } from "../Model/INode";
 import { UiEventHandler } from "./UiEventHandler";
+import { MainEntry } from "../app";
 
 export class NodeManager {
   static svgNodes: Selection<any, INode, any, any>;
+
+  static DrawNodes() {
+    // Create Nodes
+    NodeManager.CreateNodes();
+
+    // Append circles to Nodes
+    NodeManager.AppendCirclesToNodes();
+
+    // Append text to Nodes
+    NodeManager.AppendTextToNodes();
+  }
 
   /*
   They are initially invisible
@@ -111,7 +122,7 @@ export class NodeManager {
       .attr("y", function(d) {
         return d.y;
       })
-      .attr("r", (d: INode) => d.IsFocalNode() ? Utility.centerNodeSize : Utility.nodeSize)
+      .attr("r", (d: INode) => d.IsFocalNode() ? MainEntry.centerNodeSize : MainEntry.nodeSize)
       .style("fill", "White") // Make the nodes hollow looking
       .style("fill", "Blue")
       .attr("type_value", (d: INode) => d.type)

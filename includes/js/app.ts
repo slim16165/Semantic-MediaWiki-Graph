@@ -6,11 +6,18 @@ import { SemanticWikiApi } from "./Semantic/semanticWikiApi";
 import { Article } from "./Model/OtherTypes";
 import { NodeType } from "./Model/nodeType";
 import { NodeStore } from "./nodeStore";
+import { Canvas } from "./Ui/Canvas";
+import { NodeManager } from "./Ui/nodeManager";
+import { LegendManager } from "./Ui/legendManager";
+import * as d3 from "d3";
+import { LinkManager } from "./Ui/LinkManager";
 
 export class MainEntry {
-
   static downloadedArticles: any[] = [];
 
+  public static centerNodeSize: number = 50;
+  public static nodeSize: number = 10;
+  public static scale: number = 1;
   /*Primary Node of Context*/
   static focalNodeID: string = ""; // Esempio  di valore reale: 'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
   static force: IForce;
@@ -42,7 +49,44 @@ export class MainEntry {
     // });
   }
 
+  /**
+   * Draws a cluster using the provided data.
+   *
+   * @param {string} drawingName - A unique drawing identifier that has no spaces, no "." and no "#" characters.
+   *
+   *              0 = No Sort.  Maintain original order.
+   *              1 = Sort by arc value size.
+   */
+  public static drawCluster(drawingName: string): void {
+    new Canvas();
 
+    console.log("N° NodeStore.nodeList: " + NodeStore.nodeList.length);
+    if (NodeStore.nodeList.length == 0) return;
+
+    NodeManager.DrawNodes();
+
+    LinkManager.DrawLinks();
+
+    LegendManager.DrawLegend();
+
+    d3.select(window).on("resize.updatesvg", Canvas.updateWindowSize);
+  }
+
+  static InitNodeAndLinks_Backlinks(backlinks: Article[]) {
+    for (let article of backlinks) {
+      let node = new INode(NodeType.Backlink, article.title, article.title, "Unknown", 0, 0, article.title);
+      let link = new Link(NodeType.Backlink, "Unknown", article.title, MainEntry.focalNodeID, null, null, "");
+
+      NodeStore.nodeList.push(node);
+      NodeStore.linkList.push(link);
+    }
+  }
+
+  static resetData() {
+    NodeStore.nodeList = [];
+    NodeStore.linkList = [];
+    MainEntry.downloadedArticles = [];
+  }
 
   private static HandleOnClick() {
     $("#visualiseSite").on("click", () => {
@@ -59,25 +103,6 @@ export class MainEntry {
         SemanticWikiApi.BrowseBySubject(wikiArticleTitle);
       }
     });
-  }
-
-
-
-    static InitNodeAndLinks_Backlinks(backlinks: Article[])
-  {
-    for (let article of backlinks) {
-      let node = new INode(NodeType.Backlink, article.title, article.title, "Unknown", 0, 0, article.title);
-      let link = new Link(NodeType.Backlink,"Unknown", article.title, MainEntry.focalNodeID, null, null, "");
-
-      NodeStore.nodeList.push(node);
-      NodeStore.linkList.push(link);
-    }
-  }
-
-  static resetData() {
-    NodeStore.nodeList = [];
-    NodeStore.linkList = [];
-    MainEntry.downloadedArticles = [];
   }
 }
 

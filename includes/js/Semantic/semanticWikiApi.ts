@@ -1,4 +1,3 @@
-import { Utility } from "../Ui/utility";
 import { NodeStore } from "../nodeStore";
 import { MainEntry } from "../app";
 import { VisibilityHandler } from "../Ui/visibilityHandler";
@@ -51,7 +50,7 @@ export class SemanticWikiApi {
     //  var k = cloneNode(nodeSet);
     //  var m = cloneEdge(linkSet);
     console.log("BrowseBySubject");
-    Utility.drawCluster("Drawing1");
+    MainEntry.drawCluster("Drawing1");
     //drawCluster.update();
     VisibilityHandler.hideElements();
     // const elem: JQuery<HTMLElement> = $(`[id=${MyClass.focalNodeID}] a`);
@@ -93,7 +92,7 @@ export class SemanticWikiApi {
       NodeStore.UpdateSourceAndTarget2();
 
       console.log("BacklinksCallback");
-      Utility.drawCluster("Drawing1");
+      MainEntry.drawCluster("Drawing1");
       //drawCluster.update();
       VisibilityHandler.hideElements();
     }

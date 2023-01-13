@@ -46,4 +46,19 @@ export class NodeStore {
         }
     }
 
+    static isThereAnyUncompleteLink() {
+        for (const link of NodeStore.linkList) {
+            if(!link.source)
+            {
+                console.log("SourceId missing "+ link.sourceId);
+                debugger;
+            }
+            if(!link.target)
+            {
+                console.log("SourceId missing "+ link.targetId);
+                debugger;
+            }
+
+        }
+    }
 }
