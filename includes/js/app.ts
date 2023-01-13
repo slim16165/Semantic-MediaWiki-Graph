@@ -1,7 +1,6 @@
 import { Link } from "./Model/Link";
 import "select2";
 import { INode } from "./Model/INode";
-import { IForce } from "./Model/IForce";
 import { SemanticWikiApi } from "./Semantic/semanticWikiApi";
 import { Article } from "./Model/OtherTypes";
 import { NodeType } from "./Model/nodeType";
@@ -10,7 +9,7 @@ import { Canvas } from "./Ui/Canvas";
 import { NodeManager } from "./Ui/nodeManager";
 import { LegendManager } from "./Ui/legendManager";
 import * as d3 from "d3";
-import { LinkManager } from "./Ui/LinkManager";
+import { LinkAndForcesManager } from "./Ui/LinkAndForcesManager";
 
 export class MainEntry {
   static downloadedArticles: any[] = [];
@@ -20,7 +19,6 @@ export class MainEntry {
   public static scale: number = 1;
   /*Primary Node of Context*/
   static focalNodeID: string = ""; // Esempio  di valore reale: 'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
-  static force: IForce;
 
   constructor() {
     MainEntry.InitialPageLoad();
@@ -63,11 +61,21 @@ export class MainEntry {
     console.log("N° NodeStore.nodeList: " + NodeStore.nodeList.length);
     if (NodeStore.nodeList.length == 0) return;
 
+    //Init nodes and links svg
+    NodeManager.svgNodes = NodeManager.svgNodes = Canvas.svgCanvas.selectAll(".node")
+      .data(NodeStore.nodeList)
+      .enter()
+      .append("g")
+
+    LinkAndForcesManager.svgLinks = Canvas.svgCanvas.selectAll(".gLink")
+      .data(NodeStore.linkList)
+      .enter().append("g")
+
     NodeManager.DrawNodes();
 
-    LinkManager.DrawLinks();
+    // LinkAndForcesManager.DrawLinks();
 
-    LegendManager.DrawLegend();
+    // LegendManager.DrawLegend();
 
     d3.select(window).on("resize.updatesvg", Canvas.updateWindowSize);
   }
@@ -75,7 +83,7 @@ export class MainEntry {
   static InitNodeAndLinks_Backlinks(backlinks: Article[]) {
     for (let article of backlinks) {
       let node = new INode(NodeType.Backlink, article.title, article.title, "Unknown", 0, 0, article.title);
-      let link = new Link(NodeType.Backlink, "Unknown", article.title, MainEntry.focalNodeID, null, null, "");
+      let link = new Link(NodeType.Backlink, "Backlink", article.title, MainEntry.focalNodeID, null, null, "");
 
       NodeStore.nodeList.push(node);
       NodeStore.linkList.push(link);

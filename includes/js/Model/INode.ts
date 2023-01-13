@@ -56,4 +56,8 @@ export class INode {
         const maxDistFromBorder = (containerSize - minDistFromBorder) / MainEntry.scale;
         return Math.max(minDistFromBorder, Math.min(maxDistFromBorder, currentPos));
     }
+
+  debugString() {
+      return `ID: ${this.id}, Name: ${this.name}, Type: ${this.type}, Fixed: ${this.fixed}, x: ${this.x}, y: ${this.y}, hlink: ${this.hlink}, notetype: ${this.notetype}`;
+  }
 }

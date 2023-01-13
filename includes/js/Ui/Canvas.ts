@@ -83,8 +83,8 @@ export class Canvas {
       .attr("width", this.width)
       .attr("height", this.heigth);
 
-    console.log("Canvas width: " + this.width);
-    console.log("Canvas height: " + this.heigth);
+    // console.log("Canvas width: " + this.width);
+    // console.log("Canvas height: " + this.heigth);
 
     // Canvas.svgCanvas.setWidthAndHeight(Canvas.width, Canvas.heigth)
   }

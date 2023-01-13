@@ -1,6 +1,6 @@
 export enum NodeType {
-  Backlink,
-  Article,
+  Backlink = "Backlink",
+  Article = "Article",
 
-  Property
+  Property = "Property"
 }

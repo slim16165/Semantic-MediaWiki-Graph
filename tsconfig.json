@@ -4,74 +4,20 @@
     "node_modules/types-mediawiki/mw/index.d.ts"
   ],
   "knownSymbols": {
-    "d3": [
-      {
-        "name": "d3",
-        "module": "d3",
-        "isDefault": true
-      }
-    ],
-    "ColorHelper": [
-      {
-        "name": "ColorHelper",
-        "path": "./includes/js/Helpers/ColorHelper.ts",
-        "type": "class",
-        "isDefault": false
-      }
-    ],
-    "ILink": [
-      {
-        "name": "ILink",
-        "path": "./includes/js/app.ts",
-        "type": "class",
-        "isDefault": false
-      }
-    ],
-    "IForce": [
-      {
-        "name": "IForce",
-        "path": "./includes/js/app.ts",
-        "type": "interface",
-        "isDefault": false
-      }
-    ],
-    "INode": [
-      {
-        "name": "INode",
-        "path": "./includes/js/app.ts",
-        "type": "interface",
-        "isDefault": false
-      }
-    ],
-    "MyClass": [
-      {
-        "name": "MyClass",
-        "path": "./includes/js/app.ts",
-        "type": "class",
-        "isDefault": false
-      }
-    ],
-    "mw": [
-      {
-        "name": "mw",
-        "module": "types-mediawiki/*",
-        "isDefault": true
-      }
-    ]
   },
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig to read more about this file */
 
     /* Projects */
-    // "incremental": true,                              /* Save .tsbuildinfo files to allow for incremental compilation of projects. */
+     "incremental": true,                              /* Save .tsbuildinfo files to allow for incremental compilation of projects. */
     // "composite": true,                                /* Enable constraints that allow a TypeScript project to be used with project references. */
-    // "tsBuildInfoFile": "./.tsbuildinfo",              /* Specify the path to .tsbuildinfo incremental compilation file. */
+     "tsBuildInfoFile": "./.tsbuildinfo",              /* Specify the path to .tsbuildinfo incremental compilation file. */
     // "disableSourceOfProjectReferenceRedirect": true,  /* Disable preferring source files instead of declaration files when referencing composite projects. */
     // "disableSolutionSearching": true,                 /* Opt a project out of multi-project reference checking when editing. */
     // "disableReferencedProjectLoad": true,             /* Reduce the number of projects loaded automatically by TypeScript. */
 
     /* Language and Environment */
-    "target": "es2016",
+    "target": "ES2022",
     /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
     // "lib": [],                                        /* Specify a set of bundled library declaration files that describe the target runtime environment. */
     // "jsx": "preserve",                                /* Specify what JSX code is generated. */
@@ -109,9 +55,9 @@
     // "maxNodeModuleJsDepth": 1,                        /* Specify the maximum folder depth used for checking JavaScript files from 'node_modules'. Only applicable with 'allowJs'. */
 
     /* Emit */
-    "declaration": true,
+    "declaration": false,
     /* Generate .d.ts files from TypeScript and JavaScript files in your project. */
-    "declarationMap": true,
+    "declarationMap": false,
     /* Create sourcemaps for d.ts files. */
     // "emitDeclarationOnly": true,                      /* Only output d.ts files and not JavaScript files. */
     "sourceMap": true,
@@ -121,7 +67,7 @@
     // "removeComments": true,                           /* Disable emitting comments. */
     // "noEmit": true,                                   /* Disable emitting files from a compilation. */
     // "importHelpers": true,                            /* Allow importing helper functions from tslib once per project, instead of including them per-file. */
-    // "importsNotUsedAsValues": "remove",               /* Specify emit/checking behavior for imports that are only used for types. */
+     "importsNotUsedAsValues": "remove",               /* Specify emit/checking behavior for imports that are only used for types. */
     // "downlevelIteration": true,                       /* Emit more compliant, but verbose and less performant JavaScript for iteration. */
     // "sourceRoot": "",                                 /* Specify the root path for debuggers to find the reference source code. */
     // "mapRoot": "",                                    /* Specify the location where debugger should locate map files instead of generated locations. */
@@ -169,7 +115,7 @@
 
     /* Completeness */
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
-    "skipLibCheck": false,
+    "skipLibCheck": true,
     /* Skip type checking all .d.ts files. */
 
     "noUnusedLocals": false,
@@ -179,6 +125,5 @@
     "pretty": true,
     "allowJs": true,
     "checkJs": true,
-    "noEmit": false
   }
 }

@@ -1,11 +1,12 @@
 import * as d3 from "d3";
-import { Selection } from "d3";
+import { BaseType, DragBehavior, Selection } from "d3";
 import { ColorHelper } from "../Helpers/ColorHelper";
 import { Canvas } from "./Canvas";
 import { NodeStore } from "../nodeStore";
 import { INode } from "../Model/INode";
 import { UiEventHandler } from "./UiEventHandler";
 import { MainEntry } from "../app";
+import { LinkAndForcesManager } from "./LinkAndForcesManager";
 
 export class NodeManager {
   static svgNodes: Selection<any, INode, any, any>;
@@ -36,7 +37,7 @@ export class NodeManager {
 
     console.log(NodeStore.nodeList.length);
 
-    this.svgNodes = Canvas.svgCanvas.selectAll(".node")
+    NodeManager.svgNodes = Canvas.svgCanvas.selectAll(".node")
       .data(NodeStore.nodeList)
       .enter()
       .append("g")
@@ -51,8 +52,7 @@ export class NodeManager {
       .on("mouseover", () => UiEventHandler.nodeMouseOver)
       .on("click", () => UiEventHandler.mouseClickNode)
       .on("mouseout", () => UiEventHandler.nodeMouseOut)
-      //TODO: controllare qui
-      // .call(Utility.force.drag)
+      .call(LinkAndForcesManager.forceDragBehaviour)
       .attr("transform", function(d) {
         return `translate(${d.x},${d.y})`;
       })
@@ -88,7 +88,7 @@ export class NodeManager {
   static updateNodePositions() {
     this.svgNodes.datum().updatePositions();
     this.svgNodes.attr("cx", (d: INode) => d.x)
-      .attr("cy", (d: INode) => d.y);
+        .attr("cy", (d: INode) => d.y);
   }
 
   static AppendTextToNodes() {
@@ -99,6 +99,7 @@ export class NodeManager {
       })
       .attr("text-anchor", (d: INode) => d.IsFocalNode() ? "middle" : "start")
       .on("click", function() {
+        // @ts-ignore
         UiEventHandler.mouseClickNodeText(d3.select(this), false);
       })
       .attr("font-family", "Arial, Helvetica, sans-serif")
@@ -142,8 +143,8 @@ export class NodeManager {
         return d.fixed ? "focalNodeCircle" : `nodeCircle-${strippedString}`;
       })
       .style("stroke-width", 5) // Give the node strokes some thickness
-      .style("stroke", (d: INode) => ColorHelper.color_hash[d.type]); // Node stroke colors
-    // .call(force.drag);
+      .style("stroke", (d: INode) => ColorHelper.color_hash[d.type]) // Node stroke colors
+      .call(LinkAndForcesManager.forceDragBehaviour);
   }
 }
 

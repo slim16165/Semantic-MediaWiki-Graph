@@ -23,6 +23,8 @@ export class NodeStore {
         for (const link of this.linkList) {
             NodeStore.UpdateSourceAndTarget(link);
         }
+
+        // this.logNodeAndLinkStatus();
     }
 
     private static UpdateSourceAndTarget(link: Link) {
@@ -44,6 +46,19 @@ export class NodeStore {
 
             throw new DOMException("Node not found");
         }
+    }
+
+    private static logNodeAndLinkStatus() {
+        console.log("Node Status:");
+        let debugString = "";
+        NodeStore.nodeList.forEach((node) => {
+            debugString += node.debugString() + "\n";
+        });
+        debugString += "Link Status:\n";
+        NodeStore.linkList.forEach((link) => {
+            debugString += link.debugString() + "\n";
+        });
+        console.log(debugString);
     }
 
     static isThereAnyUncompleteLink() {

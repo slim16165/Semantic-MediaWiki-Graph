@@ -73,6 +73,17 @@ export class Link {
     private CalcMiddlePoint(x: number, y: number) {
         return Math.min(x, y) + Math.abs(y - x) / 2;
     }
+
+    debugString() {
+        return `Link Name: ${this.linkName}, `+
+        `Source ID: ${this.sourceId}, `+
+        `Target ID: ${this.targetId},`+
+        `source type: ${typeof this.source}`+
+        `target type: ${typeof this.target}`+
+        `Points to Focal Node: ${this.pointsFocalNode}, `+
+        `Direction: ${this.direction}, `+
+        `nodetype: ${this.nodetype}`;
+    }
 }
 
 
