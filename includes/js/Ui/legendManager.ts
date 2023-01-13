@@ -75,7 +75,7 @@ export class LegendManager {
     const strippedTypeValue = typeValue.replace(/ /g, "_");
 
     LegendManager.setLegendStyles("strippedTypeValue", "Maroon", 1.2 * 6);
-    NodeManager.setNodeStyles(strippedTypeValue, "Maroon", "bold", nodeSize, false);
+    NodeManager.setNodeStylesOnMouseMove(strippedTypeValue, "Maroon", "bold", nodeSize, false);
   }
 
   public static typeMouseOut(selector: Selection<any, any, any, any>, nodeSize: number) {
@@ -84,7 +84,7 @@ export class LegendManager {
     const strippedTypeValue = typeValue.replace(/ /g, "_");
 
     LegendManager.setLegendStyles(strippedTypeValue, colorValue, 6);
-    NodeManager.setNodeStyles(strippedTypeValue, "Blue", "normal", nodeSize, false);
+    NodeManager.setNodeStylesOnMouseMove(strippedTypeValue, "Blue", "normal", nodeSize, false);
 
   }
 

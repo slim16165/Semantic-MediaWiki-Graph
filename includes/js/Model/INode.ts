@@ -49,12 +49,14 @@ export class INode {
     public updatePositions() {
         this.x = this.calcNewPosition(Canvas.width, this.x)
         this.y = this.calcNewPosition(Canvas.heigth, this.y)
+        console.log(`posizione x e y: ${this.x} ${this.y}`)
     }
 
     public calcNewPosition(containerSize: number, currentPos: number) {
         const minDistFromBorder = this.IsFocalNode() ? 60 : 20;
         const maxDistFromBorder = (containerSize - minDistFromBorder) / MainEntry.scale;
         return Math.max(minDistFromBorder, Math.min(maxDistFromBorder, currentPos));
+        //return Math.floor(Math.random() * (500 - 20 + 1) + 20);
     }
 
   debugString() {

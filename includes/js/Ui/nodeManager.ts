@@ -35,8 +35,6 @@ export class NodeManager {
     In summary enter() allows to select and operate on data elements that haven't been associated yet to DOM elements.
     * */
 
-    console.log(NodeStore.nodeList.length);
-
     NodeManager.svgNodes = Canvas.svgCanvas.selectAll(".node")
       .data(NodeStore.nodeList)
       .enter()
@@ -46,9 +44,10 @@ export class NodeManager {
       .attr("type_value", (d: INode) => d.type)
       .attr("color_value", (d: INode) => ColorHelper.color_hash[d.type])
       .attr("xlink:href", (d: INode) => d.hlink as string)
-      .attr("fixed", function(d) {
-        return d.fixed;
-      })
+      .attr("fixed", d => d.fixed)
+      // .setXYPos()
+      .attr("cx", (d: INode) => d.x)
+      .attr("cy", (d: INode) => d.y)
       .on("mouseover", () => UiEventHandler.nodeMouseOver)
       .on("click", () => UiEventHandler.mouseClickNode)
       .on("mouseout", () => UiEventHandler.nodeMouseOut)
@@ -61,7 +60,7 @@ export class NodeManager {
     return this.svgNodes;
   }
 
-  public static setNodeStyles(strippedTypeValue: string, colorValue: string, fontWeight: string, nodeSize: number, focalNode: boolean) {
+  public static setNodeStylesOnMouseMove(strippedTypeValue: string, colorValue: string, fontWeight: string, nodeSize: number, focalNode: boolean) {
     if(isNaN(nodeSize) )
       nodeSize = 10;
 
@@ -120,31 +119,24 @@ export class NodeManager {
   static AppendCirclesToNodes() {
     this.svgNodes.append("circle")
       .attr("x", d => d.x)
-      .attr("y", function(d) {
-        return d.y;
-      })
+      .attr("y", d => d.y)
       .attr("r", (d: INode) => d.IsFocalNode() ? MainEntry.centerNodeSize : MainEntry.nodeSize)
       .style("fill", "White") // Make the nodes hollow looking
-      .style("fill", "Blue")
       .attr("type_value", (d: INode) => d.type)
       .attr("color_value", (d: INode) => ColorHelper.color_hash[d.type])
       .attr("fixed", function(d) {
         return d.fixed;
       })
-      .attr("x", function(d) {
-        return d.fixed ? Canvas.width / 2 : d.x;
-      })
-      .attr("y", function(d) {
-        return d.fixed ? Canvas.heigth / 2 : d.y;
-      })
+      .attr("x", d => d.fixed ? Canvas.width / 2 : d.x)
+      .attr("y", d => d.fixed ? Canvas.heigth / 2 : d.y)
       .attr("class", (d: INode) => {
         const strippedString = d.type.replace(/ /g, "_");
         // return "nodeCircle-" + strippedString; })
         return d.fixed ? "focalNodeCircle" : `nodeCircle-${strippedString}`;
       })
       .style("stroke-width", 5) // Give the node strokes some thickness
-      .style("stroke", (d: INode) => ColorHelper.color_hash[d.type]) // Node stroke colors
-      .call(LinkAndForcesManager.forceDragBehaviour);
+      .style("stroke", (d: INode) => "Blue" /*TODO: ColorHelper.color_hash[d.type]*/) // Node stroke colors
+      // .call(LinkAndForcesManager.forceDragBehaviour);
   }
 }
 

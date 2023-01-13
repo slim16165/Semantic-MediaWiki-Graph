@@ -58,15 +58,10 @@ export class MainEntry {
   public static drawCluster(drawingName: string): void {
     new Canvas();
 
-    console.log("N° NodeStore.nodeList: " + NodeStore.nodeList.length);
+    console.log("Called drawCluster; N° NodeStore.nodeList: " + NodeStore.nodeList.length);
     if (NodeStore.nodeList.length == 0) return;
 
-    //Init nodes and links svg
-    NodeManager.svgNodes = NodeManager.svgNodes = Canvas.svgCanvas.selectAll(".node")
-      .data(NodeStore.nodeList)
-      .enter()
-      .append("g")
-
+    //Init links svg
     LinkAndForcesManager.svgLinks = Canvas.svgCanvas.selectAll(".gLink")
       .data(NodeStore.linkList)
       .enter().append("g")
