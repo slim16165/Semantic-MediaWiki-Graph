@@ -98,7 +98,7 @@ export class LegendManager {
       .attr("y", (d: any, i: number) => (45 + (i * 20)))
       .attr("dx", 0)
       .attr("dy", "4px") // Controls padding to place text in alignment with bullets
-      .text((d: any) => d)
+      .text((d) => d.toString())
       .attr("color_value", (d: any) => ColorHelper.color_hash[d])
       .attr("type_value", (d: string) => d)
       .attr("index_value", (d: any, i: number) => `index-${i}`)
@@ -108,8 +108,9 @@ export class LegendManager {
       })
       .style("fill", "Black")
       .style("font", "normal 14px Arial")
-      .on("mouseover", LegendManager.typeMouseOver)
-      .on("mouseout", LegendManager.typeMouseOut);
+      //TODO: refactor to a D3 extension method
+      .on("mouseover", function(d) { LegendManager.typeMouseOver(d3.select(this), d.nodeSize) })
+      .on("mouseout", function(d) { LegendManager.typeMouseOut(d3.select(this), d.nodeSize) });
   }
 
   private static PrintLegendTitle() {

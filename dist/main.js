@@ -921,10 +921,16 @@ class LegendManager {
     Canvas_1.Canvas.svgCanvas.selectAll("a.legend_link").data(sortedColors) // Instruct to bind dataSet to text elements
     .enter().append("svg:a") // Append legend elements
     .append("text").attr("text-anchor", "center").attr("x", 40).attr("y", (d, i) => 45 + i * 20).attr("dx", 0).attr("dy", "4px") // Controls padding to place text in alignment with bullets
-    .text(d => d).attr("color_value", d => ColorHelper_1.ColorHelper.color_hash[d]).attr("type_value", d => d).attr("index_value", (d, i) => `index-${i}`).attr("class", d => {
+    .text(d => d.toString()).attr("color_value", d => ColorHelper_1.ColorHelper.color_hash[d]).attr("type_value", d => d).attr("index_value", (d, i) => `index-${i}`).attr("class", d => {
       const strippedString = d.replace(/ /g, "_");
       return `legendText-${strippedString}`;
-    }).style("fill", "Black").style("font", "normal 14px Arial").on("mouseover", LegendManager.typeMouseOver).on("mouseout", LegendManager.typeMouseOut);
+    }).style("fill", "Black").style("font", "normal 14px Arial")
+    //TODO: refactor to a D3 extension method
+    .on("mouseover", function (d) {
+      LegendManager.typeMouseOver(d3.select(this), d.nodeSize);
+    }).on("mouseout", function (d) {
+      LegendManager.typeMouseOut(d3.select(this), d.nodeSize);
+    });
   }
   static PrintLegendTitle() {
     Canvas_1.Canvas.svgCanvas.append("text").attr("class", "region").text("Color Keys for Data Types...").attr("x", 15).attr("y", 25).style("fill", "Black").style("font", "bold 16px Arial").attr("text-anchor", "start");
@@ -997,10 +1003,7 @@ class NodeManager {
     In summary enter() allows to select and operate on data elements that haven't been associated yet to DOM elements.
     * */
     console.log(nodeStore_1.NodeStore.nodeList.length);
-    const node = Canvas_1.Canvas.svgCanvas.selectAll(".node");
-    let x1 = node.data(nodeStore_1.NodeStore.nodeList);
-    let x2 = x1.enter();
-    let x3 = x2.append("g").attr("class", "node").attr("id", node => node.id).attr("type_value", d => d.type).attr("color_value", d => ColorHelper_1.ColorHelper.color_hash[d.type]).attr("xlink:href", d => d.hlink).attr("fixed", function (d) {
+    this.svgNodes = Canvas_1.Canvas.svgCanvas.selectAll(".node").data(nodeStore_1.NodeStore.nodeList).enter().append("g").attr("class", "node").attr("id", node => node.id).attr("type_value", d => d.type).attr("color_value", d => ColorHelper_1.ColorHelper.color_hash[d.type]).attr("xlink:href", d => d.hlink).attr("fixed", function (d) {
       return d.fixed;
     }).on("mouseover", () => UiEventHandler_1.UiEventHandler.nodeMouseOver).on("click", () => UiEventHandler_1.UiEventHandler.mouseClickNode).on("mouseout", () => UiEventHandler_1.UiEventHandler.nodeMouseOut)
     //TODO: controllare qui
@@ -1008,9 +1011,10 @@ class NodeManager {
     .attr("transform", function (d) {
       return `translate(${d.x},${d.y})`;
     }).append("a");
-    return x3;
+    return this.svgNodes;
   }
   static setNodeStyles(strippedTypeValue, colorValue, fontWeight, nodeSize, focalNode) {
+    if (isNaN(nodeSize)) nodeSize = 10;
     d3.selectAll(`.nodeText-${strippedTypeValue}`).style("font", `${fontWeight} 16px Arial`).style("fill", colorValue);
     d3.selectAll(`.nodeCircle-${strippedTypeValue}`).style("fill", colorValue).style("stroke", colorValue).attr("r", focalNode ? nodeSize : 1.2 * nodeSize);
     if (focalNode) {
@@ -1018,12 +1022,12 @@ class NodeManager {
       d3.selectAll(".focalNodeText").style("fill", colorValue).style("font", `${fontWeight} 16px Arial`);
     }
   }
-  static updateNodePositions(node) {
-    node.datum().updatePositions();
-    node.attr("cx", d => d.x).attr("cy", d => d.y);
+  static updateNodePositions() {
+    this.svgNodes.datum().updatePositions();
+    this.svgNodes.attr("cx", d => d.x).attr("cy", d => d.y);
   }
-  static AppendTextToNodes(node) {
-    node.append("text").attr("x", d => d.IsFocalNode() ? 0 : 20).attr("y", d => {
+  static AppendTextToNodes() {
+    this.svgNodes.append("text").attr("x", d => d.IsFocalNode() ? 0 : 20).attr("y", d => {
       return d.IsFocalNode() ? 0 : -10;
     }).attr("text-anchor", d => d.IsFocalNode() ? "middle" : "start").on("click", function () {
       UiEventHandler_1.UiEventHandler.mouseClickNodeText(d3.select(this), false);
@@ -1033,10 +1037,8 @@ class NodeManager {
       return d.IsFocalNode() ? "focalNodeText" : `nodeText-${type_string}`;
     }).attr("dy", ".35em").text(d => d.name);
   }
-  static AppendCirclesToNodes(node) {
-    node.append("circle").attr("x", function (d) {
-      return d.x;
-    }).attr("y", function (d) {
+  static AppendCirclesToNodes() {
+    this.svgNodes.append("circle").attr("x", d => d.x).attr("y", function (d) {
       return d.y;
     }).attr("r", d => d.IsFocalNode() ? utility_1.Utility.centerNodeSize : utility_1.Utility.nodeSize).style("fill", "White") // Make the nodes hollow looking
     .style("fill", "Blue").attr("type_value", d => d.type).attr("color_value", d => ColorHelper_1.ColorHelper.color_hash[d.type]).attr("fixed", function (d) {
@@ -1123,18 +1125,18 @@ class Utility {
     console.log("N° NodeStore.nodeList: " + nodeStore_1.NodeStore.nodeList.length);
     if (nodeStore_1.NodeStore.nodeList.length == 0) return;
     // Create Nodes
-    this.nodes = nodeManager_1.NodeManager.CreateNodes();
+    nodeManager_1.NodeManager.CreateNodes();
     // Append circles to Nodes
-    nodeManager_1.NodeManager.AppendCirclesToNodes(this.nodes);
+    nodeManager_1.NodeManager.AppendCirclesToNodes();
     // Append text to Nodes
-    nodeManager_1.NodeManager.AppendTextToNodes(this.nodes);
+    nodeManager_1.NodeManager.AppendTextToNodes();
     // Append text to Link edges
-    this.linkText = this.AppendTextToLinkEdges();
+    this.AppendTextToLinkEdges();
     // Draw lines for Links between Nodes
     this.DrawLinesForLinksBetweenNodes();
     let clickText = false;
     // Create a force layout and bind Nodes and Links
-    this.force = this.CreateAForceLayoutAndBindNodesAndLinks().on("tick", () => {
+    this.CreateAForceLayoutAndBindNodesAndLinks().on("tick", () => {
       this.Tick();
     });
     //Build the Arrows
@@ -1151,37 +1153,39 @@ class Utility {
     this.link = Canvas_1.Canvas.svgCanvas.selectAll(".gLink").data(nodeStore_1.NodeStore.linkList /*force.links()*/).enter().append("g").attr("class", "gLink").attr("class", "link").attr("endNode", d => d.targetId).attr("startNode", d => d.sourceId).attr("targetType", d => d.target.type).attr("sourceType", d => d.source.type).append("line").style("stroke", "#ccc").style("stroke-width", "1.5px").attr("marker-end", (d, i) => `url(#arrow_${i})`).attr("x1", l => l.source.x).attr("y1", l => l.source.y).attr("x2", l => l.target.x).attr("y2", l => l.target.y);
   }
   static AppendTextToLinkEdges() {
-    let linkText = Canvas_1.Canvas.svgCanvas.selectAll(".gLink").data(nodeStore_1.NodeStore.linkList).append("text").attr("font-family", "Arial, Helvetica, sans-serif")
+    this.linkText = Canvas_1.Canvas.svgCanvas.selectAll(".gLink").data(nodeStore_1.NodeStore.linkList).append("text").attr("font-family", "Arial, Helvetica, sans-serif")
     // .call(this.setLinkTextInMiddle, ink)
     .attr("fill", "Black").style("font", "normal 12px Arial").attr("dy", ".35em").text(link => link.linkName);
-    if (linkText.empty()) {
+    if (this.linkText.empty()) {
       console.log("linkText is empty");
     } else {
-      this.setLinkTextInMiddle(linkText);
+      this.setLinkTextInMiddle();
     }
-    return linkText;
   }
-  static updateLinkPositions(linkText) {
-    linkText.attr("x1", link => link.source.x).attr("y1", link => link.source.y).attr("x2", link => link.target.x).attr("y2", link => link.target.y);
+  static updateLinkPositions() {
+    this.linkText.attr("x1", link => link.source.x).attr("y1", link => link.source.y).attr("x2", link => link.target.x).attr("y2", link => link.target.y);
   }
   static Tick() {
-    Utility.updateLinkPositions(this.link);
-    nodeManager_1.NodeManager.updateNodePositions(this.nodes);
-    Utility.updateLinkPositions(this.link);
-    this.nodes.attr("transform", d => `translate(${d.x},${d.y})`);
+    Utility.updateLinkPositions();
+    nodeManager_1.NodeManager.updateNodePositions();
+    Utility.updateLinkPositions();
+    nodeManager_1.NodeManager.svgNodes.attr("transform", d => `translate(${d.x},${d.y})`);
     // Questo pezzo di codice si occupa di aggiungere del testo ai link e di posizionarlo nella parte centrale del link stesso.
     // Il testo viene posizionato in modo che sia metà strada tra il nodo di partenza e quello di destinazione. Se il nodo di destinazione ha una coordinata x maggiore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y). Se invece il nodo di destinazione ha una coordinata x minore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y).
-    this.setLinkTextInMiddle(Utility.linkText);
+    this.setLinkTextInMiddle();
   }
   /**
    Calculates and sets the position of the text element for the given link.
    @param linkText
    @returns {void}
    */
-  static setLinkTextInMiddle(linkText) {
-    let center = linkText.datum().CalculateMidpoint();
-    linkText.attr("x", center.x).attr("y", center.y);
-    return linkText;
+  static setLinkTextInMiddle() {
+    if (this.linkText.empty()) {
+      console.log("linkText is empty");
+      return;
+    }
+    let center = this.linkText.datum().CalculateMidpoint();
+    this.linkText.attr("x", center.x).attr("y", center.y);
   }
   /**
    * Builds the arrows for the specified SVG canvas.

@@ -8,7 +8,7 @@ import { INode } from "../Model/INode";
 import { UiEventHandler } from "./UiEventHandler";
 
 export class NodeManager {
-  private static svgNodes: any;
+  static svgNodes: Selection<any, INode, any, any>;
 
   /*
   They are initially invisible
@@ -51,6 +51,9 @@ export class NodeManager {
   }
 
   public static setNodeStyles(strippedTypeValue: string, colorValue: string, fontWeight: string, nodeSize: number, focalNode: boolean) {
+    if(isNaN(nodeSize) )
+      nodeSize = 10;
+
     d3.selectAll(`.nodeText-${strippedTypeValue}`)
       .style("font", `${fontWeight} 16px Arial`)
       .style("fill", colorValue);
@@ -71,9 +74,9 @@ export class NodeManager {
     }
   }
 
-  static updateNodePositions(node: Selection<SVGGElement, INode, any, any>) {
-    this.svgNodes.datum().updatePositions()
-      .attr("cx", (d: INode) => d.x)
+  static updateNodePositions() {
+    this.svgNodes.datum().updatePositions();
+    this.svgNodes.attr("cx", (d: INode) => d.x)
       .attr("cy", (d: INode) => d.y);
   }
 
@@ -102,11 +105,9 @@ export class NodeManager {
       .text((d: INode) => d.name);
   }
 
-  static AppendCirclesToNodes(node: Selection<SVGGElement, INode, any, any>) {
+  static AppendCirclesToNodes() {
     this.svgNodes.append("circle")
-      .attr("x", function(d) {
-        return d.x;
-      })
+      .attr("x", d => d.x)
       .attr("y", function(d) {
         return d.y;
       })

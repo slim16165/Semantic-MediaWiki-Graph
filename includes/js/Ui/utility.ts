@@ -15,7 +15,7 @@ export class Utility {
     public static nodeSize :number = 10;
     public static scale :number = 1;
 
-    private static linkText: d3.Selection<SVGTextElement, any, SVGGElement, Link>;
+    private static linkText: d3.Selection<SVGTextElement, Link, SVGGElement, Link>;
     private static link: Selection<SVGLineElement, Link, SVGLineElement, Link>;
 
     /**
@@ -131,7 +131,7 @@ export class Utility {
 
         Utility.updateLinkPositions();
 
-        NodeManager.nodes.attr("transform", (d: INode) => `translate(${d.x},${d.y})`);
+        NodeManager.svgNodes.attr("transform", (d: INode) => `translate(${d.x},${d.y})`);
 
 
         // Questo pezzo di codice si occupa di aggiungere del testo ai link e di posizionarlo nella parte centrale del link stesso.
@@ -145,6 +145,11 @@ export class Utility {
      @returns {void}
      */
     private static setLinkTextInMiddle() {
+        if (this.linkText.empty()) {
+            console.log("linkText is empty");
+            return;
+        }
+
         let center: Point = this.linkText.datum().CalculateMidpoint();
         this.linkText.attr("x", center.x)
             .attr("y", center.y);
