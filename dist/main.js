@@ -16772,12 +16772,12 @@ class ColorHelper {
     static colorScaleMW(type) {
         const colorArray = Object.entries(this.color).map(([name, color]) => ({ name, color }));
         const colorObject = colorArray.find(c => c.name === type);
-        return colorObject ? colorObject.color : "undefined";
+        return colorObject ? colorObject.color : "green";
     }
     static color_hash = {};
-    static GetColor(colors) {
+    static GetColor(colorScaleName) {
         let colorScale;
-        switch (colors) {
+        switch (colorScaleName) {
             // case "colorScale10":
             //     colorScale = d3.schemeSet1;
             //     break;
@@ -16794,10 +16794,10 @@ class ColorHelper {
     }
     static GetColors(colorScaleName) {
         // Color Scale Handling...
-        //ColorHelper.GetColor(colors);
+        //ColorHelper.GetColor(colorScaleName);
         // Create a hash that maps colors to types...
         nodeStore_1.NodeStore.nodeList.forEach((d) => {
-            this.color_hash[d.type] = d.type;
+            this.color_hash[d.type] = "green";
         });
         const sortedColors = ColorHelper.keys(this.color_hash).sort();
         sortedColors.forEach((d) => {
@@ -17574,10 +17574,11 @@ class LinkAndForcesManager {
         this.DrawLinesForLinksBetweenNodes();
         this.clickText = false;
         // Create a force layout and bind Nodes and Links
-        this.CreateAForceLayoutAndBindNodesAndLinks()
-            .on("tick", () => {
-            this.Tick();
-        });
+        //TODO: da erorre, per ora commento
+        // this.CreateAForceLayoutAndBindNodesAndLinks()
+        //   .on("tick", () => {
+        //     this.Tick();
+        //   });
         //Build the Arrows
         this.buildArrows();
     }
@@ -17620,7 +17621,7 @@ class LinkAndForcesManager {
             .data(nodeStore_1.NodeStore.linkList)
             .enter().append("g")
             .attr("class", "gLink")
-            .attr("class", "link")
+            // .attr("class", "link")
             .attr("endNode", (d) => d.targetId)
             .attr("startNode", (d) => d.sourceId)
             .attr("targetType", (d) => d.target.type)
@@ -17989,13 +17990,13 @@ class NodeManager {
             .append("g")
             .attr("class", "node")
             .attr("id", (node) => node.id)
-            .attr("type_value", (d) => d.type)
-            .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
-            .attr("xlink:href", (d) => d.hlink)
-            .attr("fixed", d => d.fixed)
+            .attr("type_value", (node) => node.type)
+            .attr("color_value", (node) => ColorHelper_1.ColorHelper.color_hash[node.type])
+            .attr("xlink:href", (node) => node.hlink)
+            .attr("fixed", node => node.fixed)
             // .setXYPos()
-            .attr("cx", (d) => d.x)
-            .attr("cy", (d) => d.y)
+            .attr("cx", (node) => node.x)
+            .attr("cy", (node) => node.y)
             .on("mouseover", () => UiEventHandler_1.UiEventHandler.nodeMouseOver)
             .on("click", () => UiEventHandler_1.UiEventHandler.mouseClickNode)
             .on("mouseout", () => UiEventHandler_1.UiEventHandler.nodeMouseOut)
@@ -18034,18 +18035,11 @@ class NodeManager {
     }
     static AppendTextToNodes() {
         this.svgNodes.append("text")
-            .attr("x", (d) => d.IsFocalNode() ? 0 : 20)
-            .attr("y", (d) => {
-            return d.IsFocalNode() ? 0 : -10;
-        })
-            .attr("text-anchor", (d) => d.IsFocalNode() ? "middle" : "start")
-            .on("click", function () {
-            // @ts-ignore
-            UiEventHandler_1.UiEventHandler.mouseClickNodeText(d3.select(this), false);
-        })
-            .attr("font-family", "Arial, Helvetica, sans-serif")
+            .attr("x", (d) => /*d.IsFocalNode() ?*/ d.x + 20)
+            .attr("y", (d) => /*d.IsFocalNode() ? 0 : -10*/ d.y + 5)
+            .attr("text-anchor", (d) => d.IsFocalNode() ? "middle" : "start") //Not visible, just an attribute
+            .style("font-family", "Arial, Helvetica, sans-serif")
             .style("font", "normal 16px Arial")
-            .attr("fill", "Blue")
             .style("fill", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
             .attr("type_value", (d) => d.type)
             .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
@@ -18054,25 +18048,26 @@ class NodeManager {
             //return "nodeText-" + type_string; })
             return d.IsFocalNode() ? "focalNodeText" : `nodeText-${type_string}`;
         })
+            .on("click", function () {
+            // @ts-ignore
+            UiEventHandler_1.UiEventHandler.mouseClickNodeText(d3.select(this), false);
+        })
             //TODO: commento dy
             // .attr("dy", ".35em")
             .text((d) => d.name);
     }
     static AppendCirclesToNodes() {
         this.svgNodes.append("circle")
-            //TODO: commento doppione
-            // .attr("cx", d => d.x)
-            // .attr("cy", d => d.y)
             .attr("r", (d) => d.IsFocalNode() ? app_1.MainEntry.centerNodeSize : app_1.MainEntry.nodeSize)
             .attr("type_value", (d) => d.type)
             .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
             .attr("fixed", d => d.fixed)
-            .attr("cx", d => d.fixed ? Canvas_1.Canvas.width / 2 : d.x)
-            .attr("cy", d => d.fixed ? Canvas_1.Canvas.heigth / 2 : d.y)
+            .attr("cx", d => d.IsFocalNode() ? Canvas_1.Canvas.width / 2 : d.x)
+            .attr("cy", d => d.IsFocalNode() ? Canvas_1.Canvas.heigth / 2 : d.y)
             .attr("class", (d) => {
             const strippedString = d.type.replace(/ /g, "_");
             // return "nodeCircle-" + strippedString; })
-            return d.fixed ? "focalNodeCircle" : `nodeCircle-${strippedString}`;
+            return d.IsFocalNode() ? "focalNodeCircle" : `nodeCircle-${strippedString}`;
         })
             .style("fill", "White") // Make the nodes hollow looking
             .style("stroke-width", 5) // Give the node strokes some thickness
@@ -18271,7 +18266,7 @@ class MainEntry {
     }
     static InitNodeAndLinks_Backlinks(backlinks) {
         for (let article of backlinks) {
-            let node = new INode_1.INode(nodeType_1.NodeType.Backlink, article.title, article.title, "Unknown", 0, 0, article.title);
+            let node = new INode_1.INode(nodeType_1.NodeType.Backlink, article.title, article.title, "Backlink", 0, 0, article.title);
             let link = new Link_1.Link(nodeType_1.NodeType.Backlink, "Backlink", article.title, MainEntry.focalNodeID, null, null, "");
             nodeStore_1.NodeStore.nodeList.push(node);
             nodeStore_1.NodeStore.linkList.push(link);
