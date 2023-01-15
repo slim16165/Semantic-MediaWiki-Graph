@@ -1,5 +1,6 @@
 import d3 from "d3-scale-chromatic";
 import {INode} from "../Model/INode";
+import { NodeStore } from "../nodeStore";
 
 export class ColorHelper
 {
@@ -48,12 +49,12 @@ export class ColorHelper
         return colorScale;
     }
 
-    public static GetColors(colors: string, nodeSetApp: INode[]) {
+    public static GetColors(colorScaleName: string) {
         // Color Scale Handling...
         //ColorHelper.GetColor(colors);
 
         // Create a hash that maps colors to types...
-        nodeSetApp.forEach((d: INode) => {
+        NodeStore.nodeList.forEach((d: INode) => {
             this.color_hash[d.type] = d.type;
         });
 
@@ -66,20 +67,20 @@ export class ColorHelper
 
 
         // Add colors to original node records...
-        nodeSetApp.forEach((d: any) => {
+        NodeStore.nodeList.forEach((d: INode) => {
             d.color = this.color_hash[d.type];
             //document.writeln(d.type);
         });
         return sortedColors;
     }
 
-    public static keys(obj: any)
+    public static keys(obj: { [p: string]: string })
     {
         const keys = [];
 
         for (const key in obj) {
             if (obj.hasOwnProperty(key)) {
-                keys.push((key) as any);
+                keys.push((key));
             }
         }
         return keys;

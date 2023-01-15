@@ -9,7 +9,7 @@ import { MainEntry } from "../app";
 import { LinkAndForcesManager } from "./LinkAndForcesManager";
 
 export class NodeManager {
-  static svgNodes: Selection<any, INode, any, any>;
+  static svgNodes: Selection<HTMLAnchorElement, INode, HTMLAnchorElement, INode>;
 
   static DrawNodes() {
     // Create Nodes
@@ -52,9 +52,10 @@ export class NodeManager {
       .on("click", () => UiEventHandler.mouseClickNode)
       .on("mouseout", () => UiEventHandler.nodeMouseOut)
       .call(LinkAndForcesManager.forceDragBehaviour)
-      .attr("transform", function(d) {
-        return `translate(${d.x},${d.y})`;
-      })
+      //TODO: commento il trasform
+      // .attr("transform", function(d) {
+      //   return `translate(${d.x},${d.y})`;
+      // })
       .append("a");
 
     return this.svgNodes;
@@ -86,8 +87,9 @@ export class NodeManager {
 
   static updateNodePositions() {
     this.svgNodes.datum().updatePositions();
-    this.svgNodes.attr("cx", (d: INode) => d.x)
-        .attr("cy", (d: INode) => d.y);
+    this.svgNodes
+      .attr("cx", (d: INode) => d.x)
+      .attr("cy", (d: INode) => d.y);
   }
 
   static AppendTextToNodes() {
@@ -112,31 +114,31 @@ export class NodeManager {
         //return "nodeText-" + type_string; })
         return d.IsFocalNode() ? "focalNodeText" : `nodeText-${type_string}`;
       })
-      .attr("dy", ".35em")
+      //TODO: commento dy
+      // .attr("dy", ".35em")
       .text((d: INode) => d.name);
   }
 
   static AppendCirclesToNodes() {
     this.svgNodes.append("circle")
-      .attr("x", d => d.x)
-      .attr("y", d => d.y)
+      //TODO: commento doppione
+      // .attr("cx", d => d.x)
+      // .attr("cy", d => d.y)
       .attr("r", (d: INode) => d.IsFocalNode() ? MainEntry.centerNodeSize : MainEntry.nodeSize)
-      .style("fill", "White") // Make the nodes hollow looking
       .attr("type_value", (d: INode) => d.type)
       .attr("color_value", (d: INode) => ColorHelper.color_hash[d.type])
-      .attr("fixed", function(d) {
-        return d.fixed;
-      })
-      .attr("x", d => d.fixed ? Canvas.width / 2 : d.x)
-      .attr("y", d => d.fixed ? Canvas.heigth / 2 : d.y)
+      .attr("fixed", d => d.fixed)
+      .attr("cx", d => d.fixed ? Canvas.width / 2 : d.x)
+      .attr("cy", d => d.fixed ? Canvas.heigth / 2 : d.y)
       .attr("class", (d: INode) => {
         const strippedString = d.type.replace(/ /g, "_");
         // return "nodeCircle-" + strippedString; })
         return d.fixed ? "focalNodeCircle" : `nodeCircle-${strippedString}`;
       })
+      .style("fill", "White") // Make the nodes hollow looking
       .style("stroke-width", 5) // Give the node strokes some thickness
       .style("stroke", (d: INode) => "Blue" /*TODO: ColorHelper.color_hash[d.type]*/) // Node stroke colors
-      // .call(LinkAndForcesManager.forceDragBehaviour);
+    // .call(LinkAndForcesManager.forceDragBehaviour);
   }
 }
 

@@ -40,12 +40,6 @@ const config = {
         exclude: /node_modules/,
         use: [
           {
-            loader: "babel-loader",
-            options: {
-              plugins: ["transform-imports"]
-            }
-          },
-          {
             loader: "ts-loader"
           }
         ]

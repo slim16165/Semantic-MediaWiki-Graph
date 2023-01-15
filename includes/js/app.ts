@@ -12,7 +12,7 @@ import * as d3 from "d3";
 import { LinkAndForcesManager } from "./Ui/LinkAndForcesManager";
 
 export class MainEntry {
-  static downloadedArticles: any[] = [];
+  static downloadedArticles: string[] = [];
 
   public static centerNodeSize: number = 50;
   public static nodeSize: number = 10;
@@ -58,7 +58,7 @@ export class MainEntry {
   public static drawCluster(drawingName: string): void {
     new Canvas();
 
-    console.log("N° NodeStore.nodeList: " + NodeStore.nodeList.length);
+    console.log("Called drawCluster; N° NodeStore.nodeList: " + NodeStore.nodeList.length);
     if (NodeStore.nodeList.length == 0) return;
 
     NodeManager.DrawNodes();
@@ -88,6 +88,10 @@ export class MainEntry {
 
   private static HandleOnClick() {
     $("#visualiseSite").on("click", () => {
+
+      //#if DEBUG
+      SemanticWikiApi.BrowseBySubject("Abbandono dei principi giornalistici, nascita delle Fuck News ed episodi vari");
+      //#endif
 
       //Get the selected article in the combobox
       let wikiArticleTitle = $("#wikiArticle").val() as string;

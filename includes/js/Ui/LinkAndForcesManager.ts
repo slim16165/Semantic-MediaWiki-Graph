@@ -45,23 +45,24 @@ export class LinkAndForcesManager {
       .force("charge", d3.forceManyBody().strength(-1000))
       .force("gravity", d3.forceManyBody().strength(.01))
       .force("friction", d3.forceManyBody().strength(.2))
-      .force("link", d3.forceLink().id((d: any) => d.id).distance(100).strength(1)) //=> d.id).strength(9))
-      .force("link", d3.forceLink().id((d: any) => d.id).distance(() => $(".chart")[0].clientWidth < $(".chart")[0].clientHeight ? $(".chart")[0].clientWidth / 3 : $(".chart")[0].clientHeight / 3))
+      //commento
+      // .force("link", d3.forceLink().id((d:SimulationNodeDatum) => d.).distance(100).strength(1)) //=> d.id).strength(9))
+      // .force("link", d3.forceLink().id((d: any) => d.id).distance(() => $(".chart")[0].clientWidth < $(".chart")[0].clientHeight ? $(".chart")[0].clientWidth / 3 : $(".chart")[0].clientHeight / 3))
       .force("center", d3.forceCenter(Canvas.width / 2, Canvas.heigth / 2));
       // .restart();
 
-    function dragStarted(d: { fx: any; x: any; fy: any; y: any; }) {
+    function dragStarted(d: { fx: number; x: number; fy: number; y: number; }) {
       if (!d3.event.active) LinkAndForcesManager.force.alphaTarget(0.3).restart();
       d.fx = d.x;
       d.fy = d.y;
     }
 
-    function dragged(d: { fx: any; x: any; fy: any; y: any; }) {
+    function dragged(d: { fx: number; x: number; fy: number; y: number; }) {
       d.fx = d3.event.x;
       d.fy = d3.event.y;
     }
 
-    function dragEnded(d: { fx: any; x: any; fy: any; y: any; }) {
+    function dragEnded(d: { fx: number; x: number; fy: number; y: number; }) {
       if (!d3.event.active) LinkAndForcesManager.force.alphaTarget(0);
       d.fx = d.x;
       d.fy = d.y;
@@ -88,7 +89,7 @@ export class LinkAndForcesManager {
       .append("line")
       .style("stroke", "#ccc")
       .style("stroke-width", "1.5px")
-      .attr("marker-end", (d: any, i: any) => `url(#arrow_${i})`)
+      .attr("marker-end", (d: Link, index:number) => `url(#arrow_${index})`)
       .attr("x1", (l: Link) => l.source.x)
       .attr("y1", (l: Link) => l.source.y)
       .attr("x2", (l: Link) => l.target.x)
@@ -101,7 +102,7 @@ export class LinkAndForcesManager {
       .data(NodeStore.linkList)
       .append("text")
       .attr("font-family", "Arial, Helvetica, sans-serif")
-       .call(this.setLinkTextInMiddle)
+      .call(() => this.setLinkTextInMiddle)
       .attr("fill", "Black")
       .style("font", "normal 12px Arial")
       .attr("dy", ".35em")
@@ -117,11 +118,13 @@ export class LinkAndForcesManager {
   }
 
   private static Tick() {
-    NodeManager.updateNodePositions();
-    LinkAndForcesManager.updateLinkPositions();
+    //TODO: blocco l'aggiornamento delle posizioni dei nodi
+    // NodeManager.updateNodePositions();
+    // LinkAndForcesManager.updateLinkPositions();
 
     let nodes = Canvas.svgCanvas.selectAll(".gLink")
-    NodeManager.svgNodes.attr("transform", (d: INode) => `translate(${d.x},${d.y})`);
+    //Questo sembra tanto tanto un doppione
+    // NodeManager.svgNodes.attr("transform", (d: INode) => `translate(${d.x},${d.y})`);
 
 
     // Questo pezzo di codice si occupa di aggiungere del testo ai link e di posizionarlo nella parte centrale del link stesso.
@@ -133,14 +136,15 @@ export class LinkAndForcesManager {
    Calculates and sets the position of the text element for the given link.
    @returns {void}
    */
-  private static setLinkTextInMiddle(linkText: any) {
+  private static setLinkTextInMiddle(linkText: Selection<HTMLAnchorElement, Link, HTMLAnchorElement, Link>) {
     if (linkText.empty()) {
       console.log("linkText is empty");
       return;
     }
 
     let center: Point = linkText.datum().CalculateMidpoint();
-    linkText.attr("x", center.x)
+    linkText
+      .attr("x", center.x)
       .attr("y", center.y);
   }
 
@@ -154,10 +158,10 @@ export class LinkAndForcesManager {
     L'attributo id viene utilizzato per assegnare un identificatore univoco al marker, che può essere utilizzato per fare riferimento al marker in altri punti del codice o nei fogli di stile CSS. L'attributo viewBox definisce l'area di visualizzazione del marker e il suo contenuto. L'attributo refX e refY vengono utilizzati per specificare le coordinate del punto di riferimento del marker, ovvero il punto del marker che verrà ancorato al percorso o all'elemento che lo utilizza. Gli attributi markerWidth e markerHeight definiscono la dimensione del marker.
     Una volta creato il marker, viene aggiunto un elemento path che definisce la forma del simbolo all'interno del marker. In questo caso, la forma del simbolo è una freccia, definita dal valore "M0,-5L10,0L0,5" dell'attributo d dell'elemento path.*/
 
-    let selection: Selection<SVGGElement, Link, SVGGElement, any> = Canvas.svgCanvas.selectAll('.gLink');
-
-    selection.append('marker')
-      .attr('id', (d: Link, i: number) => `arrow_${i}`)
+    let selection = Canvas.svgCanvas.selectAll('.gLink')
+      .data(NodeStore.linkList)
+      .append('marker')
+      .attr('id', (d: any,  i: number) => `arrow_${i}`)
       .attr('viewBox', '0 -5 10 10')
       .attr('refX', (d: Link) => d.pointsFocalNode ? 55 : 20)
       .attr('refY', 0)

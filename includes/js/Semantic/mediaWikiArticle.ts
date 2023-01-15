@@ -9,7 +9,7 @@ export class MediaWikiArticle {
   Id: string;
   semanticNodeList: SemanticPropertyAndItems[];
 
-  constructor(id: string, semanticNodeList: any[]) {
+  constructor(id: string, semanticNodeList : any) {
     this.Id = id; //'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
     MainEntry.focalNodeID = id;
     this.node = this.ParseNodeBrowseBySubject();

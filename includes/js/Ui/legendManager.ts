@@ -6,11 +6,12 @@ import { NodeStore } from "../nodeStore";
 import { Canvas } from "./Canvas";
 import { CustomHTMLElement } from "../Model/OtherTypes";
 import { VisibilityHandler } from "./visibilityHandler";
+import { INode } from "../Model/INode";
 
 export class LegendManager {
 
   public static DrawLegend() {
-    const sortedColors = ColorHelper.GetColors("colorScale20", NodeStore.nodeList);
+    const sortedColors = ColorHelper.GetColors("colorScale20");
     // Plot the bullet circles...
 
     // Print Legend Title...
@@ -22,7 +23,7 @@ export class LegendManager {
     LegendManager.CreateLegendTextThatActsAsLabelKeys(sortedColors);
   }
 
-  public static clickLegend(selector:  Selection<any, any, any, any>) {
+  public static clickLegend(selector:  Selection<SVGGElement, INode, SVGGElement, INode>) {
     const typeValue: string = selector.attr("type_value");
 
     let invisibleType: string[] = [];
@@ -50,27 +51,28 @@ export class LegendManager {
     selectedLegendText.style("fill", colorValue === "Maroon" ? "Maroon" : "Black");
   }
 
-  public static PlotTheBulletCircles(sortedColors: any[]) {
+  public static PlotTheBulletCircles(sortedColors: string[]) {
     Canvas.svgCanvas.selectAll("focalNodeCanvas")
       .data(sortedColors).enter().append("svg:circle") // Append circle elements
       .attr("cx", 20)
-      .attr("cy", (d: any, i: number) => (45 + (i * 20)))
+      .attr("cy", (d: string, i: number) => (45 + (i * 20)))
       .attr("stroke-width", ".5")
-      .style("fill", (d: number) => ColorHelper.color_hash[d])
+      .style("fill", (d: string) => ColorHelper.color_hash[d])
       .attr("r", 6)
-      .attr("color_value", (d: any) => ColorHelper.color_hash[d])
-      .attr("type_value", (d: any) => d)
-      .attr("index_value", (d: any, i: number) => `index-${i}`)
-      .attr("class", (d: any) => {
+      .attr("color_value", (d: string) => ColorHelper.color_hash[d])
+      .attr("type_value", (d: string) => d)
+      .attr("index_value", (d: string, i: number) => `index-${i}`)
+      .attr("class", (d: string) => {
         const strippedString = d.replace(/ /g, "_");
         return `legendBullet-${strippedString}`;
       })
-      .on("mouseover", function(d) {LegendManager.typeMouseOver(d3.select(this), d.nodeSize)})
-      .on("mouseout", function(d) { LegendManager.typeMouseOut(d3.select(this), d.nodeSize); })
-      .on("click", function() { LegendManager.clickLegend(d3.select(this)); });
+      //TODO: disabilito
+      // .on("mouseover", function(d) {LegendManager.typeMouseOver(d3.select(this), d.nodeSize)})
+      // .on("mouseout", function(d) { LegendManager.typeMouseOut(d3.select(this), d.nodeSize); })
+      // .on("click", function() { LegendManager.clickLegend(d3.select(this)); });
   }
 
-  public static typeMouseOver(selector:  Selection<any, any, any, any>, nodeSize: number) {
+  public static typeMouseOver(selector:  Selection<SVGGElement, INode, SVGGElement, INode>, nodeSize: number) {
     const typeValue = selector.attr("type_value");
     const strippedTypeValue = typeValue.replace(/ /g, "_");
 
@@ -78,7 +80,7 @@ export class LegendManager {
     NodeManager.setNodeStylesOnMouseMove(strippedTypeValue, "Maroon", "bold", nodeSize, false);
   }
 
-  public static typeMouseOut(selector: Selection<any, any, any, any>, nodeSize: number) {
+  public static typeMouseOut(selector: Selection<SVGGElement, INode, SVGGElement, INode>, nodeSize: number) {
     const typeValue = selector.attr("type_value") as string;
     const colorValue = selector.attr("color_value") as string;
     const strippedTypeValue = typeValue.replace(/ /g, "_");
@@ -88,29 +90,29 @@ export class LegendManager {
 
   }
 
-  private static CreateLegendTextThatActsAsLabelKeys(sortedColors: any[]) {
+  private static CreateLegendTextThatActsAsLabelKeys(sortedColors: string[]) {
     Canvas.svgCanvas.selectAll("a.legend_link")
       .data(sortedColors) // Instruct to bind dataSet to text elements
       .enter().append("svg:a") // Append legend elements
       .append("text")
       .attr("text-anchor", "center")
       .attr("x", 40)
-      .attr("y", (d: any, i: number) => (45 + (i * 20)))
+      .attr("y", (d: string, i: number) => (45 + (i * 20)))
       .attr("dx", 0)
       .attr("dy", "4px") // Controls padding to place text in alignment with bullets
       .text((d) => d.toString())
-      .attr("color_value", (d: any) => ColorHelper.color_hash[d])
+      .attr("color_value", (d: string) => ColorHelper.color_hash[d])
       .attr("type_value", (d: string) => d)
-      .attr("index_value", (d: any, i: number) => `index-${i}`)
-      .attr("class", (d: any) => {
+      .attr("index_value", (d: string, i: number) => `index-${i}`)
+      .attr("class", (d: string) => {
         const strippedString = d.replace(/ /g, "_");
         return `legendText-${strippedString}`;
       })
       .style("fill", "Black")
       .style("font", "normal 14px Arial")
-      //TODO: refactor to a D3 extension method
-      .on("mouseover", function(d) { LegendManager.typeMouseOver(d3.select(this), d.nodeSize) })
-      .on("mouseout", function(d) { LegendManager.typeMouseOut(d3.select(this), d.nodeSize) });
+      //TODO: commento
+      // .on("mouseover", function(d) { LegendManager.typeMouseOver(d3.select(this), d.nodeSize) })
+      // .on("mouseout", function(d) { LegendManager.typeMouseOut(d3.select(this), d.nodeSize) });
   }
 
   private static PrintLegendTitle() {

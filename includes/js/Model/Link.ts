@@ -70,8 +70,8 @@ export class Link {
         return {x, y} as Point;
     }
 
-    private CalcMiddlePoint(x: number, y: number) {
-        return Math.min(x, y) + Math.abs(y - x) / 2;
+    private CalcMiddlePoint(p1: number, p2: number) {
+        return Math.min(p1, p2) + Math.abs(p2 - p1) / 2;
     }
 
     debugString() {

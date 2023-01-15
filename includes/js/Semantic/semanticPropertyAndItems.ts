@@ -12,11 +12,11 @@ export class SemanticPropertyAndItems {
   private subject: string | undefined;
   dataitems: PropertyDataItem[];
   private parentArticle!: MediaWikiArticle;
-  private firstItem: any;
-  public nodeAndLinks: any;
+  private firstItem!: PropertyDataItem;
+  public nodeAndLinks: { node: INode; link: Link; }[];
   private readonly sourceNodeUrl: string;
 
-  constructor(property: string, dataitems: PropertyDataItem[], subject: any, parentArticle: MediaWikiArticle) {
+  constructor(property: string, dataitems: PropertyDataItem[], subject: string | undefined, parentArticle: MediaWikiArticle) {
     this.propertyName = property;
     this.nicePropertyName = this.NicePropertyName();
     //Solo per alcune proprietà sono presenti dataitems e subject

@@ -3,16 +3,23 @@
 
 <head>
   <script src="https://code.jquery.com/jquery-3.6.3.js" integrity="sha256-nQLuAZGRRcILA+6dMBOvcRh5Pe310sBpanc6+QBmyVM=" crossorigin="anonymous"></script>
-  <script src="./node_modules/d3/jquery-3.6.3.js" integrity="sha256-nQLuAZGRRcILA+6dMBOvcRh5Pe310sBpanc6+QBmyVM=" crossorigin="anonymous"></script>
+  <script src="https://d3js.org/d3.v7.min.js" integrity="sha256-nQLuAZGRRcILA+6dMBOvcRh5Pe310sBpanc6+QBmyVM=" crossorigin="anonymous"></script>
 
-  <link href='./node_modules/d3/extensions/SemanticMediaWikiGraph/includes/css/select2.css' rel='stylesheet'/>
-  <link href='{$wgScriptPath}/extensions/SemanticMediaWikiGraph/includes/css/screen.css' rel='stylesheet'>
+  <link href='../../css/select2.css' rel='stylesheet'/>
+  <link href='../../css/screen.css' rel='stylesheet'>
 
 
 </head>
 <title>Title in the Browser</title>
 <body>
 <div class='wrapper'>
+<script type="text/javascript">
+  import { SemanticWikiApi } from "../Semantic/semanticWikiApi";
+  import { MyData } from "../Semantic/myData";
+
+  let wikiArticleTitle = "Abbandono dei principi giornalistici, nascita delle Fuck News ed episodi vari"
+  SemanticWikiApi.BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle, new MyData(data));
+</script>
 
   <section>
     <article>

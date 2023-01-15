@@ -7,13 +7,12 @@ import { LegendManager } from "./legendManager";
 const TRANSACTION_DURATION : number = 250;
 
 export class UiEventHandler {
-  public static mouseClickNode(selector: Selection<any, any, any, any>, clickText: boolean) {
+  public static mouseClickNode(selector: Selection<SVGGElement, INode, SVGGElement, INode>, clickText: boolean) {
     //TODO: clickText è di tipo capture? Devo mettere i ... sul chiamante?
-    const thisObject: Selection<any, any, HTMLElement, any> = selector;
-    const typeValue = thisObject.attr("type_value");
+    const typeValue = selector.attr("type_value");
 
     if (!clickText && typeValue === 'Internal Link') {
-      const nodeName = thisObject.node().__data__.name;
+      const nodeName = selector.datum().name;
       if (!MainEntry.downloadedArticles.includes(nodeName)) {
         SemanticWikiApi.BrowseBySubject(nodeName);
       }
@@ -22,7 +21,7 @@ export class UiEventHandler {
     clickText = false;
   };
 
-  public static mouseClickNodeText(selector: Selection<any, any, any, any>, clickText: boolean) {
+  public static mouseClickNodeText(selector: Selection<SVGGElement, INode, SVGGElement, INode>, clickText: boolean) {
 
     const typeValue = selector.attr("type_value");
 
@@ -36,7 +35,7 @@ export class UiEventHandler {
     clickText = true;
   };
 
-  public static nodeMouseOver(selector: Selection<any, any, any, any>) {
+  public static nodeMouseOver(selector: Selection<SVGGElement, INode, SVGGElement, INode>) {
     const typeValue = selector.attr("type_value");
     const strippedTypeValue = typeValue.replace(/ /g, "_");
 
@@ -52,7 +51,7 @@ export class UiEventHandler {
     LegendManager.setLegendStyles(strippedTypeValue, "Maroon", 1.2 * 6);
   };
 
-  public static nodeMouseOut(selector: Selection<any, any, any, any>) {
+  public static nodeMouseOut(selector: Selection<SVGGElement, INode, SVGGElement, INode>) {
 
     const typeValue = selector.attr("type_value");
     const colorValue = selector.attr("color_value");

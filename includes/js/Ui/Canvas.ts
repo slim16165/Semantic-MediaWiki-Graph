@@ -3,6 +3,8 @@ import * as d3 from "d3";
 //import needed
 import * as D3Ext from "./d3Extension"
 import { MainEntry } from "../app";
+import { INode } from "../Model/INode";
+import { Link } from "../Model/Link";
 
 export class Chart {
   public width: number;
@@ -27,7 +29,7 @@ export class Canvas {
 
   /**
    * Initialize the canvas and create the svg element with all its attributes.
-   * @returns {d3.Selection<any, any, any, any>} svgCanvas - The svg canvas element
+   * @returns {d3.Selection<HTMLElement, INode, HTMLElement, INode>} svgCanvas - The svg canvas element
    */
   public static InitCanvas() {
     //outer = .chart

@@ -11,6 +11,7 @@ export class INode {
     y: number;
     hlink?: string;
     private readonly notetype: NodeType;
+    color: string;
 
     public constructor(nodeType : NodeType, id: string, name: string, type: string, x: number, y: number, hlink: string) {
         this.id = id;
@@ -22,6 +23,7 @@ export class INode {
         this.type = type;
         this.notetype = nodeType;
         this.fixed = this.id === MainEntry.focalNodeID;
+        this.color = "green"
     }
 
 
