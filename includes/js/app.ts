@@ -58,7 +58,7 @@ export class MainEntry {
   public static drawCluster(drawingName: string): void {
     new Canvas();
 
-    console.log("Called drawCluster; N° NodeStore.nodeList: " + NodeStore.nodeList.length);
+    console.log("N° NodeStore.nodeList: " + NodeStore.nodeList.length);
     if (NodeStore.nodeList.length == 0) return;
 
     NodeManager.DrawNodes();
