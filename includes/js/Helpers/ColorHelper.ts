@@ -2,6 +2,7 @@ import d3 from "d3-scale-chromatic";
 import {INode} from "../Model/INode";
 import { NodeStore } from "../nodeStore";
 
+//TODO: color maanagement doesn't work properly
 export class ColorHelper
 {
     private static color = {
@@ -24,16 +25,16 @@ export class ColorHelper
     public static colorScaleMW(type: string) : string {
         const colorArray = Object.entries(this.color).map(([name, color]) => ({ name, color }));
         const colorObject = colorArray.find(c => c.name === type);
-        return colorObject ? colorObject.color : "undefined";
+        return colorObject ? colorObject.color : "green";
     }
 
     public static color_hash: { [key: string]: string } = {};
 
 
-    public static GetColor(colors: string)
+    public static GetColor(colorScaleName: string)
     {
         let  colorScale: readonly string[];
-        switch (colors) {
+        switch (colorScaleName) {
             // case "colorScale10":
             //     colorScale = d3.schemeSet1;
             //     break;
@@ -51,11 +52,11 @@ export class ColorHelper
 
     public static GetColors(colorScaleName: string) {
         // Color Scale Handling...
-        //ColorHelper.GetColor(colors);
+        //ColorHelper.GetColor(colorScaleName);
 
         // Create a hash that maps colors to types...
         NodeStore.nodeList.forEach((d: INode) => {
-            this.color_hash[d.type] = d.type;
+            this.color_hash[d.type] = "green";
         });
 
         const sortedColors = ColorHelper.keys(this.color_hash).sort();

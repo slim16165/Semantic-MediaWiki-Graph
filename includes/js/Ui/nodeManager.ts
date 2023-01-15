@@ -41,13 +41,13 @@ export class NodeManager {
       .append("g")
       .attr("class", "node")
       .attr("id", (node: INode) => node.id)
-      .attr("type_value", (d: INode) => d.type)
-      .attr("color_value", (d: INode) => ColorHelper.color_hash[d.type])
-      .attr("xlink:href", (d: INode) => d.hlink as string)
-      .attr("fixed", d => d.fixed)
+      .attr("type_value", (node: INode) => node.type)
+      .attr("color_value", (node: INode) => ColorHelper.color_hash[node.type])
+      .attr("xlink:href", (node: INode) => node.hlink as string)
+      .attr("fixed", node => node.fixed)
       // .setXYPos()
-      .attr("cx", (d: INode) => d.x)
-      .attr("cy", (d: INode) => d.y)
+      .attr("cx", (node: INode) => node.x)
+      .attr("cy", (node: INode) => node.y)
       .on("mouseover", () => UiEventHandler.nodeMouseOver)
       .on("click", () => UiEventHandler.mouseClickNode)
       .on("mouseout", () => UiEventHandler.nodeMouseOut)
@@ -94,18 +94,11 @@ export class NodeManager {
 
   static AppendTextToNodes() {
     this.svgNodes.append("text")
-      .attr("x", (d: INode) => d.IsFocalNode() ? 0 : 20)
-      .attr("y", (d: INode) => {
-        return d.IsFocalNode() ? 0 : -10;
-      })
-      .attr("text-anchor", (d: INode) => d.IsFocalNode() ? "middle" : "start")
-      .on("click", function() {
-        // @ts-ignore
-        UiEventHandler.mouseClickNodeText(d3.select(this), false);
-      })
-      .attr("font-family", "Arial, Helvetica, sans-serif")
+      .attr("x", (d: INode) => /*d.IsFocalNode() ?*/ d.x + 20)
+      .attr("y", (d: INode) => /*d.IsFocalNode() ? 0 : -10*/ d.y + 5)
+      .attr("text-anchor", (d: INode) => d.IsFocalNode() ? "middle" : "start") //Not visible, just an attribute
+      .style("font-family", "Arial, Helvetica, sans-serif")
       .style("font", "normal 16px Arial")
-      .attr("fill", "Blue")
       .style("fill", (d: INode) => ColorHelper.color_hash[d.type])
       .attr("type_value", (d: INode) => d.type)
       .attr("color_value", (d: INode) => ColorHelper.color_hash[d.type])
@@ -114,6 +107,10 @@ export class NodeManager {
         //return "nodeText-" + type_string; })
         return d.IsFocalNode() ? "focalNodeText" : `nodeText-${type_string}`;
       })
+      .on("click", function() {
+        // @ts-ignore
+        UiEventHandler.mouseClickNodeText(d3.select(this), false);
+      })
       //TODO: commento dy
       // .attr("dy", ".35em")
       .text((d: INode) => d.name);
@@ -121,19 +118,16 @@ export class NodeManager {
 
   static AppendCirclesToNodes() {
     this.svgNodes.append("circle")
-      //TODO: commento doppione
-      // .attr("cx", d => d.x)
-      // .attr("cy", d => d.y)
       .attr("r", (d: INode) => d.IsFocalNode() ? MainEntry.centerNodeSize : MainEntry.nodeSize)
       .attr("type_value", (d: INode) => d.type)
       .attr("color_value", (d: INode) => ColorHelper.color_hash[d.type])
       .attr("fixed", d => d.fixed)
-      .attr("cx", d => d.fixed ? Canvas.width / 2 : d.x)
-      .attr("cy", d => d.fixed ? Canvas.heigth / 2 : d.y)
+      .attr("cx", d => d.IsFocalNode() ? Canvas.width / 2 : d.x)
+      .attr("cy", d => d.IsFocalNode() ? Canvas.heigth / 2 : d.y)
       .attr("class", (d: INode) => {
         const strippedString = d.type.replace(/ /g, "_");
         // return "nodeCircle-" + strippedString; })
-        return d.fixed ? "focalNodeCircle" : `nodeCircle-${strippedString}`;
+        return d.IsFocalNode() ? "focalNodeCircle" : `nodeCircle-${strippedString}`;
       })
       .style("fill", "White") // Make the nodes hollow looking
       .style("stroke-width", 5) // Give the node strokes some thickness

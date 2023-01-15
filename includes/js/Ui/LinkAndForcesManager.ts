@@ -29,10 +29,11 @@ export class LinkAndForcesManager {
     this.clickText = false;
 
     // Create a force layout and bind Nodes and Links
-    this.CreateAForceLayoutAndBindNodesAndLinks()
-      .on("tick", () => {
-        this.Tick();
-      });
+    //TODO: da erorre, per ora commento
+    // this.CreateAForceLayoutAndBindNodesAndLinks()
+    //   .on("tick", () => {
+    //     this.Tick();
+    //   });
 
     //Build the Arrows
     this.buildArrows();
@@ -81,7 +82,7 @@ export class LinkAndForcesManager {
       .data(NodeStore.linkList)
       .enter().append("g")
       .attr("class", "gLink")
-      .attr("class", "link")
+      // .attr("class", "link")
       .attr("endNode", (d: Link) => d.targetId)
       .attr("startNode", (d: Link) => d.sourceId)
       .attr("targetType", (d: Link) => d.target.type)
