@@ -16752,6 +16752,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ColorHelper = void 0;
 const d3_scale_chromatic_1 = __importDefault(__webpack_require__(/*! d3-scale-chromatic */ "./node_modules/d3-scale-chromatic/src/index.js"));
 const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
+//TODO: color maanagement doesn't work properly
 class ColorHelper {
     static color = {
         "InternalLink": '#1f77b4',
@@ -17558,10 +17559,11 @@ exports.LinkAndForcesManager = void 0;
 const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
 const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
 const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts");
+const nodeManager_1 = __webpack_require__(/*! ./nodeManager */ "./includes/js/Ui/nodeManager.ts");
 class LinkAndForcesManager {
-    static clickText;
     static force;
     static svgLinks;
+    static clickText;
     static forceDragBehaviour() {
         LinkAndForcesManager.CreateAForceLayoutAndBindNodesAndLinks();
     }
@@ -17575,52 +17577,97 @@ class LinkAndForcesManager {
         this.clickText = false;
         // Create a force layout and bind Nodes and Links
         //TODO: da erorre, per ora commento
-        // this.CreateAForceLayoutAndBindNodesAndLinks()
-        //   .on("tick", () => {
-        //     this.Tick();
-        //   });
+        this.CreateAForceLayoutAndBindNodesAndLinks()
+            .on("tick", () => {
+            this.Tick();
+        });
         //Build the Arrows
         this.buildArrows();
+    }
+    static updateNodePositions() {
+        // this.svgNodes.datum().updatePositions();
+        nodeManager_1.NodeManager.svgNodes
+            .exit()
+            .attr("cx", (d) => d.x)
+            .attr("cy", (d) => d.y);
+        nodeManager_1.NodeManager.svgNodes.attr("transform", function (d) {
+            return "translate(" + d.x / 5 + "," + d.y / 5 + ")";
+        });
+    }
+    static updateLinkPositions() {
+        this.svgLinks
+            .attr("x1", (link) => link.source.x)
+            .attr("y1", (link) => link.source.y)
+            .attr("x2", (link) => link.target.x)
+            .attr("y2", (link) => link.target.y);
+    }
+    /**
+     * Builds the arrows for the specified SVG canvas.
+     */
+    static buildArrows() {
+        /*
+        * Il tipo marker è un tipo di elemento SVG (Scalable Vector Graphics). Viene utilizzato per definire un segno o un simbolo da inserire in un altro elemento SVG, ad esempio una linea o un percorso. In questo caso, il codice sta creando un marker che verrà inserito come "punta di freccia" in tutti gli elementi di classe gLink.
+        Il marker viene creato con l'elemento marker di SVG, che ha un insieme di attributi che ne definiscono l'aspetto e il comportamento. Gli attributi id, viewBox, refX, refY, markerWidth e markerHeight sono tutti attributi standard del tag marker di SVG, mentre l'attributo orient è un attributo non standard che viene utilizzato per specificare l'orientamento del simbolo all'interno del marker.
+        L'attributo id viene utilizzato per assegnare un identificatore univoco al marker, che può essere utilizzato per fare riferimento al marker in altri punti del codice o nei fogli di stile CSS. L'attributo viewBox definisce l'area di visualizzazione del marker e il suo contenuto. L'attributo refX e refY vengono utilizzati per specificare le coordinate del punto di riferimento del marker, ovvero il punto del marker che verrà ancorato al percorso o all'elemento che lo utilizza. Gli attributi markerWidth e markerHeight definiscono la dimensione del marker.
+        Una volta creato il marker, viene aggiunto un elemento path che definisce la forma del simbolo all'interno del marker. In questo caso, la forma del simbolo è una freccia, definita dal valore "M0,-5L10,0L0,5" dell'attributo d dell'elemento path.*/
+        let selection = Canvas_1.Canvas.svgCanvas.selectAll(".gLink")
+            .data(nodeStore_1.NodeStore.linkList)
+            .append("marker")
+            .attr("id", (d, i) => `arrow_${i}`)
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", (d) => d.pointsFocalNode ? 55 : 20)
+            .attr("refY", 0)
+            .attr("markerWidth", 8)
+            .attr("markerHeight", 8)
+            .attr("orient", "auto")
+            .append("svg:path")
+            .attr("d", "M0,-5L10,0L0,5");
     }
     static CreateAForceLayoutAndBindNodesAndLinks() {
         this.force = d3.forceSimulation()
             .nodes(nodeStore_1.NodeStore.nodeList)
             .force("link", d3.forceLink(nodeStore_1.NodeStore.linkList))
-            .force("charge", d3.forceManyBody().strength(-1000))
+            .force("charge", d3.forceManyBody().strength(-10))
             .force("gravity", d3.forceManyBody().strength(.01))
             .force("friction", d3.forceManyBody().strength(.2))
             //commento
-            // .force("link", d3.forceLink().id((d:SimulationNodeDatum) => d.).distance(100).strength(1)) //=> d.id).strength(9))
-            // .force("link", d3.forceLink().id((d: any) => d.id).distance(() => $(".chart")[0].clientWidth < $(".chart")[0].clientHeight ? $(".chart")[0].clientWidth / 3 : $(".chart")[0].clientHeight / 3))
-            .force("center", d3.forceCenter(Canvas_1.Canvas.width / 2, Canvas_1.Canvas.heigth / 2));
-        // .restart();
-        function dragStarted(d) {
-            if (!d3.event.active)
-                LinkAndForcesManager.force.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
-        }
-        function dragged(d) {
-            d.fx = d3.event.x;
-            d.fy = d3.event.y;
-        }
-        function dragEnded(d) {
-            if (!d3.event.active)
-                LinkAndForcesManager.force.alphaTarget(0);
-            d.fx = d.x;
-            d.fy = d.y;
-        }
-        d3.drag()
-            .on("start", () => dragStarted)
-            .on("drag", () => dragged)
-            .on("end", () => dragEnded);
+            .force("link", d3.forceLink(nodeStore_1.NodeStore.linkList))
+            .force("center", d3.forceCenter(Canvas_1.Canvas.width / 2, Canvas_1.Canvas.heigth / 2))
+            .alphaTarget(0.03);
+        const linkForce = d3.forceLink().id((d) => d.id);
+        const chart = d3.select(".chart");
+        const width = Canvas_1.Canvas.width;
+        const height = Canvas_1.Canvas.heigth;
+        linkForce.distance(() => width < height ? width / 3 : height / 3);
+        this.force.force("link", linkForce);
+        // function dragStarted(d: { fx: number; x: number; fy: number; y: number; }) {
+        //   if (!d3.event.active) LinkAndForcesManager.force.alphaTarget(0.3).restart();
+        //   d.fx = d.x;
+        //   d.fy = d.y;
+        // }
+        //
+        // function dragged(d: { fx: number; x: number; fy: number; y: number; }) {
+        //   d.fx = d3.event.x;
+        //   d.fy = d3.event.y;
+        // }
+        //
+        // function dragEnded(d: { fx: number; x: number; fy: number; y: number; }) {
+        //   if (!d3.event.active) LinkAndForcesManager.force.alphaTarget(0);
+        //   d.fx = d.x;
+        //   d.fy = d.y;
+        // }
+        //
+        // d3.drag()
+        //   .on("start", () => dragStarted)
+        //   .on("drag", () => dragged)
+        //   .on("end", () => dragEnded);
         return this.force;
     }
     static DrawLinesForLinksBetweenNodes() {
         this.svgLinks = Canvas_1.Canvas.svgCanvas.selectAll(".gLink")
             .data(nodeStore_1.NodeStore.linkList)
             .enter().append("g")
-            .attr("class", "gLink")
+            // .attr("class", "gLink")
             // .attr("class", "link")
             .attr("endNode", (d) => d.targetId)
             .attr("startNode", (d) => d.sourceId)
@@ -17646,20 +17693,10 @@ class LinkAndForcesManager {
             .attr("dy", ".35em")
             .text((link) => link.linkName);
     }
-    static updateLinkPositions() {
-        this.svgLinks
-            .attr("x1", (link) => link.source.x)
-            .attr("y1", (link) => link.source.y)
-            .attr("x2", (link) => link.target.x)
-            .attr("y2", (link) => link.target.y);
-    }
     static Tick() {
         //TODO: blocco l'aggiornamento delle posizioni dei nodi
-        // NodeManager.updateNodePositions();
-        // LinkAndForcesManager.updateLinkPositions();
-        let nodes = Canvas_1.Canvas.svgCanvas.selectAll(".gLink");
-        //Questo sembra tanto tanto un doppione
-        // NodeManager.svgNodes.attr("transform", (d: INode) => `translate(${d.x},${d.y})`);
+        LinkAndForcesManager.updateNodePositions();
+        LinkAndForcesManager.updateLinkPositions();
         // Questo pezzo di codice si occupa di aggiungere del testo ai link e di posizionarlo nella parte centrale del link stesso.
         // Il testo viene posizionato in modo che sia metà strada tra il nodo di partenza e quello di destinazione. Se il nodo di destinazione ha una coordinata x maggiore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y). Se invece il nodo di destinazione ha una coordinata x minore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y).
         // this.setLinkTextInMiddle();
@@ -17677,28 +17714,6 @@ class LinkAndForcesManager {
         linkText
             .attr("x", center.x)
             .attr("y", center.y);
-    }
-    /**
-     * Builds the arrows for the specified SVG canvas.
-     */
-    static buildArrows() {
-        /*
-        * Il tipo marker è un tipo di elemento SVG (Scalable Vector Graphics). Viene utilizzato per definire un segno o un simbolo da inserire in un altro elemento SVG, ad esempio una linea o un percorso. In questo caso, il codice sta creando un marker che verrà inserito come "punta di freccia" in tutti gli elementi di classe gLink.
-        Il marker viene creato con l'elemento marker di SVG, che ha un insieme di attributi che ne definiscono l'aspetto e il comportamento. Gli attributi id, viewBox, refX, refY, markerWidth e markerHeight sono tutti attributi standard del tag marker di SVG, mentre l'attributo orient è un attributo non standard che viene utilizzato per specificare l'orientamento del simbolo all'interno del marker.
-        L'attributo id viene utilizzato per assegnare un identificatore univoco al marker, che può essere utilizzato per fare riferimento al marker in altri punti del codice o nei fogli di stile CSS. L'attributo viewBox definisce l'area di visualizzazione del marker e il suo contenuto. L'attributo refX e refY vengono utilizzati per specificare le coordinate del punto di riferimento del marker, ovvero il punto del marker che verrà ancorato al percorso o all'elemento che lo utilizza. Gli attributi markerWidth e markerHeight definiscono la dimensione del marker.
-        Una volta creato il marker, viene aggiunto un elemento path che definisce la forma del simbolo all'interno del marker. In questo caso, la forma del simbolo è una freccia, definita dal valore "M0,-5L10,0L0,5" dell'attributo d dell'elemento path.*/
-        let selection = Canvas_1.Canvas.svgCanvas.selectAll('.gLink')
-            .data(nodeStore_1.NodeStore.linkList)
-            .append('marker')
-            .attr('id', (d, i) => `arrow_${i}`)
-            .attr('viewBox', '0 -5 10 10')
-            .attr('refX', (d) => d.pointsFocalNode ? 55 : 20)
-            .attr('refY', 0)
-            .attr('markerWidth', 8)
-            .attr('markerHeight', 8)
-            .attr('orient', 'auto')
-            .append('svg:path')
-            .attr('d', 'M0,-5L10,0L0,5');
     }
 }
 exports.LinkAndForcesManager = LinkAndForcesManager;
@@ -17993,18 +18008,17 @@ class NodeManager {
             .attr("type_value", (node) => node.type)
             .attr("color_value", (node) => ColorHelper_1.ColorHelper.color_hash[node.type])
             .attr("xlink:href", (node) => node.hlink)
-            .attr("fixed", node => node.fixed)
+            .attr("fixed", node => node.IsFocalNode())
             // .setXYPos()
-            .attr("cx", (node) => node.x)
-            .attr("cy", (node) => node.y)
+            // .attr("cx", (node: INode) => node.x)
+            // .attr("cy", (node: INode) => node.y)
             .on("mouseover", () => UiEventHandler_1.UiEventHandler.nodeMouseOver)
             .on("click", () => UiEventHandler_1.UiEventHandler.mouseClickNode)
             .on("mouseout", () => UiEventHandler_1.UiEventHandler.nodeMouseOut)
             .call(LinkAndForcesManager_1.LinkAndForcesManager.forceDragBehaviour)
-            //TODO: commento il trasform
-            // .attr("transform", function(d) {
-            //   return `translate(${d.x},${d.y})`;
-            // })
+            .attr("transform", function (d) {
+            return `translate(${d.x},${d.y})`;
+        })
             .append("a");
         return this.svgNodes;
     }
@@ -18027,16 +18041,10 @@ class NodeManager {
                 .style("font", `${fontWeight} 16px Arial`);
         }
     }
-    static updateNodePositions() {
-        this.svgNodes.datum().updatePositions();
-        this.svgNodes
-            .attr("cx", (d) => d.x)
-            .attr("cy", (d) => d.y);
-    }
     static AppendTextToNodes() {
         this.svgNodes.append("text")
-            .attr("x", (d) => /*d.IsFocalNode() ?*/ d.x + 20)
-            .attr("y", (d) => /*d.IsFocalNode() ? 0 : -10*/ d.y + 5)
+            .attr("x", (d) => /*d.IsFocalNode() ?*/ d.x)
+            .attr("y", (d) => /*d.IsFocalNode() ? 0 : -10*/ d.y)
             .attr("text-anchor", (d) => d.IsFocalNode() ? "middle" : "start") //Not visible, just an attribute
             .style("font-family", "Arial, Helvetica, sans-serif")
             .style("font", "normal 16px Arial")
@@ -18053,7 +18061,7 @@ class NodeManager {
             UiEventHandler_1.UiEventHandler.mouseClickNodeText(d3.select(this), false);
         })
             //TODO: commento dy
-            // .attr("dy", ".35em")
+            .attr("dy", ".35em")
             .text((d) => d.name);
     }
     static AppendCirclesToNodes() {

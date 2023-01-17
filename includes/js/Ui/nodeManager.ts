@@ -35,6 +35,8 @@ export class NodeManager {
     In summary enter() allows to select and operate on data elements that haven't been associated yet to DOM elements.
     * */
 
+
+
     NodeManager.svgNodes = Canvas.svgCanvas.selectAll(".node")
       .data(NodeStore.nodeList)
       .enter()
@@ -44,18 +46,17 @@ export class NodeManager {
       .attr("type_value", (node: INode) => node.type)
       .attr("color_value", (node: INode) => ColorHelper.color_hash[node.type])
       .attr("xlink:href", (node: INode) => node.hlink as string)
-      .attr("fixed", node => node.fixed)
+      .attr("fixed", node => node.IsFocalNode())
       // .setXYPos()
-      .attr("cx", (node: INode) => node.x)
-      .attr("cy", (node: INode) => node.y)
+      // .attr("cx", (node: INode) => node.x)
+      // .attr("cy", (node: INode) => node.y)
       .on("mouseover", () => UiEventHandler.nodeMouseOver)
       .on("click", () => UiEventHandler.mouseClickNode)
       .on("mouseout", () => UiEventHandler.nodeMouseOut)
       .call(LinkAndForcesManager.forceDragBehaviour)
-      //TODO: commento il trasform
-      // .attr("transform", function(d) {
-      //   return `translate(${d.x},${d.y})`;
-      // })
+      .attr("transform", function(d) {
+        return `translate(${d.x},${d.y})`;
+      })
       .append("a");
 
     return this.svgNodes;
@@ -85,17 +86,12 @@ export class NodeManager {
     }
   }
 
-  static updateNodePositions() {
-    this.svgNodes.datum().updatePositions();
-    this.svgNodes
-      .attr("cx", (d: INode) => d.x)
-      .attr("cy", (d: INode) => d.y);
-  }
+
 
   static AppendTextToNodes() {
     this.svgNodes.append("text")
-      .attr("x", (d: INode) => /*d.IsFocalNode() ?*/ d.x + 20)
-      .attr("y", (d: INode) => /*d.IsFocalNode() ? 0 : -10*/ d.y + 5)
+      .attr("x", (d: INode) => /*d.IsFocalNode() ?*/ d.x)
+      .attr("y", (d: INode) => /*d.IsFocalNode() ? 0 : -10*/ d.y)
       .attr("text-anchor", (d: INode) => d.IsFocalNode() ? "middle" : "start") //Not visible, just an attribute
       .style("font-family", "Arial, Helvetica, sans-serif")
       .style("font", "normal 16px Arial")
@@ -112,7 +108,7 @@ export class NodeManager {
         UiEventHandler.mouseClickNodeText(d3.select(this), false);
       })
       //TODO: commento dy
-      // .attr("dy", ".35em")
+      .attr("dy", ".35em")
       .text((d: INode) => d.name);
   }
 
