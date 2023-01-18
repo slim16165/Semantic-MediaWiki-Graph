@@ -54,6 +54,7 @@ export class NodeManager {
       .on("click", () => UiEventHandler.mouseClickNode)
       .on("mouseout", () => UiEventHandler.nodeMouseOut)
       .call(LinkAndForcesManager.forceDragBehaviour)
+      //.call(drag(simulation));
       .attr("transform", function(d) {
         return `translate(${d.x},${d.y})`;
       })

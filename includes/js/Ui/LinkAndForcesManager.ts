@@ -39,27 +39,6 @@ export class LinkAndForcesManager {
     this.buildArrows();
   }
 
-  static updateNodePositions() {
-    // this.svgNodes.datum().updatePositions();
-    NodeManager.svgNodes
-      .exit()
-      .attr("cx", (d: any) => d.x)
-      .attr("cy", (d: any) => d.y);
-
-
-    NodeManager.svgNodes.attr("transform", function(d) {
-      return "translate(" + d.x/5 + "," + d.y/5 + ")";
-    });
-
-  }
-
-  static updateLinkPositions() {
-    this.svgLinks
-      .attr("x1", (link: Link) => link.source.x)
-      .attr("y1", (link: Link) => link.source.y)
-      .attr("x2", (link: Link) => link.target.x)
-      .attr("y2", (link: Link) => link.target.y);
-  }
 
   /**
    * Builds the arrows for the specified SVG canvas.
@@ -107,27 +86,27 @@ export class LinkAndForcesManager {
 
     this.force.force("link", linkForce);
 
-    // function dragStarted(d: { fx: number; x: number; fy: number; y: number; }) {
-    //   if (!d3.event.active) LinkAndForcesManager.force.alphaTarget(0.3).restart();
-    //   d.fx = d.x;
-    //   d.fy = d.y;
-    // }
-    //
-    // function dragged(d: { fx: number; x: number; fy: number; y: number; }) {
-    //   d.fx = d3.event.x;
-    //   d.fy = d3.event.y;
-    // }
-    //
-    // function dragEnded(d: { fx: number; x: number; fy: number; y: number; }) {
-    //   if (!d3.event.active) LinkAndForcesManager.force.alphaTarget(0);
-    //   d.fx = d.x;
-    //   d.fy = d.y;
-    // }
-    //
-    // d3.drag()
-    //   .on("start", () => dragStarted)
-    //   .on("drag", () => dragged)
-    //   .on("end", () => dragEnded);
+    function dragStarted(d: { fx: number; x: number; fy: number; y: number; }) {
+      if (!d3.event.active) LinkAndForcesManager.force.alphaTarget(0.3).restart();
+      d.fx = d.x;
+      d.fy = d.y;
+    }
+
+    function dragged(d: { fx: number; x: number; fy: number; y: number; }) {
+      d.fx = d3.event.x;
+      d.fy = d3.event.y;
+    }
+
+    function dragEnded(d: { fx: number; x: number; fy: number; y: number; }) {
+      if (!d3.event.active) LinkAndForcesManager.force.alphaTarget(0);
+      d.fx = d.x;
+      d.fy = d.y;
+    }
+
+    d3.drag()
+      .on("start", () => dragStarted)
+      .on("drag", () => dragged)
+      .on("end", () => dragEnded);
 
     return this.force;
   }
@@ -174,6 +153,29 @@ export class LinkAndForcesManager {
     // Il testo viene posizionato in modo che sia metà strada tra il nodo di partenza e quello di destinazione. Se il nodo di destinazione ha una coordinata x maggiore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y). Se invece il nodo di destinazione ha una coordinata x minore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y).
     // this.setLinkTextInMiddle();
   }
+
+  static updateNodePositions() {
+    // this.svgNodes.datum().updatePositions();
+    NodeManager.svgNodes
+      .exit()
+      .attr("cx", (d: any) => d.x)
+      .attr("cy", (d: any) => d.y);
+
+
+    NodeManager.svgNodes.attr("transform", function(d) {
+      return "translate(" + d.x/5 + "," + d.y/5 + ")";
+    });
+
+  }
+
+  static updateLinkPositions() {
+    this.svgLinks
+      .attr("x1", (link: Link) => link.source.x)
+      .attr("y1", (link: Link) => link.source.y)
+      .attr("x2", (link: Link) => link.target.x)
+      .attr("y2", (link: Link) => link.target.y);
+  }
+
 
   /**
    Calculates and sets the position of the text element for the given link.
