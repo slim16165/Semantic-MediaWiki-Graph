@@ -17,6 +17,7 @@ export class NodeStore {
         @param {Link[]} linkSetApp - Set of links and their relevant data.
      */
     public static UpdateSourceAndTarget() {
+        console.log("Method enter: UpdateSourceAndTarget")
         console.log("Updating Source and Target of " + this.linkList.length + " links");
         // Append the source Node and the target Node to each Link
         for (let link of this.linkList) {
@@ -29,6 +30,7 @@ export class NodeStore {
     }
 
     static getNodeById(nodeId: string): INode {
+        console.log("Method enter: getNodeById");
         let p = NodeStore.nodeList.find((node) => node.id === nodeId);
         if(p instanceof INode) {
             return p as INode;
@@ -43,17 +45,22 @@ export class NodeStore {
         }
     }
 
-    private static logNodeAndLinkStatus() {
-        console.log("Node Status:");
-        let debugString = "";
-        NodeStore.nodeList.forEach((node) => {
-            debugString += node.debugString() + "\n";
-        });
-        debugString += "Link Status:\n";
-        NodeStore.linkList.forEach((link) => {
-            debugString += link.debugString() + "\n";
-        });
-        console.log(debugString);
+    static logNodeAndLinkStatus(details : boolean) {
+        console.log("N° of nodes " + NodeStore.nodeList.length);
+        console.log("N° of links " + NodeStore.linkList.length);
+
+        if(details) {
+            console.log("Node Status:");
+            let debugString = "";
+            NodeStore.nodeList.forEach((node) => {
+                debugString += node.debugString() + "\n";
+            });
+            debugString += "Link Status:\n";
+            NodeStore.linkList.forEach((link) => {
+                debugString += link.debugString() + "\n";
+            });
+            console.log(debugString);
+        }
     }
 
     static isThereAnyUncompleteLink() {

@@ -55,9 +55,9 @@ export class MainEntry {
    *              0 = No Sort.  Maintain original order.
    *              1 = Sort by arc value size.
    */
-  public static drawCluster(drawingName: string): void {
+  public static drawCluster(drawingName: string, calledBy: string): void {
     new Canvas();
-
+    console.log("Method enter: drawCluster called by " + calledBy);
     console.log("Called drawCluster; N° NodeStore.nodeList: " + NodeStore.nodeList.length);
     if (NodeStore.nodeList.length == 0) return;
 
@@ -71,6 +71,7 @@ export class MainEntry {
   }
 
   static InitNodeAndLinks_Backlinks(backlinks: Article[]) {
+    console.log("Method enter: InitNodeAndLinks_Backlinks");
     for (let article of backlinks) {
       let node = new INode(NodeType.Backlink, article.title, article.title, "Backlink", 0, 0, article.title);
       NodeStore.nodeList.push(node);

@@ -11,6 +11,7 @@ export class MediaWikiArticle {
   semanticNodeList: SemanticPropertyAndItems[];
 
   constructor(id: string, semanticNodeList : any) {
+    console.log("Method enter: MediaWikiArticle constructor");
     this.Id = id; //'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
     MainEntry.focalNodeID = id;
     this.node = this.ParseNodeBrowseBySubject();
@@ -24,6 +25,7 @@ export class MediaWikiArticle {
   }
 
   private ParseNodeBrowseBySubject() {
+    console.log("Method enter: ParseNodeBrowseBySubject");
     let nameDoslike = this.Id.split("#")[0];
     let nodeName = nameDoslike.replace("_", " ");
     let node = new INode(NodeType.Article, this.Id, nodeName, "Internal Link", 10, 0, `./${nameDoslike}`);
@@ -33,10 +35,10 @@ export class MediaWikiArticle {
 
   HandleProperties()
   {
+    console.log("Method enter: HandleProperties");
     for (const semanticNode of this.semanticNodeList) {
       if (semanticNode.IsSpecialProperty()) continue; // Non fare nulla se la proprietà è una delle proprietà speciali "_SKEY", "_MDAT" o "_ASK"
 
-      // semanticNode.SemanticNodeParse();
       semanticNode.SetUri();
 
       //All the nodes should be initialized before the links
@@ -49,9 +51,6 @@ export class MediaWikiArticle {
         let link = semanticNode.ParsePropertyLink(dataitem);
         NodeStore.linkList.push(link);
       }
-
     }
   }
-
-
 }

@@ -13,6 +13,7 @@ export class LinkAndForcesManager {
   private static clickText: boolean;
 
   static DrawLinks() {
+    console.log("Method enter: DrawLinks");
     NodeStore.UpdateSourceAndTarget();
 
 
@@ -164,7 +165,7 @@ export class LinkAndForcesManager {
   }
 
   private static AppendTextToLinkEdges() {
-
+    console.log("Method enter: AppendTextToLinkEdges");
     Canvas.svgCanvas.selectAll(".gLink")
       .data(NodeStore.linkList)
       .append("text")
@@ -177,6 +178,9 @@ export class LinkAndForcesManager {
   }
 
   private static Tick() {
+    console.log("Method enter: Tick");
+    NodeStore.logNodeAndLinkStatus(false);
+
     LinkAndForcesManager.updateNodePositionsOnUi();
     LinkAndForcesManager.updateLinkPositionsOnUi();
 
@@ -202,7 +206,7 @@ export class LinkAndForcesManager {
   }
 
   private static checkValues(link: Link) {
-    if(!link.source || !link.target)
+    if(!link.source || !link.target ||  isNaN(link.source.x) || isNaN(link.source.y))
       debugger;
   }
 

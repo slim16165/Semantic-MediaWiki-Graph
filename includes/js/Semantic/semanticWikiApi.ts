@@ -49,8 +49,8 @@ export class SemanticWikiApi {
     $("#cluster_chart .chart").empty();
     //  var k = cloneNode(nodeSet);
     //  var m = cloneEdge(linkSet);
-    console.log("BrowseBySubject");
-    MainEntry.drawCluster("Drawing1");
+
+    MainEntry.drawCluster("Drawing1", "BrowseBySubject");
     //drawCluster.update();
     VisibilityHandler.hideElements();
     // const elem: JQuery<HTMLElement> = $(`[id=${MyClass.focalNodeID}] a`);
@@ -59,8 +59,6 @@ export class SemanticWikiApi {
     // // @ts-ignore
     // elem[0].__data__.py = Canvas.height / 2;
   }
-
-
 
   public static QueryBackLinks(wikiArticle: string) {
     $.ajax({
@@ -89,15 +87,13 @@ export class SemanticWikiApi {
       //  var k = cloneNode(nodeSet);
       //  var m = cloneEdge(linkSet);
 
-      NodeStore.UpdateSourceAndTarget();
+      // NodeStore.UpdateSourceAndTarget();
 
-      console.log("BacklinksCallback");
-      MainEntry.drawCluster("Drawing1");
+      MainEntry.drawCluster("Drawing1","BacklinksCallback" );
       //drawCluster.update();
       VisibilityHandler.hideElements();
     }
   }
-
 
   public static AllPagesCall() {
     $.ajax({

@@ -17012,6 +17012,7 @@ class MediaWikiArticle {
     Id;
     semanticNodeList;
     constructor(id, semanticNodeList) {
+        console.log("Method enter: MediaWikiArticle constructor");
         this.Id = id; //'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
         app_1.MainEntry.focalNodeID = id;
         this.node = this.ParseNodeBrowseBySubject();
@@ -17023,6 +17024,7 @@ class MediaWikiArticle {
         }
     }
     ParseNodeBrowseBySubject() {
+        console.log("Method enter: ParseNodeBrowseBySubject");
         let nameDoslike = this.Id.split("#")[0];
         let nodeName = nameDoslike.replace("_", " ");
         let node = new INode_1.INode(nodeType_1.NodeType.Article, this.Id, nodeName, "Internal Link", 10, 0, `./${nameDoslike}`);
@@ -17030,10 +17032,10 @@ class MediaWikiArticle {
         return node;
     }
     HandleProperties() {
+        console.log("Method enter: HandleProperties");
         for (const semanticNode of this.semanticNodeList) {
             if (semanticNode.IsSpecialProperty())
                 continue; // Non fare nulla se la proprietà è una delle proprietà speciali "_SKEY", "_MDAT" o "_ASK"
-            // semanticNode.SemanticNodeParse();
             semanticNode.SetUri();
             //All the nodes should be initialized before the links
             for (let dataitem of semanticNode.dataitems) {
@@ -17071,6 +17073,7 @@ class MyData {
         this.query = callback.query;
     }
     Parse() {
+        console.log("Parse");
         this.mediawikiArticle = new mediaWikiArticle_1.MediaWikiArticle(this.query.subject, this.query.data);
         let wikiArticle = this.mediawikiArticle;
         nodeStore_1.NodeStore.nodeList.push(wikiArticle.node);
@@ -17160,6 +17163,7 @@ class SemanticPropertyAndItems {
     firstItem;
     sourceNodeUrl;
     constructor(property, dataitems, subject, parentArticle) {
+        console.log("Method enter: SemanticPropertyAndItems constructor");
         this.propertyName = property;
         this.nicePropertyName = this.NicePropertyName();
         //Solo per alcune proprietà sono presenti dataitems e subject
@@ -17280,7 +17284,6 @@ exports.SemanticPropertyAndItems = SemanticPropertyAndItems;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SemanticWikiApi = void 0;
-const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
 const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
 const visibilityHandler_1 = __webpack_require__(/*! ../Ui/visibilityHandler */ "./includes/js/Ui/visibilityHandler.ts");
 const myData_1 = __webpack_require__(/*! ./myData */ "./includes/js/Semantic/myData.ts");
@@ -17324,8 +17327,7 @@ class SemanticWikiApi {
         $("#cluster_chart .chart").empty();
         //  var k = cloneNode(nodeSet);
         //  var m = cloneEdge(linkSet);
-        console.log("BrowseBySubject");
-        app_1.MainEntry.drawCluster("Drawing1");
+        app_1.MainEntry.drawCluster("Drawing1", "BrowseBySubject");
         //drawCluster.update();
         visibilityHandler_1.VisibilityHandler.hideElements();
         // const elem: JQuery<HTMLElement> = $(`[id=${MyClass.focalNodeID}] a`);
@@ -17360,9 +17362,8 @@ class SemanticWikiApi {
             $("#cluster_chart .chart").empty();
             //  var k = cloneNode(nodeSet);
             //  var m = cloneEdge(linkSet);
-            nodeStore_1.NodeStore.UpdateSourceAndTarget();
-            console.log("BacklinksCallback");
-            app_1.MainEntry.drawCluster("Drawing1");
+            // NodeStore.UpdateSourceAndTarget();
+            app_1.MainEntry.drawCluster("Drawing1", "BacklinksCallback");
             //drawCluster.update();
             visibilityHandler_1.VisibilityHandler.hideElements();
         }
@@ -17557,6 +17558,7 @@ class LinkAndForcesManager {
     static svgLinks;
     static clickText;
     static DrawLinks() {
+        console.log("Method enter: DrawLinks");
         nodeStore_1.NodeStore.UpdateSourceAndTarget();
         // Append text to Link edges
         this.AppendTextToLinkEdges();
@@ -17684,6 +17686,7 @@ class LinkAndForcesManager {
             .attr("y2", (l) => l.target.y);
     }
     static AppendTextToLinkEdges() {
+        console.log("Method enter: AppendTextToLinkEdges");
         Canvas_1.Canvas.svgCanvas.selectAll(".gLink")
             .data(nodeStore_1.NodeStore.linkList)
             .append("text")
@@ -17695,6 +17698,8 @@ class LinkAndForcesManager {
             .text((link) => link.linkName);
     }
     static Tick() {
+        console.log("Method enter: Tick");
+        nodeStore_1.NodeStore.logNodeAndLinkStatus(false);
         LinkAndForcesManager.updateNodePositionsOnUi();
         LinkAndForcesManager.updateLinkPositionsOnUi();
         // Questo pezzo di codice si occupa di aggiungere del testo ai link e di posizionarlo nella parte centrale del link stesso.
@@ -17708,10 +17713,15 @@ class LinkAndForcesManager {
     }
     static updateLinkPositionsOnUi() {
         this.svgLinks
+            .each((link) => LinkAndForcesManager.checkValues(link))
             .attr("x1", (link) => link.source.x)
             .attr("y1", (link) => link.source.y)
             .attr("x2", (link) => link.target.x)
             .attr("y2", (link) => link.target.y);
+    }
+    static checkValues(link) {
+        if (!link.source || !link.target || isNaN(link.source.x) || isNaN(link.source.y))
+            debugger;
     }
     /**
      Calculates and sets the position of the text element for the given link.
@@ -18274,8 +18284,9 @@ class MainEntry {
      *              0 = No Sort.  Maintain original order.
      *              1 = Sort by arc value size.
      */
-    static drawCluster(drawingName) {
+    static drawCluster(drawingName, calledBy) {
         new Canvas_1.Canvas();
+        console.log("Method enter: drawCluster called by " + calledBy);
         console.log("Called drawCluster; N° NodeStore.nodeList: " + nodeStore_1.NodeStore.nodeList.length);
         if (nodeStore_1.NodeStore.nodeList.length == 0)
             return;
@@ -18285,6 +18296,7 @@ class MainEntry {
         d3.select(window).on("resize.updatesvg", Canvas_1.Canvas.updateWindowSize);
     }
     static InitNodeAndLinks_Backlinks(backlinks) {
+        console.log("Method enter: InitNodeAndLinks_Backlinks");
         for (let article of backlinks) {
             let node = new INode_1.INode(nodeType_1.NodeType.Backlink, article.title, article.title, "Backlink", 0, 0, article.title);
             nodeStore_1.NodeStore.nodeList.push(node);
@@ -18347,6 +18359,7 @@ class NodeStore {
         @param {Link[]} linkSetApp - Set of links and their relevant data.
      */
     static UpdateSourceAndTarget() {
+        console.log("Method enter: UpdateSourceAndTarget");
         console.log("Updating Source and Target of " + this.linkList.length + " links");
         // Append the source Node and the target Node to each Link
         for (let link of this.linkList) {
@@ -18358,6 +18371,7 @@ class NodeStore {
         // this.logNodeAndLinkStatus();
     }
     static getNodeById(nodeId) {
+        console.log("Method enter: getNodeById");
         let p = NodeStore.nodeList.find((node) => node.id === nodeId);
         if (p instanceof INode_1.INode) {
             return p;
@@ -18371,17 +18385,21 @@ class NodeStore {
             throw new DOMException("Node not found");
         }
     }
-    static logNodeAndLinkStatus() {
-        console.log("Node Status:");
-        let debugString = "";
-        NodeStore.nodeList.forEach((node) => {
-            debugString += node.debugString() + "\n";
-        });
-        debugString += "Link Status:\n";
-        NodeStore.linkList.forEach((link) => {
-            debugString += link.debugString() + "\n";
-        });
-        console.log(debugString);
+    static logNodeAndLinkStatus(details) {
+        console.log("N° of nodes " + NodeStore.nodeList.length);
+        console.log("N° of links " + NodeStore.linkList.length);
+        if (details) {
+            console.log("Node Status:");
+            let debugString = "";
+            NodeStore.nodeList.forEach((node) => {
+                debugString += node.debugString() + "\n";
+            });
+            debugString += "Link Status:\n";
+            NodeStore.linkList.forEach((link) => {
+                debugString += link.debugString() + "\n";
+            });
+            console.log(debugString);
+        }
     }
     static isThereAnyUncompleteLink() {
         for (const link of NodeStore.linkList) {

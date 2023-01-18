@@ -17,6 +17,7 @@ export class SemanticPropertyAndItems {
   private readonly sourceNodeUrl: string;
 
   constructor(property: string, dataitems: PropertyDataItem[], subject: string | undefined, parentArticle: MediaWikiArticle) {
+    console.log("Method enter: SemanticPropertyAndItems constructor");
     this.propertyName = property;
     this.nicePropertyName = this.NicePropertyName();
     //Solo per alcune proprietà sono presenti dataitems e subject

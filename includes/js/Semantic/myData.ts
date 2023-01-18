@@ -13,6 +13,7 @@ export class MyData {
   }
 
   public Parse() {
+    console.log("Callback data Parse");
     this.mediawikiArticle = new MediaWikiArticle(this.query.subject, this.query.data);
     let wikiArticle = this.mediawikiArticle;
 
