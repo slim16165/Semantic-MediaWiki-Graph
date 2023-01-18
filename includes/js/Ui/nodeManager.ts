@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import { BaseType, DragBehavior, Selection } from "d3";
+import { BaseType, drag, DragBehavior, Selection } from "d3";
 import { ColorHelper } from "../Helpers/ColorHelper";
 import { Canvas } from "./Canvas";
 import { NodeStore } from "../nodeStore";
@@ -35,8 +35,9 @@ export class NodeManager {
     In summary enter() allows to select and operate on data elements that haven't been associated yet to DOM elements.
     * */
 
+    // LinkAndForcesManager.forceDragBehaviour();
 
-
+    // @ts-ignore
     NodeManager.svgNodes = Canvas.svgCanvas.selectAll(".node")
       .data(NodeStore.nodeList)
       .enter()
@@ -53,8 +54,7 @@ export class NodeManager {
       .on("mouseover", () => UiEventHandler.nodeMouseOver)
       .on("click", () => UiEventHandler.mouseClickNode)
       .on("mouseout", () => UiEventHandler.nodeMouseOut)
-      .call(LinkAndForcesManager.forceDragBehaviour)
-      //.call(drag(simulation));
+      .call(LinkAndForcesManager.MyDrag(LinkAndForcesManager.simulation))
       .attr("transform", function(d) {
         return `translate(${d.x},${d.y})`;
       })

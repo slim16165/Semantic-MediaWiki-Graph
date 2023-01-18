@@ -17561,7 +17561,7 @@ const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/ind
 const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts");
 const nodeManager_1 = __webpack_require__(/*! ./nodeManager */ "./includes/js/Ui/nodeManager.ts");
 class LinkAndForcesManager {
-    static force;
+    static simulation;
     static svgLinks;
     static clickText;
     static forceDragBehaviour() {
@@ -17583,23 +17583,6 @@ class LinkAndForcesManager {
         });
         //Build the Arrows
         this.buildArrows();
-    }
-    static updateNodePositions() {
-        // this.svgNodes.datum().updatePositions();
-        nodeManager_1.NodeManager.svgNodes
-            .exit()
-            .attr("cx", (d) => d.x)
-            .attr("cy", (d) => d.y);
-        nodeManager_1.NodeManager.svgNodes.attr("transform", function (d) {
-            return "translate(" + d.x / 5 + "," + d.y / 5 + ")";
-        });
-    }
-    static updateLinkPositions() {
-        this.svgLinks
-            .attr("x1", (link) => link.source.x)
-            .attr("y1", (link) => link.source.y)
-            .attr("x2", (link) => link.target.x)
-            .attr("y2", (link) => link.target.y);
     }
     /**
      * Builds the arrows for the specified SVG canvas.
@@ -17624,7 +17607,7 @@ class LinkAndForcesManager {
             .attr("d", "M0,-5L10,0L0,5");
     }
     static CreateAForceLayoutAndBindNodesAndLinks() {
-        this.force = d3.forceSimulation()
+        this.simulation = d3.forceSimulation()
             .nodes(nodeStore_1.NodeStore.nodeList)
             .force("link", d3.forceLink(nodeStore_1.NodeStore.linkList))
             .force("charge", d3.forceManyBody().strength(-10))
@@ -17639,29 +17622,30 @@ class LinkAndForcesManager {
         const width = Canvas_1.Canvas.width;
         const height = Canvas_1.Canvas.heigth;
         linkForce.distance(() => width < height ? width / 3 : height / 3);
-        this.force.force("link", linkForce);
-        // function dragStarted(d: { fx: number; x: number; fy: number; y: number; }) {
-        //   if (!d3.event.active) LinkAndForcesManager.force.alphaTarget(0.3).restart();
-        //   d.fx = d.x;
-        //   d.fy = d.y;
-        // }
-        //
-        // function dragged(d: { fx: number; x: number; fy: number; y: number; }) {
-        //   d.fx = d3.event.x;
-        //   d.fy = d3.event.y;
-        // }
-        //
-        // function dragEnded(d: { fx: number; x: number; fy: number; y: number; }) {
-        //   if (!d3.event.active) LinkAndForcesManager.force.alphaTarget(0);
-        //   d.fx = d.x;
-        //   d.fy = d.y;
-        // }
-        //
-        // d3.drag()
-        //   .on("start", () => dragStarted)
-        //   .on("drag", () => dragged)
-        //   .on("end", () => dragEnded);
-        return this.force;
+        this.simulation.force("link", linkForce);
+        return this.simulation;
+    }
+    static MyDrag(simulation) {
+        function dragstarted(event) {
+            if (!event.active)
+                simulation.alphaTarget(0.3).restart();
+            event.subject.fx = event.subject.x;
+            event.subject.fy = event.subject.y;
+        }
+        function dragged(event) {
+            event.subject.fx = event.x;
+            event.subject.fy = event.y;
+        }
+        function dragended(event) {
+            if (!event.active)
+                simulation.alphaTarget(0);
+            event.subject.fx = null;
+            event.subject.fy = null;
+        }
+        return d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended);
     }
     static DrawLinesForLinksBetweenNodes() {
         this.svgLinks = Canvas_1.Canvas.svgCanvas.selectAll(".gLink")
@@ -17700,6 +17684,23 @@ class LinkAndForcesManager {
         // Questo pezzo di codice si occupa di aggiungere del testo ai link e di posizionarlo nella parte centrale del link stesso.
         // Il testo viene posizionato in modo che sia metà strada tra il nodo di partenza e quello di destinazione. Se il nodo di destinazione ha una coordinata x maggiore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y). Se invece il nodo di destinazione ha una coordinata x minore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y).
         // this.setLinkTextInMiddle();
+    }
+    static updateNodePositions() {
+        // this.svgNodes.datum().updatePositions();
+        nodeManager_1.NodeManager.svgNodes
+            .exit()
+            .attr("cx", (d) => d.x)
+            .attr("cy", (d) => d.y);
+        nodeManager_1.NodeManager.svgNodes.attr("transform", function (d) {
+            return "translate(" + d.x / 5 + "," + d.y / 5 + ")";
+        });
+    }
+    static updateLinkPositions() {
+        this.svgLinks
+            .attr("x1", (link) => link.source.x)
+            .attr("y1", (link) => link.source.y)
+            .attr("x2", (link) => link.target.x)
+            .attr("y2", (link) => link.target.y);
     }
     /**
      Calculates and sets the position of the text element for the given link.
@@ -17999,6 +18000,8 @@ class NodeManager {
         on("click", () => this.mouseClickNode), on("mouseout", () => this.nodeMouseOut) are associated with the created group.
         In summary enter() allows to select and operate on data elements that haven't been associated yet to DOM elements.
         * */
+        // LinkAndForcesManager.forceDragBehaviour();
+        // @ts-ignore
         NodeManager.svgNodes = Canvas_1.Canvas.svgCanvas.selectAll(".node")
             .data(nodeStore_1.NodeStore.nodeList)
             .enter()
@@ -18015,7 +18018,7 @@ class NodeManager {
             .on("mouseover", () => UiEventHandler_1.UiEventHandler.nodeMouseOver)
             .on("click", () => UiEventHandler_1.UiEventHandler.mouseClickNode)
             .on("mouseout", () => UiEventHandler_1.UiEventHandler.nodeMouseOut)
-            .call(LinkAndForcesManager_1.LinkAndForcesManager.forceDragBehaviour)
+            .call(LinkAndForcesManager_1.LinkAndForcesManager.MyDrag(LinkAndForcesManager_1.LinkAndForcesManager.simulation))
             .attr("transform", function (d) {
             return `translate(${d.x},${d.y})`;
         })

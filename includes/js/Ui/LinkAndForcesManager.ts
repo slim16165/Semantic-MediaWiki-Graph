@@ -8,7 +8,7 @@ import { NodeManager } from "./nodeManager";
 import { INode } from "../Model/INode";
 
 export class LinkAndForcesManager {
-  static force: Simulation<SimulationNodeDatum, any>;
+  static simulation: Simulation<SimulationNodeDatum, any>;
   static svgLinks: Selection<any, Link, any, any>;
   private static clickText: boolean;
 
@@ -64,8 +64,8 @@ export class LinkAndForcesManager {
       .attr("d", "M0,-5L10,0L0,5");
   }
 
-  private static CreateAForceLayoutAndBindNodesAndLinks(): Simulation<any, any> {
-    this.force = d3.forceSimulation()
+  private static  CreateAForceLayoutAndBindNodesAndLinks(): Simulation<any, any> {
+    this.simulation = d3.forceSimulation()
       .nodes(NodeStore.nodeList)
       .force("link", d3.forceLink(NodeStore.linkList))
       .force("charge", d3.forceManyBody().strength(-10))
@@ -84,31 +84,33 @@ export class LinkAndForcesManager {
 
     linkForce.distance(() => width < height ? width / 3 : height / 3);
 
-    this.force.force("link", linkForce);
+    this.simulation.force("link", linkForce);
 
-    function dragStarted(d: { fx: number; x: number; fy: number; y: number; }) {
-      if (!d3.event.active) LinkAndForcesManager.force.alphaTarget(0.3).restart();
-      d.fx = d.x;
-      d.fy = d.y;
+    return this.simulation;
+  }
+
+  public static MyDrag(simulation : any) : any {
+    function dragstarted(event: any) {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      event.subject.fx = event.subject.x;
+      event.subject.fy = event.subject.y;
     }
 
-    function dragged(d: { fx: number; x: number; fy: number; y: number; }) {
-      d.fx = d3.event.x;
-      d.fy = d3.event.y;
+    function dragged(event: any) {
+      event.subject.fx = event.x;
+      event.subject.fy = event.y;
     }
 
-    function dragEnded(d: { fx: number; x: number; fy: number; y: number; }) {
-      if (!d3.event.active) LinkAndForcesManager.force.alphaTarget(0);
-      d.fx = d.x;
-      d.fy = d.y;
+    function dragended(event: any) {
+      if (!event.active) simulation.alphaTarget(0);
+      event.subject.fx = null;
+      event.subject.fy = null;
     }
 
-    d3.drag()
-      .on("start", () => dragStarted)
-      .on("drag", () => dragged)
-      .on("end", () => dragEnded);
-
-    return this.force;
+    return d3.drag()
+      .on("start", dragstarted)
+      .on("drag", dragged)
+      .on("end", dragended);
   }
 
   private static DrawLinesForLinksBetweenNodes() {
