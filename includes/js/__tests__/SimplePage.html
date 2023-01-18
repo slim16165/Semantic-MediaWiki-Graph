@@ -133,12 +133,14 @@
       }
 
       function ticked() {
+        //x1,y1,x2,y2 are used for lines
         link
           .attr("x1", d => d.source.x)
           .attr("y1", d => d.source.y)
           .attr("x2", d => d.target.x)
           .attr("y2", d => d.target.y);
 
+        //cx, cy is used for circles
         node
           .attr("cx", d => d.x)
           .attr("cy", d => d.y);
