@@ -1,7 +1,7 @@
 import { Link } from "./Model/Link";
 import "select2";
 import { INode } from "./Model/INode";
-import { SemanticWikiApi } from "./Semantic/semanticWikiApi";
+import { SemanticWikiApi } from "./Semantic/Api/semanticWikiApi";
 import { Article } from "./Model/OtherTypes";
 import { NodeType } from "./Model/nodeType";
 import { NodeStore } from "./nodeStore";
@@ -10,9 +10,11 @@ import { NodeManager } from "./Ui/nodeManager";
 import { LegendManager } from "./Ui/legendManager";
 import * as d3 from "d3";
 import { LinkAndForcesManager } from "./Ui/LinkAndForcesManager";
+import { VisibilityHandler } from "./Ui/visibilityHandler";
+import { MediaWikiArticle } from "./Semantic/mediaWikiArticle";
 
 export class MainEntry {
-  static downloadedArticles: string[] = [];
+
 
   public static centerNodeSize: number = 50;
   public static nodeSize: number = 10;
@@ -34,10 +36,11 @@ export class MainEntry {
   }
 
   static PopulateSelectorWithWikiArticleUi(articles: Article[]) {
-    MainEntry.downloadedArticles = [];
     for (const article of articles) {
       $("#wikiArticle").append(`<option value="${article.title}">${article.title}</option>`);
     }
+
+    $("#visualiseSite").on("click", () => { this.HandleOnClick(); });
 
     // require("select2");
     //
@@ -45,6 +48,25 @@ export class MainEntry {
     //     placeholder: "Select a Wiki Article",
     //     allowClear: true
     // });
+  }
+
+  private static HandleOnClick() {
+    //Get the select  ed article in the combobox
+    let wikiArticleTitle = $("#wikiArticle").val() as string;
+
+    if (wikiArticleTitle === "") {
+      // Error Message
+      $("#error_msg").show();
+    } else {
+      $("#error_msg").hide();
+
+      SemanticWikiApi.BrowseBySubject(wikiArticleTitle, MainEntry.BrowseBySubjectCallback);
+      SemanticWikiApi.QueryBackLinks(wikiArticleTitle, MainEntry.BacklinksCallback);
+
+      MainEntry.drawCluster("Drawing1", "BrowseBySubject");
+      //drawCluster.update();
+      // VisibilityHandler.hideElements();
+    }
   }
 
   /**
@@ -70,45 +92,21 @@ export class MainEntry {
     d3.select(window).on("resize.updatesvg", Canvas.updateWindowSize);
   }
 
-  static InitNodeAndLinks_Backlinks(backlinks: Article[]) {
-    console.log("Method enter: InitNodeAndLinks_Backlinks");
-    for (let article of backlinks) {
-      let node = new INode(NodeType.Backlink, article.title, article.title, "Backlink", 0, 0, article.title);
-      NodeStore.nodeList.push(node);
-    }
+  // static resetData() {
+  //   NodeStore.nodeList = [];
+  //   NodeStore.linkList = [];
+  //   SemanticWikiApi.downloadedArticles = [];
+  // }
 
-    for (let article of backlinks) {
-      let link = new Link(NodeType.Backlink, "Backlink", article.title, MainEntry.focalNodeID, "");
-      NodeStore.linkList.push(link);
-    }
-
+  static BrowseBySubjectCallback(wikiArticle: MediaWikiArticle) {
+    // NodeStore.nodeList.push(wikiArticle.node);
+    NodeStore.nodeList = NodeStore.nodeList.concat(wikiArticle.GetNodes());
+    NodeStore.linkList = NodeStore.linkList.concat(wikiArticle.GetLinks());
   }
 
-  static resetData() {
-    NodeStore.nodeList = [];
-    NodeStore.linkList = [];
-    MainEntry.downloadedArticles = [];
-  }
-
-  private static HandleOnClick() {
-    $("#visualiseSite").on("click", () => {
-
-      //#if DEBUG
-      SemanticWikiApi.BrowseBySubject("Abbandono dei principi giornalistici, nascita delle Fuck News ed episodi vari");
-      //#endif
-
-      //Get the selected article in the combobox
-      let wikiArticleTitle = $("#wikiArticle").val() as string;
-
-      if (wikiArticleTitle === "") {
-        // Error Message
-        $("#error_msg").show();
-      } else {
-        $("#error_msg").hide();
-
-        SemanticWikiApi.BrowseBySubject(wikiArticleTitle);
-      }
-    });
+  static BacklinksCallback(nodesAndLinks: {nodeList : INode[]; linkList : Link[];}) {
+    NodeStore.nodeList = NodeStore.nodeList.concat(nodesAndLinks.nodeList);
+    NodeStore.linkList = NodeStore.linkList.concat(nodesAndLinks.linkList);
   }
 }
 

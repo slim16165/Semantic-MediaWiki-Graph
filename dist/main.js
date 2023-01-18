@@ -16992,6 +16992,119 @@ var NodeType;
 
 /***/ }),
 
+/***/ "./includes/js/Semantic/Api/semanticWikiApi.ts":
+/*!*****************************************************!*\
+  !*** ./includes/js/Semantic/Api/semanticWikiApi.ts ***!
+  \*****************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SemanticWikiApi = void 0;
+const app_1 = __webpack_require__(/*! ../../app */ "./includes/js/app.ts");
+const INode_1 = __webpack_require__(/*! ../../Model/INode */ "./includes/js/Model/INode.ts");
+const nodeType_1 = __webpack_require__(/*! ../../Model/nodeType */ "./includes/js/Model/nodeType.ts");
+const Link_1 = __webpack_require__(/*! ../../Model/Link */ "./includes/js/Model/Link.ts");
+const mediaWikiArticle_1 = __webpack_require__(/*! ../mediaWikiArticle */ "./includes/js/Semantic/mediaWikiArticle.ts");
+class SemanticWikiApi {
+    static downloadedArticles = [];
+    static BrowseBySubject(wikiArticleTitle, callback) {
+        this.downloadedArticles = [];
+        let wikiArticle;
+        $.ajax({
+            url: mw.util.wikiScript("api"),
+            data: {
+                action: "browsebysubject",
+                subject: wikiArticleTitle,
+                format: "json"
+            },
+            type: "GET",
+            success: function (data) {
+                if (data?.edit && data.edit.result === "Success") {
+                    // debugger;
+                }
+                else if (data?.error) {
+                    alert(data);
+                    // debugger;
+                }
+                else {
+                    /**
+                     *  }
+                     * JSON.stringify(data)
+                     * https://jsonformatter.org/json-parser/5e9d52
+                     */
+                    this.downloadedArticles.push(wikiArticleTitle);
+                    wikiArticle = new mediaWikiArticle_1.MediaWikiArticle(data.query.subject, data.query.data);
+                    callback();
+                }
+            }
+        });
+    }
+    static QueryBackLinks(wikiArticle, callback) {
+        $.ajax({
+            url: mw.util.wikiScript("api"),
+            data: {
+                action: "query",
+                list: "backlinks",
+                bltitle: wikiArticle,
+                format: "json"
+            },
+            type: "GET",
+            success: function (data) {
+                if (data?.edit && data.edit.result === "Success") {
+                    // debugger;
+                }
+                else if (data?.error) {
+                    alert((data));
+                    // debugger;
+                }
+                else {
+                    console.log("Callback data ParseBacklinks");
+                    let { nodeList, linkList } = this.ParseBacklinks(data.query.backlinks);
+                    callback({ nodeList, linkList });
+                }
+            }
+        });
+    }
+    static ParseBacklinks(backlinks) {
+        console.log("Method enter: InitNodeAndLinks_Backlinks");
+        let nodeList = [];
+        let linkList = [];
+        for (let article of backlinks) {
+            let node = new INode_1.INode(nodeType_1.NodeType.Backlink, article.title, article.title, "Backlink", 0, 0, article.title);
+            nodeList.push(node);
+        }
+        for (let article of backlinks) {
+            let link = new Link_1.Link(nodeType_1.NodeType.Backlink, "Backlink", article.title, app_1.MainEntry.focalNodeID, "");
+            linkList.push(link);
+        }
+        return { nodeList, linkList };
+    }
+    static AllPagesCall() {
+        $.ajax({
+            url: mw.util.wikiScript("api"),
+            data: {
+                action: "query",
+                list: "allpages",
+                aplimit: 1000,
+                format: "json"
+            },
+            type: "GET",
+            success(data) {
+                if (!(!(data?.edit && data.edit.result === "Success") && !(data?.error))) {
+                    return;
+                }
+                app_1.MainEntry.PopulateSelectorWithWikiArticleUi(data.query.allpages);
+            }
+        });
+    }
+}
+exports.SemanticWikiApi = SemanticWikiApi;
+
+
+/***/ }),
+
 /***/ "./includes/js/Semantic/mediaWikiArticle.ts":
 /*!**************************************************!*\
   !*** ./includes/js/Semantic/mediaWikiArticle.ts ***!
@@ -17006,22 +17119,33 @@ const INode_1 = __webpack_require__(/*! ../Model/INode */ "./includes/js/Model/I
 const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
 const semanticPropertyAndItems_1 = __webpack_require__(/*! ./semanticPropertyAndItems */ "./includes/js/Semantic/semanticPropertyAndItems.ts");
 const nodeType_1 = __webpack_require__(/*! ../Model/nodeType */ "./includes/js/Model/nodeType.ts");
-const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
 class MediaWikiArticle {
     node;
     Id;
     semanticNodeList;
+    nodeList;
+    linkList;
     constructor(id, semanticNodeList) {
         console.log("Method enter: MediaWikiArticle constructor");
         this.Id = id; //'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
         app_1.MainEntry.focalNodeID = id;
         this.node = this.ParseNodeBrowseBySubject();
-        nodeStore_1.NodeStore.nodeList.push(this.node);
         this.semanticNodeList = [];
         for (const data of semanticNodeList) {
             let item = new semanticPropertyAndItems_1.SemanticPropertyAndItems(data.property, data.dataitem, data.subject, this);
             this.semanticNodeList.push(item);
         }
+        let propertyList = this.HandleProperties();
+        this.nodeList = propertyList.nodeList;
+        this.linkList = propertyList.linkList;
+    }
+    GetNodes() {
+        console.log("Method enter: MediaWikiArticle GetNodes");
+        return this.nodeList.concat(this.node);
+    }
+    GetLinks() {
+        console.log("Method enter: MediaWikiArticle GetNodes");
+        return this.linkList;
     }
     ParseNodeBrowseBySubject() {
         console.log("Method enter: ParseNodeBrowseBySubject");
@@ -17033,6 +17157,8 @@ class MediaWikiArticle {
     }
     HandleProperties() {
         console.log("Method enter: HandleProperties");
+        let nodeList = [];
+        let linkList = [];
         for (const semanticNode of this.semanticNodeList) {
             if (semanticNode.IsSpecialProperty())
                 continue; // Non fare nulla se la proprietà è una delle proprietà speciali "_SKEY", "_MDAT" o "_ASK"
@@ -17040,47 +17166,17 @@ class MediaWikiArticle {
             //All the nodes should be initialized before the links
             for (let dataitem of semanticNode.dataitems) {
                 let node = semanticNode.ParsePropertyNode(dataitem);
-                nodeStore_1.NodeStore.nodeList.push(node);
+                nodeList.push(node);
             }
             for (let dataitem of semanticNode.dataitems) {
                 let link = semanticNode.ParsePropertyLink(dataitem);
-                nodeStore_1.NodeStore.linkList.push(link);
+                linkList.push(link);
             }
         }
+        return { nodeList, linkList };
     }
 }
 exports.MediaWikiArticle = MediaWikiArticle;
-
-
-/***/ }),
-
-/***/ "./includes/js/Semantic/myData.ts":
-/*!****************************************!*\
-  !*** ./includes/js/Semantic/myData.ts ***!
-  \****************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.MyData = void 0;
-const mediaWikiArticle_1 = __webpack_require__(/*! ./mediaWikiArticle */ "./includes/js/Semantic/mediaWikiArticle.ts");
-const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
-class MyData {
-    mediawikiArticle;
-    query;
-    constructor(callback) {
-        this.query = callback.query;
-    }
-    Parse() {
-        console.log("Parse");
-        this.mediawikiArticle = new mediaWikiArticle_1.MediaWikiArticle(this.query.subject, this.query.data);
-        let wikiArticle = this.mediawikiArticle;
-        nodeStore_1.NodeStore.nodeList.push(wikiArticle.node);
-        wikiArticle.HandleProperties();
-    }
-}
-exports.MyData = MyData;
 
 
 /***/ }),
@@ -17270,130 +17366,6 @@ class SemanticPropertyAndItems {
     }
 }
 exports.SemanticPropertyAndItems = SemanticPropertyAndItems;
-
-
-/***/ }),
-
-/***/ "./includes/js/Semantic/semanticWikiApi.ts":
-/*!*************************************************!*\
-  !*** ./includes/js/Semantic/semanticWikiApi.ts ***!
-  \*************************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SemanticWikiApi = void 0;
-const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
-const visibilityHandler_1 = __webpack_require__(/*! ../Ui/visibilityHandler */ "./includes/js/Ui/visibilityHandler.ts");
-const myData_1 = __webpack_require__(/*! ./myData */ "./includes/js/Semantic/myData.ts");
-class SemanticWikiApi {
-    static BrowseBySubject(wikiArticleTitle) {
-        app_1.MainEntry.downloadedArticles = [];
-        $.ajax({
-            url: mw.util.wikiScript("api"),
-            data: {
-                action: "browsebysubject",
-                subject: wikiArticleTitle,
-                format: "json"
-            },
-            type: "GET",
-            success: execSuccessCallback
-        });
-        function execSuccessCallback(data) {
-            if (data?.edit && data.edit.result === "Success") {
-                // debugger;
-            }
-            else if (data?.error) {
-                alert(data);
-                // debugger;
-            }
-            else {
-                SemanticWikiApi.BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle, new myData_1.MyData(data));
-            }
-        }
-    }
-    static BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle, data) {
-        /**
-         *  }
-         * JSON.stringify(data)
-         * https://jsonformatter.org/json-parser/5e9d52
-         */
-        // MainEntry.resetData();
-        app_1.MainEntry.downloadedArticles.push(wikiArticleTitle);
-        data.Parse();
-        // MyClass.force.stop();
-        SemanticWikiApi.QueryBackLinks(wikiArticleTitle); //tramite questa chiama → MyClass.InitNodeAndLinks(data.query.backlinks);
-        $("#cluster_chart .chart").empty();
-        //  var k = cloneNode(nodeSet);
-        //  var m = cloneEdge(linkSet);
-        app_1.MainEntry.drawCluster("Drawing1", "BrowseBySubject");
-        //drawCluster.update();
-        visibilityHandler_1.VisibilityHandler.hideElements();
-        // const elem: JQuery<HTMLElement> = $(`[id=${MyClass.focalNodeID}] a`);
-        // // @ts-ignore
-        // elem[0].__data__.px = Canvas.width / 2;
-        // // @ts-ignore
-        // elem[0].__data__.py = Canvas.height / 2;
-    }
-    static QueryBackLinks(wikiArticle) {
-        $.ajax({
-            url: mw.util.wikiScript("api"),
-            data: {
-                action: "query",
-                list: "backlinks",
-                bltitle: wikiArticle,
-                format: "json"
-            },
-            type: "GET",
-            success: BacklinksCallback
-        });
-        function BacklinksCallback(data) {
-            if (data?.edit && data.edit.result === "Success") {
-                // debugger;
-            }
-            else if (data?.error) {
-                alert((data));
-                // debugger;
-            }
-            else {
-                app_1.MainEntry.InitNodeAndLinks_Backlinks(data.query.backlinks);
-            }
-            $("#cluster_chart .chart").empty();
-            //  var k = cloneNode(nodeSet);
-            //  var m = cloneEdge(linkSet);
-            // NodeStore.UpdateSourceAndTarget();
-            app_1.MainEntry.drawCluster("Drawing1", "BacklinksCallback");
-            //drawCluster.update();
-            visibilityHandler_1.VisibilityHandler.hideElements();
-        }
-    }
-    static AllPagesCall() {
-        $.ajax({
-            url: mw.util.wikiScript("api"),
-            data: {
-                action: "query",
-                list: "allpages",
-                aplimit: 1000,
-                format: "json"
-            },
-            type: "GET",
-            success(data) {
-                if (!(!(data?.edit && data.edit.result === "Success") && !(data?.error))) {
-                    return;
-                }
-                app_1.MainEntry.PopulateSelectorWithWikiArticleUi(data.query.allpages);
-            }
-        });
-    }
-}
-exports.SemanticWikiApi = SemanticWikiApi;
-class testUnit {
-    static test() {
-        const jsonString = "{\"query\":{\"subject\":\"Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##\",\"data\":[{\"property\":\"_INST\",\"dataitem\":[{\"type\":9,\"item\":\"Polarizzazione#14##\"},{\"type\":9,\"item\":\"Social_network#14##\"},{\"type\":9,\"item\":\"Cancel_Culture#14##\"},{\"type\":9,\"item\":\"Episodio#14##\"},{\"type\":9,\"item\":\"Razzismo#14##\"}]},{\"property\":\"_MDAT\",\"dataitem\":[{\"type\":6,\"item\":\"1/2022/12/21/9/38/54/0\"}]},{\"property\":\"_SKEY\",\"dataitem\":[{\"type\":2,\"item\":\"Abbandono dei principi giornalistici, nascita delle Fuck News ed episodi vari\"}]}],\"serializer\":\"SMW\\\\Serializers\\\\SemanticDataSerializer\",\"version\":2}}";
-        // const myData = new MyData(jsonString);
-    }
-}
 
 
 /***/ }),
@@ -17754,7 +17726,7 @@ exports.LinkAndForcesManager = LinkAndForcesManager;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UiEventHandler = void 0;
 const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
-const semanticWikiApi_1 = __webpack_require__(/*! ../Semantic/semanticWikiApi */ "./includes/js/Semantic/semanticWikiApi.ts");
+const semanticWikiApi_1 = __webpack_require__(/*! ../Semantic/Api/semanticWikiApi */ "./includes/js/Semantic/Api/semanticWikiApi.ts");
 const legendManager_1 = __webpack_require__(/*! ./legendManager */ "./includes/js/Ui/legendManager.ts");
 const TRANSACTION_DURATION = 250;
 class UiEventHandler {
@@ -17763,8 +17735,8 @@ class UiEventHandler {
         const typeValue = selector.attr("type_value");
         if (!clickText && typeValue === 'Internal Link') {
             const nodeName = selector.datum().name;
-            if (!app_1.MainEntry.downloadedArticles.includes(nodeName)) {
-                semanticWikiApi_1.SemanticWikiApi.BrowseBySubject(nodeName);
+            if (!semanticWikiApi_1.SemanticWikiApi.downloadedArticles.includes(nodeName)) {
+                semanticWikiApi_1.SemanticWikiApi.BrowseBySubject(nodeName, app_1.MainEntry.BrowseBySubjectCallback);
             }
         }
         clickText = false;
@@ -18236,11 +18208,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.MainEntry = void 0;
-const Link_1 = __webpack_require__(/*! ./Model/Link */ "./includes/js/Model/Link.ts");
 __webpack_require__(/*! select2 */ "./node_modules/select2/dist/js/select2.js");
-const INode_1 = __webpack_require__(/*! ./Model/INode */ "./includes/js/Model/INode.ts");
-const semanticWikiApi_1 = __webpack_require__(/*! ./Semantic/semanticWikiApi */ "./includes/js/Semantic/semanticWikiApi.ts");
-const nodeType_1 = __webpack_require__(/*! ./Model/nodeType */ "./includes/js/Model/nodeType.ts");
+const semanticWikiApi_1 = __webpack_require__(/*! ./Semantic/Api/semanticWikiApi */ "./includes/js/Semantic/Api/semanticWikiApi.ts");
 const nodeStore_1 = __webpack_require__(/*! ./nodeStore */ "./includes/js/nodeStore.ts");
 const Canvas_1 = __webpack_require__(/*! ./Ui/Canvas */ "./includes/js/Ui/Canvas.ts");
 const nodeManager_1 = __webpack_require__(/*! ./Ui/nodeManager */ "./includes/js/Ui/nodeManager.ts");
@@ -18248,7 +18217,6 @@ const legendManager_1 = __webpack_require__(/*! ./Ui/legendManager */ "./include
 const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
 const LinkAndForcesManager_1 = __webpack_require__(/*! ./Ui/LinkAndForcesManager */ "./includes/js/Ui/LinkAndForcesManager.ts");
 class MainEntry {
-    static downloadedArticles = [];
     static centerNodeSize = 50;
     static nodeSize = 10;
     static scale = 1;
@@ -18265,16 +18233,32 @@ class MainEntry {
         });
     }
     static PopulateSelectorWithWikiArticleUi(articles) {
-        MainEntry.downloadedArticles = [];
         for (const article of articles) {
             $("#wikiArticle").append(`<option value="${article.title}">${article.title}</option>`);
         }
+        $("#visualiseSite").on("click", () => { this.HandleOnClick(); });
         // require("select2");
         //
         // $("#wikiArticle").select2({
         //     placeholder: "Select a Wiki Article",
         //     allowClear: true
         // });
+    }
+    static HandleOnClick() {
+        //Get the select  ed article in the combobox
+        let wikiArticleTitle = $("#wikiArticle").val();
+        if (wikiArticleTitle === "") {
+            // Error Message
+            $("#error_msg").show();
+        }
+        else {
+            $("#error_msg").hide();
+            semanticWikiApi_1.SemanticWikiApi.BrowseBySubject(wikiArticleTitle, MainEntry.BrowseBySubjectCallback);
+            semanticWikiApi_1.SemanticWikiApi.QueryBackLinks(wikiArticleTitle, MainEntry.BacklinksCallback);
+            MainEntry.drawCluster("Drawing1", "BrowseBySubject");
+            //drawCluster.update();
+            // VisibilityHandler.hideElements();
+        }
     }
     /**
      * Draws a cluster using the provided data.
@@ -18295,38 +18279,15 @@ class MainEntry {
         legendManager_1.LegendManager.DrawLegend();
         d3.select(window).on("resize.updatesvg", Canvas_1.Canvas.updateWindowSize);
     }
-    static InitNodeAndLinks_Backlinks(backlinks) {
-        console.log("Method enter: InitNodeAndLinks_Backlinks");
-        for (let article of backlinks) {
-            let node = new INode_1.INode(nodeType_1.NodeType.Backlink, article.title, article.title, "Backlink", 0, 0, article.title);
-            nodeStore_1.NodeStore.nodeList.push(node);
-        }
-        for (let article of backlinks) {
-            let link = new Link_1.Link(nodeType_1.NodeType.Backlink, "Backlink", article.title, MainEntry.focalNodeID, "");
-            nodeStore_1.NodeStore.linkList.push(link);
-        }
-    }
     static resetData() {
         nodeStore_1.NodeStore.nodeList = [];
         nodeStore_1.NodeStore.linkList = [];
-        MainEntry.downloadedArticles = [];
+        semanticWikiApi_1.SemanticWikiApi.downloadedArticles = [];
     }
-    static HandleOnClick() {
-        $("#visualiseSite").on("click", () => {
-            //#if DEBUG
-            semanticWikiApi_1.SemanticWikiApi.BrowseBySubject("Abbandono dei principi giornalistici, nascita delle Fuck News ed episodi vari");
-            //#endif
-            //Get the selected article in the combobox
-            let wikiArticleTitle = $("#wikiArticle").val();
-            if (wikiArticleTitle === "") {
-                // Error Message
-                $("#error_msg").show();
-            }
-            else {
-                $("#error_msg").hide();
-                semanticWikiApi_1.SemanticWikiApi.BrowseBySubject(wikiArticleTitle);
-            }
-        });
+    static BrowseBySubjectCallback(wikiArticle) {
+        nodeStore_1.NodeStore.nodeList.push(wikiArticle.node);
+    }
+    static BacklinksCallback() {
     }
 }
 exports.MainEntry = MainEntry;

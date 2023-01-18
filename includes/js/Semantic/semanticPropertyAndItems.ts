@@ -3,7 +3,6 @@ import { INode } from "../Model/INode";
 import { Link } from "../Model/Link";
 import { PropertyDataItem } from "./propertyDataItem";
 import { NodeType } from "../Model/nodeType";
-import { NodeStore } from "../nodeStore";
 
 // noinspection UnnecessaryLocalVariableJS
 export class SemanticPropertyAndItems {
@@ -137,6 +136,5 @@ export class SemanticPropertyAndItems {
   private parseHlink(nameToParse: string, type: string, url: string) {
     return type === "URI" ? url : type === "Internal Link" ? `./${nameToParse.split("#")[0]}` : "";
   }
-
 }
 
