@@ -3,10 +3,11 @@ import { NodeType } from "./nodeType";
 import { Point } from "./OtherTypes";
 import { MainEntry } from "../app";
 import { NodeStore } from "../nodeStore";
+import { SimulationLinkDatum } from "d3-force";
 
 /* Connection between two Nodes
 * */
-export class Link {
+export class Link implements SimulationLinkDatum<INode>{
     public linkName: string;
     public sourceId: string;
     public targetId: string;

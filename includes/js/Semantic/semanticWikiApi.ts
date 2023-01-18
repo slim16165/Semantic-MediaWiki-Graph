@@ -89,7 +89,7 @@ export class SemanticWikiApi {
       //  var k = cloneNode(nodeSet);
       //  var m = cloneEdge(linkSet);
 
-      NodeStore.UpdateSourceAndTarget2();
+      NodeStore.UpdateSourceAndTarget();
 
       console.log("BacklinksCallback");
       MainEntry.drawCluster("Drawing1");

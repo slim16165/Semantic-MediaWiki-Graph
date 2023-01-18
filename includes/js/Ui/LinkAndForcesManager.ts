@@ -8,17 +8,13 @@ import { NodeManager } from "./nodeManager";
 import { INode } from "../Model/INode";
 
 export class LinkAndForcesManager {
-  static simulation: Simulation<SimulationNodeDatum, any>;
+  static simulation: Simulation<any, any>;
   static svgLinks: Selection<any, Link, any, any>;
   private static clickText: boolean;
 
-  static forceDragBehaviour() {
-    LinkAndForcesManager.CreateAForceLayoutAndBindNodesAndLinks();
-  }
-
   static DrawLinks() {
-    NodeStore.UpdateSourceAndTarget2();
-    NodeStore.isThereAnyUncompleteLink();
+    NodeStore.UpdateSourceAndTarget();
+
 
 
     // Append text to Link edges
@@ -67,24 +63,27 @@ export class LinkAndForcesManager {
   private static  CreateAForceLayoutAndBindNodesAndLinks(): Simulation<any, any> {
     this.simulation = d3.forceSimulation()
       .nodes(NodeStore.nodeList)
-      .force("link", d3.forceLink(NodeStore.linkList))
-      .force("charge", d3.forceManyBody().strength(-10))
-      .force("gravity", d3.forceManyBody().strength(.01))
-      .force("friction", d3.forceManyBody().strength(.2))
-      //commento
-      .force("link", d3.forceLink(NodeStore.linkList))
-      .force("center", d3.forceCenter(Canvas.width / 2, Canvas.heigth / 2))
+        .force('link',
+        d3
+          .forceLink(NodeStore.linkList)
+          .id((d) => {
+            return (d as INode).name
+          })
+          // .distance()
+          // .strength(this.props.linkStrength)
+      )
+      .force("charge", d3.forceManyBody())
+      .force("gravity", d3.forceManyBody())
+      .force("friction", d3.forceManyBody())
+      .force("center", d3.forceCenter())
       .alphaTarget(0.03);
 
-    const linkForce = d3.forceLink().id((d: any) => d.id);
+    // const linkForce = d3.forceLink().id((d: any) => d.id);
 
-    const chart = d3.select(".chart");
-    const width = Canvas.width;
-    const height = Canvas.heigth;
-
-    linkForce.distance(() => width < height ? width / 3 : height / 3);
-
-    this.simulation.force("link", linkForce);
+    // const width = Canvas.width;
+    // const height = Canvas.heigth;
+    // linkForce.distance(() => width < height ? width / 3 : height / 3);
+    // this.simulation.force("link", linkForce);
 
     return this.simulation;
   }
@@ -118,9 +117,9 @@ export class LinkAndForcesManager {
       .data(NodeStore.linkList)
       .enter().append("g")
       // .attr("class", "gLink")
-      // .attr("class", "link")
-      .attr("endNode", (d: Link) => d.targetId)
-      .attr("startNode", (d: Link) => d.sourceId)
+      .attr("class", "link")
+      .attr("endNode", (d: Link) => d.target.id)
+      .attr("startNode", (d: Link) => d.source.id)
       .attr("targetType", (d: Link) => d.target.type)
       .attr("sourceType", (d: Link) => d.source.type)
       .append("line")
@@ -147,30 +146,22 @@ export class LinkAndForcesManager {
   }
 
   private static Tick() {
-    //TODO: blocco l'aggiornamento delle posizioni dei nodi
-    LinkAndForcesManager.updateNodePositions();
-    LinkAndForcesManager.updateLinkPositions();
+    LinkAndForcesManager.updateNodePositionsOnUi();
+    LinkAndForcesManager.updateLinkPositionsOnUi();
 
     // Questo pezzo di codice si occupa di aggiungere del testo ai link e di posizionarlo nella parte centrale del link stesso.
     // Il testo viene posizionato in modo che sia metà strada tra il nodo di partenza e quello di destinazione. Se il nodo di destinazione ha una coordinata x maggiore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y). Se invece il nodo di destinazione ha una coordinata x minore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y).
-    // this.setLinkTextInMiddle();
+    // LinkAndForcesManager.setLinkTextInMiddle("link");
   }
 
-  static updateNodePositions() {
-    // this.svgNodes.datum().updatePositions();
+  static updateNodePositionsOnUi() {
     NodeManager.svgNodes
-      .exit()
       .attr("cx", (d: any) => d.x)
       .attr("cy", (d: any) => d.y);
-
-
-    NodeManager.svgNodes.attr("transform", function(d) {
-      return "translate(" + d.x/5 + "," + d.y/5 + ")";
-    });
-
   }
 
-  static updateLinkPositions() {
+  static updateLinkPositionsOnUi() {
+
     this.svgLinks
       .attr("x1", (link: Link) => link.source.x)
       .attr("y1", (link: Link) => link.source.y)
@@ -183,14 +174,14 @@ export class LinkAndForcesManager {
    Calculates and sets the position of the text element for the given link.
    @returns {void}
    */
-  private static setLinkTextInMiddle(linkText: Selection<HTMLAnchorElement, Link, HTMLAnchorElement, Link>) {
-    if (linkText.empty()) {
-      console.log("linkText is empty");
+  private static setLinkTextInMiddle(link: Selection<HTMLAnchorElement, Link, HTMLAnchorElement, Link>) {
+    if (link.empty()) {
+      console.log("link is empty");
       return;
     }
 
-    let center: Point = linkText.datum().CalculateMidpoint();
-    linkText
+    let center: Point = link.datum().CalculateMidpoint();
+    link
       .attr("x", center.x)
       .attr("y", center.y);
   }

@@ -1,8 +1,9 @@
 import { MainEntry } from "../app";
 import { Canvas } from "../Ui/Canvas";
 import { NodeType } from "./nodeType";
+import { SimulationNodeDatum } from "d3-force";
 
-export class INode {
+export class INode implements SimulationNodeDatum {
     id: string;
     name: string;
     type: string;
@@ -17,8 +18,8 @@ export class INode {
         this.id = id;
         this.name = name;
         //Randomize initial position
-        this.x = Math.floor(Math.random() * (500 - 20 + 1) + 20);
-        this.y = Math.floor(Math.random() * (500 - 20 + 1) + 20);
+        this.x = x;
+        this.y = y;
         this.hlink = hlink;
         this.type = type;
         this.notetype = nodeType;

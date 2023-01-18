@@ -1,7 +1,6 @@
-import {INode} from "./Model/INode";
-import {Link} from "./Model/Link";
-import {MainEntry} from "./app";
-import { NodeManager } from "./Ui/nodeManager";
+import { INode } from "./Model/INode";
+import { Link } from "./Model/Link";
+import { MainEntry } from "./app";
 
 export class NodeStore {
 
@@ -17,22 +16,17 @@ export class NodeStore {
         @param {INode[]} nodeSetApp - Set of nodes and their relevant data.
         @param {Link[]} linkSetApp - Set of links and their relevant data.
      */
-    public static UpdateSourceAndTarget2() {
+    public static UpdateSourceAndTarget() {
         console.log("Updating Source and Target of " + this.linkList.length + " links");
         // Append the source Node and the target Node to each Link
-        for (const link of this.linkList) {
-            NodeStore.UpdateSourceAndTarget(link);
+        for (let link of this.linkList) {
+            link.source = NodeStore.getNodeById(link.sourceId);
+            link.target = NodeStore.getNodeById(link.targetId);
+            link.direction = link.sourceId === MainEntry.focalNodeID ? "OUT" : "IN";
         }
-
+        NodeStore.isThereAnyUncompleteLink();
         // this.logNodeAndLinkStatus();
     }
-
-    private static UpdateSourceAndTarget(link: Link) {
-        link.source = NodeStore.getNodeById(link.sourceId);
-        link.target = NodeStore.getNodeById(link.targetId);
-        link.direction = link.sourceId === MainEntry.focalNodeID ? "OUT" : "IN";
-    }
-
     static getNodeById(sourceId: string): INode {
         let p = NodeStore.nodeList.find((node) => node.id === sourceId);
         if(p instanceof INode) {
