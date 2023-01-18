@@ -16,8 +16,10 @@ export class MyData {
     this.mediawikiArticle = new MediaWikiArticle(this.query.subject, this.query.data);
     let wikiArticle = this.mediawikiArticle;
 
-    wikiArticle.HandleProperties();
     NodeStore.nodeList.push(wikiArticle.node);
+
+    wikiArticle.HandleProperties();
+
   }
 }
 

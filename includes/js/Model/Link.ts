@@ -9,41 +9,31 @@ import { SimulationLinkDatum } from "d3-force";
 * */
 export class Link implements SimulationLinkDatum<INode>{
     public linkName: string;
-    public sourceId: string;
-    public targetId: string;
     public pointsFocalNode : boolean;
     public source!: INode;
     public target!: INode;
     public direction!: string;
     public nodetype: NodeType;
 
-    constructor(nodetype: NodeType, linkName: string, sourceId: string, targetId: string, source: INode | null, target: INode | null, direction: string) {
-        this.sourceId = sourceId;
+    constructor(nodetype: NodeType, linkName: string, sourceId: string, targetId: string, direction: string) {
         this.linkName = linkName;
-        this.targetId = targetId;
         this.direction = direction;
-        this.UpdateSourceAndTarget(source, target);
+        try{
+            if(!sourceId)
+                debugger;
+            if(!targetId)
+                debugger;
+            this.source = NodeStore.getNodeById(sourceId);
+            this.target = NodeStore.getNodeById(targetId);
+        }
+        catch(e){
+            console.log("The nodes MUST be added to the node list before creating the links: " + e);
+        }
+
+        this.direction = sourceId === MainEntry.focalNodeID ? "OUT" : "IN";
 
         this.nodetype = nodetype;
         this.pointsFocalNode = targetId === MainEntry.focalNodeID;
-    }
-
-    UpdateSourceAndTarget(source: INode | null, target: INode | null) {
-        try{
-        if(source)
-            this.source = source;
-        // else
-        //     this.source = NodeStore.getNodeById(this.sourceId);
-        if(target)
-            this.target = target;
-        // else
-        //     this.target = NodeStore.getNodeById(this.targetId);
-        }
-        catch(e){
-            console.log("Early link initialization error: " + e);
-        }
-
-        this.direction = this.sourceId === MainEntry.focalNodeID ? "OUT" : "IN";
     }
 
     // noinspection JSUnusedGlobalSymbols
@@ -51,7 +41,7 @@ export class Link implements SimulationLinkDatum<INode>{
 
         const newArr: Link[] = [];
         array.forEach((item: Link) => {
-            newArr.push(new Link(item.nodetype, item.linkName, item.sourceId, item.targetId, item.source, item.target, item.direction));
+            newArr.push(new Link(item.nodetype, item.linkName, item.source.id, item.target.id, item.direction));
         });
 
         return newArr;
@@ -77,8 +67,8 @@ export class Link implements SimulationLinkDatum<INode>{
 
     debugString() {
         return `Link Name: ${this.linkName}, `+
-        `Source ID: ${this.sourceId}, `+
-        `Target ID: ${this.targetId},`+
+        `Source ID: ${this.source.id}, `+
+        `Target ID: ${this.target.id},`+
         `source type: ${typeof this.source}`+
         `target type: ${typeof this.target}`+
         `Points to Focal Node: ${this.pointsFocalNode}, `+

@@ -37,27 +37,25 @@ export class NodeManager {
 
     // LinkAndForcesManager.forceDragBehaviour();
 
-    // @ts-ignore
-    NodeManager.svgNodes = Canvas.svgCanvas.selectAll(".node")
+    NodeManager.svgNodes = Canvas.svgCanvas.selectAll(".node").append("g")
       .data(NodeStore.nodeList)
-      .enter()
-      .append("g")
-      .attr("class", "node")
+      // .enter()
+      // .attr("class", "node")
       .attr("id", (node: INode) => node.id)
       .attr("type_value", (node: INode) => node.type)
       .attr("color_value", (node: INode) => ColorHelper.color_hash[node.type])
       .attr("xlink:href", (node: INode) => node.hlink as string)
       .attr("fixed", node => node.IsFocalNode())
       // .setXYPos()
-      // .attr("cx", (node: INode) => node.x)
-      // .attr("cy", (node: INode) => node.y)
+      .attr("cx", (node: INode) => node.x)
+      .attr("cy", (node: INode) => node.y)
       .on("mouseover", () => UiEventHandler.nodeMouseOver)
       .on("click", () => UiEventHandler.mouseClickNode)
       .on("mouseout", () => UiEventHandler.nodeMouseOut)
       .call(LinkAndForcesManager.MyDrag(LinkAndForcesManager.simulation))
-      .attr("transform", function(d) {
-        return `translate(${d.x},${d.y})`;
-      })
+      // .attr("transform", function(d) {
+      //   return `translate(${d.x},${d.y})`;
+      // })
       .append("a");
 
     return this.svgNodes;

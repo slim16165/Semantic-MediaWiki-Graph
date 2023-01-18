@@ -38,7 +38,7 @@ export class SemanticWikiApi {
      * https://jsonformatter.org/json-parser/5e9d52
      */
 
-    MainEntry.resetData();
+    // MainEntry.resetData();
     MainEntry.downloadedArticles.push(wikiArticleTitle);
     data.Parse()
 

@@ -16853,8 +16853,8 @@ class INode {
         this.id = id;
         this.name = name;
         //Randomize initial position
-        this.x = Math.floor(Math.random() * (500 - 20 + 1) + 20);
-        this.y = Math.floor(Math.random() * (500 - 20 + 1) + 20);
+        this.x = x;
+        this.y = y;
         this.hlink = hlink;
         this.type = type;
         this.notetype = nodeType;
@@ -16907,47 +16907,39 @@ exports.INode = INode;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Link = void 0;
 const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
+const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
 /* Connection between two Nodes
 * */
 class Link {
     linkName;
-    sourceId;
-    targetId;
     pointsFocalNode;
     source;
     target;
     direction;
     nodetype;
-    constructor(nodetype, linkName, sourceId, targetId, source, target, direction) {
-        this.sourceId = sourceId;
+    constructor(nodetype, linkName, sourceId, targetId, direction) {
         this.linkName = linkName;
-        this.targetId = targetId;
         this.direction = direction;
-        this.UpdateSourceAndTarget(source, target);
-        this.nodetype = nodetype;
-        this.pointsFocalNode = targetId === app_1.MainEntry.focalNodeID;
-    }
-    UpdateSourceAndTarget(source, target) {
         try {
-            if (source)
-                this.source = source;
-            // else
-            //     this.source = NodeStore.getNodeById(this.sourceId);
-            if (target)
-                this.target = target;
-            // else
-            //     this.target = NodeStore.getNodeById(this.targetId);
+            if (!sourceId)
+                debugger;
+            if (!targetId)
+                debugger;
+            this.source = nodeStore_1.NodeStore.getNodeById(sourceId);
+            this.target = nodeStore_1.NodeStore.getNodeById(targetId);
         }
         catch (e) {
-            console.log("Early link initialization error: " + e);
+            console.log("The nodes MUST be added to the node list before creating the links: " + e);
         }
-        this.direction = this.sourceId === app_1.MainEntry.focalNodeID ? "OUT" : "IN";
+        this.direction = sourceId === app_1.MainEntry.focalNodeID ? "OUT" : "IN";
+        this.nodetype = nodetype;
+        this.pointsFocalNode = targetId === app_1.MainEntry.focalNodeID;
     }
     // noinspection JSUnusedGlobalSymbols
     static cloneEdge(array) {
         const newArr = [];
         array.forEach((item) => {
-            newArr.push(new Link(item.nodetype, item.linkName, item.sourceId, item.targetId, item.source, item.target, item.direction));
+            newArr.push(new Link(item.nodetype, item.linkName, item.source.id, item.target.id, item.direction));
         });
         return newArr;
     }
@@ -16966,8 +16958,8 @@ class Link {
     }
     debugString() {
         return `Link Name: ${this.linkName}, ` +
-            `Source ID: ${this.sourceId}, ` +
-            `Target ID: ${this.targetId},` +
+            `Source ID: ${this.source.id}, ` +
+            `Target ID: ${this.target.id},` +
             `source type: ${typeof this.source}` +
             `target type: ${typeof this.target}` +
             `Points to Focal Node: ${this.pointsFocalNode}, ` +
@@ -17023,6 +17015,7 @@ class MediaWikiArticle {
         this.Id = id; //'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
         app_1.MainEntry.focalNodeID = id;
         this.node = this.ParseNodeBrowseBySubject();
+        nodeStore_1.NodeStore.nodeList.push(this.node);
         this.semanticNodeList = [];
         for (const data of semanticNodeList) {
             let item = new semanticPropertyAndItems_1.SemanticPropertyAndItems(data.property, data.dataitem, data.subject, this);
@@ -17040,10 +17033,16 @@ class MediaWikiArticle {
         for (const semanticNode of this.semanticNodeList) {
             if (semanticNode.IsSpecialProperty())
                 continue; // Non fare nulla se la proprietà è una delle proprietà speciali "_SKEY", "_MDAT" o "_ASK"
-            semanticNode.SemanticNodeParse();
-            for (let dataitem of semanticNode.nodeAndLinks) {
-                nodeStore_1.NodeStore.nodeList.push(dataitem.node);
-                nodeStore_1.NodeStore.linkList.push(dataitem.link);
+            // semanticNode.SemanticNodeParse();
+            semanticNode.SetUri();
+            //All the nodes should be initialized before the links
+            for (let dataitem of semanticNode.dataitems) {
+                let node = semanticNode.ParsePropertyNode(dataitem);
+                nodeStore_1.NodeStore.nodeList.push(node);
+            }
+            for (let dataitem of semanticNode.dataitems) {
+                let link = semanticNode.ParsePropertyLink(dataitem);
+                nodeStore_1.NodeStore.linkList.push(link);
             }
         }
     }
@@ -17074,8 +17073,8 @@ class MyData {
     Parse() {
         this.mediawikiArticle = new mediaWikiArticle_1.MediaWikiArticle(this.query.subject, this.query.data);
         let wikiArticle = this.mediawikiArticle;
-        wikiArticle.HandleProperties();
         nodeStore_1.NodeStore.nodeList.push(wikiArticle.node);
+        wikiArticle.HandleProperties();
     }
 }
 exports.MyData = MyData;
@@ -17159,7 +17158,6 @@ class SemanticPropertyAndItems {
     dataitems;
     parentArticle;
     firstItem;
-    nodeAndLinks;
     sourceNodeUrl;
     constructor(property, dataitems, subject, parentArticle) {
         this.propertyName = property;
@@ -17173,7 +17171,6 @@ class SemanticPropertyAndItems {
         this.subject = subject;
         this.parentArticle = parentArticle;
         this.sourceNodeUrl = parentArticle.Id;
-        this.nodeAndLinks = [];
     }
     IsSpecialProperty() {
         /*
@@ -17184,14 +17181,6 @@ class SemanticPropertyAndItems {
               * INST
               */
         return ["_SKEY", "_MDAT", "_ASK"].includes(this.propertyName);
-    }
-    SemanticNodeParse() {
-        this.SetUri();
-        for (let dataitem of this.dataitems) {
-            let node = this.ParsePropertyNode(dataitem);
-            let link = new Link_1.Link(nodeType_1.NodeType.Property, this.nicePropertyName, this.sourceNodeUrl, dataitem.item /*targetId*/, null, null, "");
-            this.nodeAndLinks.push({ node: node, link: link });
-        }
     }
     SetUri() {
         if (!this.dataitems || this.dataitems.length == 0)
@@ -17206,6 +17195,9 @@ class SemanticPropertyAndItems {
         let hlink = this.parseHlink(dataitem.item, dataitem.typeStr, this.sourceNodeUrl);
         let node = new INode_1.INode(nodeType_1.NodeType.Property, dataitem.item, name, "null", 0, 0, hlink);
         return node;
+    }
+    ParsePropertyLink(dataitem) {
+        return new Link_1.Link(nodeType_1.NodeType.Property, this.nicePropertyName, this.sourceNodeUrl, dataitem.item /*targetId*/, "");
     }
     NicePropertyName() {
         let p = this.getPropertyNiceName(this.propertyName);
@@ -17324,7 +17316,7 @@ class SemanticWikiApi {
          * JSON.stringify(data)
          * https://jsonformatter.org/json-parser/5e9d52
          */
-        app_1.MainEntry.resetData();
+        // MainEntry.resetData();
         app_1.MainEntry.downloadedArticles.push(wikiArticleTitle);
         data.Parse();
         // MyClass.force.stop();
@@ -17368,7 +17360,7 @@ class SemanticWikiApi {
             $("#cluster_chart .chart").empty();
             //  var k = cloneNode(nodeSet);
             //  var m = cloneEdge(linkSet);
-            nodeStore_1.NodeStore.UpdateSourceAndTarget2();
+            nodeStore_1.NodeStore.UpdateSourceAndTarget();
             console.log("BacklinksCallback");
             app_1.MainEntry.drawCluster("Drawing1");
             //drawCluster.update();
@@ -17564,12 +17556,8 @@ class LinkAndForcesManager {
     static simulation;
     static svgLinks;
     static clickText;
-    static forceDragBehaviour() {
-        LinkAndForcesManager.CreateAForceLayoutAndBindNodesAndLinks();
-    }
     static DrawLinks() {
-        nodeStore_1.NodeStore.UpdateSourceAndTarget2();
-        nodeStore_1.NodeStore.isThereAnyUncompleteLink();
+        nodeStore_1.NodeStore.UpdateSourceAndTarget();
         // Append text to Link edges
         this.AppendTextToLinkEdges();
         // Draw lines for Links between Nodes
@@ -17607,22 +17595,51 @@ class LinkAndForcesManager {
             .attr("d", "M0,-5L10,0L0,5");
     }
     static CreateAForceLayoutAndBindNodesAndLinks() {
+        /* Convert the values of an object into a format that can be used to compare or sort the values.
+              Specifically, if the value passed is nonzero and its type is an object, then the valueOf() method is used to obtain the primitive value of the object.
+              Otherwise, the original value is returned.       */
+        function intern(value) {
+            return value !== null && typeof value === "object" ? value.valueOf() : value;
+        }
+        //     //A map (aka Dictionary) is created from the nodes object using nodeId as the key, and then each value in the map is converted using the intern() function.
+        //     const Nodes = nodes.map((node: { id: any; }) => node.id);
+        //     const LinkSources = links.map((link: { source: any; }) => link.source);
+        //     const LinkTargets = links.map((link: { target: any; }) => link.target);
+        //
+        //
+        // // Replace the input nodes and links with mutable objects for the simulation.
+        //     let nodes = nodes.map((_, i) => ({id: Nodes[i]}));
+        //     let links = links.map((_, i) => ({source: LinkSources[i], target: LinkTargets[i]}));
+        // Compute default domains.
+        // if (NodeGroups && nodeGroups === undefined) nodeGroups = d3.sort(NodeGroups);
+        // Construct the scales.
+        // const color = nodeGroup == null ? null : d3.scaleOrdinal(nodeGroups, colors);
+        /* Construct the forces.
+          d3.forceManyBody() creates a repulsion force between all nodes, where each node repels itself from its neighbors. This function needs no parameters,
+          so forceNode represents a repulsion force between nodes.
+          d3.forceLink(links) creates a force of attraction between nodes, based on the specified links.
+          This function accepts an array of links as a parameter.
+          forceLink.id(({index: i}) => Nodes[i]) specifies that the unique identifier of the nodes for the force pull is the index of the node in the Nodes array.*/
         this.simulation = d3.forceSimulation()
             .nodes(nodeStore_1.NodeStore.nodeList)
-            .force("link", d3.forceLink(nodeStore_1.NodeStore.linkList))
-            .force("charge", d3.forceManyBody().strength(-10))
-            .force("gravity", d3.forceManyBody().strength(.01))
-            .force("friction", d3.forceManyBody().strength(.2))
-            //commento
-            .force("link", d3.forceLink(nodeStore_1.NodeStore.linkList))
-            .force("center", d3.forceCenter(Canvas_1.Canvas.width / 2, Canvas_1.Canvas.heigth / 2))
+            .force('link', d3
+            .forceLink(nodeStore_1.NodeStore.linkList)
+            .id((d) => {
+            return d.name;
+        })
+        // .distance()
+        // .strength(this.props.linkStrength)
+        )
+            .force("charge", d3.forceManyBody())
+            .force("gravity", d3.forceManyBody())
+            .force("friction", d3.forceManyBody())
+            .force("center", d3.forceCenter())
             .alphaTarget(0.03);
-        const linkForce = d3.forceLink().id((d) => d.id);
-        const chart = d3.select(".chart");
-        const width = Canvas_1.Canvas.width;
-        const height = Canvas_1.Canvas.heigth;
-        linkForce.distance(() => width < height ? width / 3 : height / 3);
-        this.simulation.force("link", linkForce);
+        // const linkForce = d3.forceLink().id((d: any) => d.id);
+        // const width = Canvas.width;
+        // const height = Canvas.heigth;
+        // linkForce.distance(() => width < height ? width / 3 : height / 3);
+        // this.simulation.force("link", linkForce);
         return this.simulation;
     }
     static MyDrag(simulation) {
@@ -17652,9 +17669,9 @@ class LinkAndForcesManager {
             .data(nodeStore_1.NodeStore.linkList)
             .enter().append("g")
             // .attr("class", "gLink")
-            // .attr("class", "link")
-            .attr("endNode", (d) => d.targetId)
-            .attr("startNode", (d) => d.sourceId)
+            .attr("class", "link")
+            .attr("endNode", (d) => d.target.id)
+            .attr("startNode", (d) => d.source.id)
             .attr("targetType", (d) => d.target.type)
             .attr("sourceType", (d) => d.source.type)
             .append("line")
@@ -17678,24 +17695,18 @@ class LinkAndForcesManager {
             .text((link) => link.linkName);
     }
     static Tick() {
-        //TODO: blocco l'aggiornamento delle posizioni dei nodi
-        LinkAndForcesManager.updateNodePositions();
-        LinkAndForcesManager.updateLinkPositions();
+        LinkAndForcesManager.updateNodePositionsOnUi();
+        LinkAndForcesManager.updateLinkPositionsOnUi();
         // Questo pezzo di codice si occupa di aggiungere del testo ai link e di posizionarlo nella parte centrale del link stesso.
         // Il testo viene posizionato in modo che sia metà strada tra il nodo di partenza e quello di destinazione. Se il nodo di destinazione ha una coordinata x maggiore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y). Se invece il nodo di destinazione ha una coordinata x minore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y).
-        // this.setLinkTextInMiddle();
+        // LinkAndForcesManager.setLinkTextInMiddle("link");
     }
-    static updateNodePositions() {
-        // this.svgNodes.datum().updatePositions();
+    static updateNodePositionsOnUi() {
         nodeManager_1.NodeManager.svgNodes
-            .exit()
             .attr("cx", (d) => d.x)
             .attr("cy", (d) => d.y);
-        nodeManager_1.NodeManager.svgNodes.attr("transform", function (d) {
-            return "translate(" + d.x / 5 + "," + d.y / 5 + ")";
-        });
     }
-    static updateLinkPositions() {
+    static updateLinkPositionsOnUi() {
         this.svgLinks
             .attr("x1", (link) => link.source.x)
             .attr("y1", (link) => link.source.y)
@@ -17706,13 +17717,13 @@ class LinkAndForcesManager {
      Calculates and sets the position of the text element for the given link.
      @returns {void}
      */
-    static setLinkTextInMiddle(linkText) {
-        if (linkText.empty()) {
-            console.log("linkText is empty");
+    static setLinkTextInMiddle(link) {
+        if (link.empty()) {
+            console.log("link is empty");
             return;
         }
-        let center = linkText.datum().CalculateMidpoint();
-        linkText
+        let center = link.datum().CalculateMidpoint();
+        link
             .attr("x", center.x)
             .attr("y", center.y);
     }
@@ -18001,27 +18012,25 @@ class NodeManager {
         In summary enter() allows to select and operate on data elements that haven't been associated yet to DOM elements.
         * */
         // LinkAndForcesManager.forceDragBehaviour();
-        // @ts-ignore
-        NodeManager.svgNodes = Canvas_1.Canvas.svgCanvas.selectAll(".node")
+        NodeManager.svgNodes = Canvas_1.Canvas.svgCanvas.selectAll(".node").append("g")
             .data(nodeStore_1.NodeStore.nodeList)
-            .enter()
-            .append("g")
-            .attr("class", "node")
+            // .enter()
+            // .attr("class", "node")
             .attr("id", (node) => node.id)
             .attr("type_value", (node) => node.type)
             .attr("color_value", (node) => ColorHelper_1.ColorHelper.color_hash[node.type])
             .attr("xlink:href", (node) => node.hlink)
             .attr("fixed", node => node.IsFocalNode())
             // .setXYPos()
-            // .attr("cx", (node: INode) => node.x)
-            // .attr("cy", (node: INode) => node.y)
+            .attr("cx", (node) => node.x)
+            .attr("cy", (node) => node.y)
             .on("mouseover", () => UiEventHandler_1.UiEventHandler.nodeMouseOver)
             .on("click", () => UiEventHandler_1.UiEventHandler.mouseClickNode)
             .on("mouseout", () => UiEventHandler_1.UiEventHandler.nodeMouseOut)
             .call(LinkAndForcesManager_1.LinkAndForcesManager.MyDrag(LinkAndForcesManager_1.LinkAndForcesManager.simulation))
-            .attr("transform", function (d) {
-            return `translate(${d.x},${d.y})`;
-        })
+            // .attr("transform", function(d) {
+            //   return `translate(${d.x},${d.y})`;
+            // })
             .append("a");
         return this.svgNodes;
     }
@@ -18124,8 +18133,8 @@ class VisibilityHandler {
     }
     static SomethingRelatedToNodeVisibility(el) {
         let link = el.__data__;
-        const valSource = link.sourceId;
-        const valTarget = link.targetId;
+        const valSource = link.source.id;
+        const valTarget = link.target.id;
         let indexEdge;
         const indexSource = this.invisibleNode.indexOf(valSource);
         const indexTarget = this.invisibleNode.indexOf(valTarget);
@@ -18158,8 +18167,8 @@ class VisibilityHandler {
     static MakeInvisible2(el) {
         //      debugger;
         let data = el.__data__;
-        const valSource = data.sourceId;
-        const valTarget = data.targetId;
+        const valSource = data.source.id;
+        const valTarget = data.target.id;
         //if beide
         const indexSource = VisibilityHandler.invisibleNode.indexOf(valSource);
         const indexTarget = VisibilityHandler.invisibleNode.indexOf(valTarget);
@@ -18278,8 +18287,10 @@ class MainEntry {
     static InitNodeAndLinks_Backlinks(backlinks) {
         for (let article of backlinks) {
             let node = new INode_1.INode(nodeType_1.NodeType.Backlink, article.title, article.title, "Backlink", 0, 0, article.title);
-            let link = new Link_1.Link(nodeType_1.NodeType.Backlink, "Backlink", article.title, MainEntry.focalNodeID, null, null, "");
             nodeStore_1.NodeStore.nodeList.push(node);
+        }
+        for (let article of backlinks) {
+            let link = new Link_1.Link(nodeType_1.NodeType.Backlink, "Backlink", article.title, MainEntry.focalNodeID, "");
             nodeStore_1.NodeStore.linkList.push(link);
         }
     }
@@ -18335,29 +18346,28 @@ class NodeStore {
         @param {INode[]} nodeSetApp - Set of nodes and their relevant data.
         @param {Link[]} linkSetApp - Set of links and their relevant data.
      */
-    static UpdateSourceAndTarget2() {
+    static UpdateSourceAndTarget() {
         console.log("Updating Source and Target of " + this.linkList.length + " links");
         // Append the source Node and the target Node to each Link
-        for (const link of this.linkList) {
-            NodeStore.UpdateSourceAndTarget(link);
+        for (let link of this.linkList) {
+            link.source = NodeStore.getNodeById(link.source.id);
+            link.target = NodeStore.getNodeById(link.target.id);
+            link.direction = link.source.id === app_1.MainEntry.focalNodeID ? "OUT" : "IN";
         }
+        NodeStore.isThereAnyUncompleteLink();
         // this.logNodeAndLinkStatus();
     }
-    static UpdateSourceAndTarget(link) {
-        link.source = NodeStore.getNodeById(link.sourceId);
-        link.target = NodeStore.getNodeById(link.targetId);
-        link.direction = link.sourceId === app_1.MainEntry.focalNodeID ? "OUT" : "IN";
-    }
-    static getNodeById(sourceId) {
-        let p = NodeStore.nodeList.find((node) => node.id === sourceId);
+    static getNodeById(nodeId) {
+        let p = NodeStore.nodeList.find((node) => node.id === nodeId);
         if (p instanceof INode_1.INode) {
             return p;
         }
         else {
             console.log("N° of nodes " + NodeStore.nodeList.length);
             console.log("N° of links " + NodeStore.linkList.length);
-            console.log("sourceId " + sourceId);
+            console.log("nodeId " + nodeId);
             console.log(NodeStore.nodeList.map(node => node.id));
+            debugger;
             throw new DOMException("Node not found");
         }
     }
@@ -18376,11 +18386,9 @@ class NodeStore {
     static isThereAnyUncompleteLink() {
         for (const link of NodeStore.linkList) {
             if (!link.source) {
-                console.log("SourceId missing " + link.sourceId);
                 debugger;
             }
             if (!link.target) {
-                console.log("SourceId missing " + link.targetId);
                 debugger;
             }
         }

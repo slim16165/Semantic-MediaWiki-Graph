@@ -73,11 +73,14 @@ export class MainEntry {
   static InitNodeAndLinks_Backlinks(backlinks: Article[]) {
     for (let article of backlinks) {
       let node = new INode(NodeType.Backlink, article.title, article.title, "Backlink", 0, 0, article.title);
-      let link = new Link(NodeType.Backlink, "Backlink", article.title, MainEntry.focalNodeID, null, null, "");
-
       NodeStore.nodeList.push(node);
+    }
+
+    for (let article of backlinks) {
+      let link = new Link(NodeType.Backlink, "Backlink", article.title, MainEntry.focalNodeID, "");
       NodeStore.linkList.push(link);
     }
+
   }
 
   static resetData() {

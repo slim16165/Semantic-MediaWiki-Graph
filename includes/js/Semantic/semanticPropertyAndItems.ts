@@ -3,6 +3,7 @@ import { INode } from "../Model/INode";
 import { Link } from "../Model/Link";
 import { PropertyDataItem } from "./propertyDataItem";
 import { NodeType } from "../Model/nodeType";
+import { NodeStore } from "../nodeStore";
 
 // noinspection UnnecessaryLocalVariableJS
 export class SemanticPropertyAndItems {
@@ -13,7 +14,6 @@ export class SemanticPropertyAndItems {
   dataitems: PropertyDataItem[];
   private parentArticle!: MediaWikiArticle;
   private firstItem!: PropertyDataItem;
-  public nodeAndLinks: { node: INode; link: Link; }[];
   private readonly sourceNodeUrl: string;
 
   constructor(property: string, dataitems: PropertyDataItem[], subject: string | undefined, parentArticle: MediaWikiArticle) {
@@ -31,7 +31,6 @@ export class SemanticPropertyAndItems {
     this.subject = subject;
     this.parentArticle = parentArticle;
     this.sourceNodeUrl = parentArticle.Id;
-    this.nodeAndLinks = [];
   }
 
   IsSpecialProperty() {
@@ -45,20 +44,7 @@ export class SemanticPropertyAndItems {
     return ["_SKEY", "_MDAT", "_ASK"].includes(this.propertyName);
   }
 
-  SemanticNodeParse() {
-    this.SetUri();
-
-    for (let dataitem of this.dataitems) {
-
-      let node = this.ParsePropertyNode(dataitem);
-
-      let link = new Link(NodeType.Property, this.nicePropertyName, this.sourceNodeUrl, dataitem.item /*targetId*/, null, null, "");
-
-      this.nodeAndLinks.push({ node: node, link: link });
-    }
-  }
-
-  private SetUri() {
+  SetUri() {
     if (!this.dataitems || this.dataitems.length == 0)
       return;
 
@@ -68,12 +54,16 @@ export class SemanticPropertyAndItems {
       this.firstItem.item = `${this.firstItem.item}_${(this.propertyName)}`;
   }
 
-  private ParsePropertyNode(dataitem: PropertyDataItem) {
+  ParsePropertyNode(dataitem: PropertyDataItem) {
     //In the original version it was using the firstElement for the last 2 parameters
     let name = this.parseNodeName(dataitem.item, dataitem.typeStr);
     let hlink = this.parseHlink(dataitem.item, dataitem.typeStr, this.sourceNodeUrl);
     let node = new INode(NodeType.Property, dataitem.item, name, "null", 0, 0, hlink);
     return node;
+  }
+
+  ParsePropertyLink(dataitem: PropertyDataItem) {
+    return new Link(NodeType.Property, this.nicePropertyName, this.sourceNodeUrl, dataitem.item /*targetId*/, "");
   }
 
   private NicePropertyName(): string {
