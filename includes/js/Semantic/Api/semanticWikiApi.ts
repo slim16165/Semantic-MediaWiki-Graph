@@ -4,45 +4,46 @@ import { INode } from "../../Model/INode";
 import { NodeType } from "../../Model/nodeType";
 import { Link } from "../../Model/Link";
 import { MediaWikiArticle } from "../mediaWikiArticle";
-import { NodeStore } from "../../nodeStore";
 
 export class SemanticWikiApi {
   static downloadedArticles: string[] = [];
-  public static BrowseBySubject(wikiArticleTitle: string, callback : any) {
+
+  public static BrowseBySubject(wikiArticleTitle: string, callback: any) {
     this.downloadedArticles = [];
     let wikiArticle: MediaWikiArticle;
 
     $.ajax({
-      url: mw.util.wikiScript("api"),
-      data: {
-        action: "browsebysubject",
-        subject: wikiArticleTitle,
-        format: "json"
-      },
-      type: "GET",
-      success: function(data: SuccessCallback) {
-        if (data?.edit && data.edit.result === "Success") {
-          // debugger;
-        } else if (data?.error) {
-          alert(data);
-          // debugger;
-        } else {
-          /**
-           *  }
-           * JSON.stringify(data)
-           * https://jsonformatter.org/json-parser/5e9d52
-           */
+        url: mw.util.wikiScript("api"),
+        data: {
+          action: "browsebysubject",
+          subject: wikiArticleTitle,
+          format: "json"
+        },
+        type: "GET",
+        async: false,
+        success: function(data: SuccessCallback) {
+          if (data?.edit && data.edit.result === "Success") {
+            // debugger;
+          } else if (data?.error) {
+            alert(data);
+            // debugger;
+          } else {
+            /**
+             *  }
+             * JSON.stringify(data)
+             * https://jsonformatter.org/json-parser/5e9d52
+             */
 
-          this.downloadedArticles.push(wikiArticleTitle);
-          wikiArticle = new MediaWikiArticle(data.query.subject, data.query.data);
-          callback();
+            SemanticWikiApi.downloadedArticles.push(wikiArticleTitle);
+            wikiArticle = new MediaWikiArticle(data.query.subject, data.query.data);
+            callback();
+          }
         }
       }
-    }
     );
   }
 
-  public static QueryBackLinks(wikiArticle: string, callback : any) {
+  public static QueryBackLinks(wikiArticle: string, callback: any) {
     $.ajax({
       url: mw.util.wikiScript("api"),
       data: {
@@ -52,6 +53,7 @@ export class SemanticWikiApi {
         format: "json"
       },
       type: "GET",
+      async: false,
       success: function(data: any) {
         if (data?.edit && data.edit.result === "Success") {
           // debugger;
@@ -60,9 +62,29 @@ export class SemanticWikiApi {
           // debugger;
         } else {
           console.log("Callback data ParseBacklinks");
-          let {nodeList, linkList} = this.ParseBacklinks(data.query.backlinks);
-          callback({nodeList, linkList})
+          let { nodeList, linkList } = SemanticWikiApi.ParseBacklinks(data.query.backlinks);
+          callback({ nodeList, linkList });
         }
+      }
+    });
+  }
+
+  public static AllPagesCall() {
+    $.ajax({
+      url: mw.util.wikiScript("api") as string,
+      data: {
+        action: "query",
+        list: "allpages",
+        aplimit: 1000,
+        format: "json"
+      },
+      type: "GET",
+      async: false,
+      success(data: SuccessParams) {
+        if (!(!(data?.edit && data.edit.result === "Success") && !(data?.error))) {
+          return;
+        }
+        MainEntry.PopulateSelectorWithWikiArticleUi(data.query.allpages);
       }
     });
   }
@@ -82,37 +104,18 @@ export class SemanticWikiApi {
       linkList.push(link);
     }
 
-    return {nodeList, linkList}
-  }
-
-  public static AllPagesCall() {
-    $.ajax({
-      url: mw.util.wikiScript("api") as string,
-      data: {
-        action: "query",
-        list: "allpages",
-        aplimit: 1000,
-        format: "json"
-      },
-      type: "GET",
-      success(data: SuccessParams) {
-        if (!(!(data?.edit && data.edit.result === "Success") && !(data?.error))) {
-          return;
-        }
-        MainEntry.PopulateSelectorWithWikiArticleUi(data.query.allpages);
-      }
-    });
+    return { nodeList, linkList };
   }
 }
 
 export interface SuccessParams {
   edit: { result: string };
   error: any;
-  query: { allpages: any }
+  query: { allpages: any };
 }
 
 export interface SuccessCallback {
   edit: { result: string };
   error: any;
-  query: { subject: string; data: any }
+  query: { subject: string; data: any };
 }

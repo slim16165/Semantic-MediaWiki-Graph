@@ -17020,6 +17020,7 @@ class SemanticWikiApi {
                 format: "json"
             },
             type: "GET",
+            async: false,
             success: function (data) {
                 if (data?.edit && data.edit.result === "Success") {
                     // debugger;
@@ -17034,7 +17035,7 @@ class SemanticWikiApi {
                      * JSON.stringify(data)
                      * https://jsonformatter.org/json-parser/5e9d52
                      */
-                    this.downloadedArticles.push(wikiArticleTitle);
+                    SemanticWikiApi.downloadedArticles.push(wikiArticleTitle);
                     wikiArticle = new mediaWikiArticle_1.MediaWikiArticle(data.query.subject, data.query.data);
                     callback();
                 }
@@ -17051,6 +17052,7 @@ class SemanticWikiApi {
                 format: "json"
             },
             type: "GET",
+            async: false,
             success: function (data) {
                 if (data?.edit && data.edit.result === "Success") {
                     // debugger;
@@ -17061,9 +17063,28 @@ class SemanticWikiApi {
                 }
                 else {
                     console.log("Callback data ParseBacklinks");
-                    let { nodeList, linkList } = this.ParseBacklinks(data.query.backlinks);
+                    let { nodeList, linkList } = SemanticWikiApi.ParseBacklinks(data.query.backlinks);
                     callback({ nodeList, linkList });
                 }
+            }
+        });
+    }
+    static AllPagesCall() {
+        $.ajax({
+            url: mw.util.wikiScript("api"),
+            data: {
+                action: "query",
+                list: "allpages",
+                aplimit: 1000,
+                format: "json"
+            },
+            type: "GET",
+            async: false,
+            success(data) {
+                if (!(!(data?.edit && data.edit.result === "Success") && !(data?.error))) {
+                    return;
+                }
+                app_1.MainEntry.PopulateSelectorWithWikiArticleUi(data.query.allpages);
             }
         });
     }
@@ -17080,24 +17101,6 @@ class SemanticWikiApi {
             linkList.push(link);
         }
         return { nodeList, linkList };
-    }
-    static AllPagesCall() {
-        $.ajax({
-            url: mw.util.wikiScript("api"),
-            data: {
-                action: "query",
-                list: "allpages",
-                aplimit: 1000,
-                format: "json"
-            },
-            type: "GET",
-            success(data) {
-                if (!(!(data?.edit && data.edit.result === "Success") && !(data?.error))) {
-                    return;
-                }
-                app_1.MainEntry.PopulateSelectorWithWikiArticleUi(data.query.allpages);
-            }
-        });
     }
 }
 exports.SemanticWikiApi = SemanticWikiApi;
@@ -17144,7 +17147,7 @@ class MediaWikiArticle {
         return this.nodeList.concat(this.node);
     }
     GetLinks() {
-        console.log("Method enter: MediaWikiArticle GetNodes");
+        console.log("Method enter: MediaWikiArticle GetLinks");
         return this.linkList;
     }
     ParseNodeBrowseBySubject() {
@@ -18279,15 +18282,19 @@ class MainEntry {
         legendManager_1.LegendManager.DrawLegend();
         d3.select(window).on("resize.updatesvg", Canvas_1.Canvas.updateWindowSize);
     }
-    static resetData() {
-        nodeStore_1.NodeStore.nodeList = [];
-        nodeStore_1.NodeStore.linkList = [];
-        semanticWikiApi_1.SemanticWikiApi.downloadedArticles = [];
-    }
+    // static resetData() {
+    //   NodeStore.nodeList = [];
+    //   NodeStore.linkList = [];
+    //   SemanticWikiApi.downloadedArticles = [];
+    // }
     static BrowseBySubjectCallback(wikiArticle) {
-        nodeStore_1.NodeStore.nodeList.push(wikiArticle.node);
+        // NodeStore.nodeList.push(wikiArticle.node);
+        nodeStore_1.NodeStore.nodeList = nodeStore_1.NodeStore.nodeList.concat(wikiArticle.GetNodes());
+        nodeStore_1.NodeStore.linkList = nodeStore_1.NodeStore.linkList.concat(wikiArticle.GetLinks());
     }
-    static BacklinksCallback() {
+    static BacklinksCallback(nodesAndLinks) {
+        nodeStore_1.NodeStore.nodeList = nodeStore_1.NodeStore.nodeList.concat(nodesAndLinks.nodeList);
+        nodeStore_1.NodeStore.linkList = nodeStore_1.NodeStore.linkList.concat(nodesAndLinks.linkList);
     }
 }
 exports.MainEntry = MainEntry;
