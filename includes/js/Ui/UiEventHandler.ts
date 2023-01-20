@@ -1,6 +1,6 @@
 import { Selection } from "d3";
 import { MainEntry } from "../app";
-import { SemanticWikiApi } from "../Semantic/Api/semanticWikiApi";
+import { SemanticWikiApi } from "../SemanticMediaWikiApi/Api/semanticWikiApi";
 import { INode } from "../Model/INode";
 import { LegendManager } from "./legendManager";
 

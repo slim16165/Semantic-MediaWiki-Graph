@@ -7,11 +7,6 @@ export class NodeStore {
     public static nodeList: INode[] = [];
     public static linkList: Link[] = [];
 
-    // private constructor() {
-    //     NodeStore.nodeList = [];
-    //     NodeStore.linkList = [];
-    // }
-
     /*
         @param {INode[]} nodeSetApp - Set of nodes and their relevant data.
         @param {Link[]} linkSetApp - Set of links and their relevant data.
@@ -20,29 +15,29 @@ export class NodeStore {
         console.log("Method enter: UpdateSourceAndTarget")
         console.log("Updating Source and Target of " + this.linkList.length + " links");
         // Append the source Node and the target Node to each Link
-        for (let link of this.linkList) {
-            link.source = NodeStore.getNodeById(link.source.id);
-            link.target = NodeStore.getNodeById(link.target.id);
-            link.direction = link.source.id === MainEntry.focalNodeID ? "OUT" : "IN";
+        for (let link of this.linkList)
+        {
+            if(!link.isValid)
+                link.Fix(true);
         }
         NodeStore.isThereAnyUncompleteLink();
         // this.logNodeAndLinkStatus();
     }
 
-    static getNodeById(nodeId: string): INode {
+    static getNodeById(nodeId: string, isBlocking : boolean = false): INode {
         console.log("Method enter: getNodeById");
         let p = NodeStore.nodeList.find((node) => node.id === nodeId);
         if(p instanceof INode) {
             return p as INode;
         }
-        else {
+        else if(isBlocking) {
             console.log("N° of nodes " + NodeStore.nodeList.length);
             console.log("N° of links " + NodeStore.linkList.length);
             console.log("nodeId " + nodeId);
             console.log(NodeStore.nodeList.map(node => node.id));
             debugger;
-            throw new DOMException("Node not found");
         }
+        throw new DOMException("Node not found");
     }
 
     static logNodeAndLinkStatus(details : boolean) {

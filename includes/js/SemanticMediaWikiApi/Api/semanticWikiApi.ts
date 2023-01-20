@@ -1,16 +1,15 @@
 import { MainEntry } from "../../app";
 import { Article } from "../../Model/OtherTypes";
-import { INode } from "../../Model/INode";
 import { NodeType } from "../../Model/nodeType";
+import { MediaWikiArticle } from "../Types/mediaWikiArticle";
+import { INode } from "../../Model/INode";
 import { Link } from "../../Model/Link";
-import { MediaWikiArticle } from "../mediaWikiArticle";
 
 export class SemanticWikiApi {
   static downloadedArticles: string[] = [];
 
-  public static BrowseBySubject(wikiArticleTitle: string, callback: any) {
+  public static BrowseBySubject(wikiArticleTitle: string, callback: (wikiArticle: MediaWikiArticle) => void) {
     this.downloadedArticles = [];
-    let wikiArticle: MediaWikiArticle;
 
     $.ajax({
         url: mw.util.wikiScript("api"),
@@ -35,15 +34,15 @@ export class SemanticWikiApi {
              */
 
             SemanticWikiApi.downloadedArticles.push(wikiArticleTitle);
-            wikiArticle = new MediaWikiArticle(data.query.subject, data.query.data);
-            callback();
+            let wikiArticle = new MediaWikiArticle(data.query.subject, data.query.data);
+            callback(wikiArticle);
           }
         }
       }
     );
   }
 
-  public static QueryBackLinks(wikiArticle: string, callback: any) {
+  public static QueryBackLinks(wikiArticle: string, callback: (nodesAndLinks: { nodeList: INode[]; linkList: Link[] }) => void) {
     $.ajax({
       url: mw.util.wikiScript("api"),
       data: {
@@ -62,7 +61,7 @@ export class SemanticWikiApi {
           // debugger;
         } else {
           console.log("Callback data ParseBacklinks");
-          let { nodeList, linkList } = SemanticWikiApi.ParseBacklinks(data.query.backlinks);
+          let { nodeList, linkList } = MainEntry.ParseBacklinks(data.query.backlinks);
           callback({ nodeList, linkList });
         }
       }
@@ -89,23 +88,6 @@ export class SemanticWikiApi {
     });
   }
 
-  private static ParseBacklinks(backlinks: Article[]) {
-    console.log("Method enter: InitNodeAndLinks_Backlinks");
-    let nodeList = [];
-    let linkList = [];
-
-    for (let article of backlinks) {
-      let node = new INode(NodeType.Backlink, article.title, article.title, "Backlink", 0, 0, article.title);
-      nodeList.push(node);
-    }
-
-    for (let article of backlinks) {
-      let link = new Link(NodeType.Backlink, "Backlink", article.title, MainEntry.focalNodeID, "");
-      linkList.push(link);
-    }
-
-    return { nodeList, linkList };
-  }
 }
 
 export interface SuccessParams {

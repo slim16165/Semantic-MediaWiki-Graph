@@ -1,7 +1,7 @@
 import { Link } from "./Model/Link";
 import "select2";
 import { INode } from "./Model/INode";
-import { SemanticWikiApi } from "./Semantic/Api/semanticWikiApi";
+import { SemanticWikiApi } from "./SemanticMediaWikiApi/Api/semanticWikiApi";
 import { Article } from "./Model/OtherTypes";
 import { NodeType } from "./Model/nodeType";
 import { NodeStore } from "./nodeStore";
@@ -11,7 +11,8 @@ import { LegendManager } from "./Ui/legendManager";
 import * as d3 from "d3";
 import { LinkAndForcesManager } from "./Ui/LinkAndForcesManager";
 import { VisibilityHandler } from "./Ui/visibilityHandler";
-import { MediaWikiArticle } from "./Semantic/mediaWikiArticle";
+import { MediaWikiArticle } from "./SemanticMediaWikiApi/Types/mediaWikiArticle";
+import { MediaWiki2NodesExt } from "./Bll/mediaWiki2NodesExt";
 
 export class MainEntry {
 
@@ -69,6 +70,38 @@ export class MainEntry {
     }
   }
 
+  static BrowseBySubjectCallback(wikiArticle: MediaWikiArticle) {
+    // NodeStore.nodeList.push(wikiArticle.node);
+    let nodesAndLinks = MediaWiki2NodesExt.getNodesAndLinks(wikiArticle);
+    NodeStore.nodeList = NodeStore.nodeList.concat(nodesAndLinks.nodeList);
+    NodeStore.linkList = NodeStore.linkList.concat(nodesAndLinks.linkList);
+  }
+
+  static BacklinksCallback(nodesAndLinks: {nodeList : INode[]; linkList : Link[];}) {
+    NodeStore.nodeList = NodeStore.nodeList.concat(nodesAndLinks.nodeList);
+    NodeStore.linkList = NodeStore.linkList.concat(nodesAndLinks.linkList);
+  }
+
+  static ParseBacklinks(backlinks: Article[]) {
+    console.log("Method enter: ParseBacklinks");
+    let nodeList = [];
+    let linkList = [];
+
+    for (let article of backlinks) {
+      let node = new INode(NodeType.Backlink, article.title, article.title, "Backlink", 0, 0, article.title);
+      nodeList.push(node);
+    }
+
+    for (let article of backlinks) {
+      let link = new Link(NodeType.Backlink, "Backlink", article.title, MainEntry.focalNodeID, "");
+      linkList.push(link);
+    }
+
+    return { nodeList, linkList };
+  }
+
+
+
   /**
    * Draws a cluster using the provided data.
    *
@@ -82,6 +115,7 @@ export class MainEntry {
     console.log("Method enter: drawCluster called by " + calledBy);
     console.log("Called drawCluster; N° NodeStore.nodeList: " + NodeStore.nodeList.length);
     if (NodeStore.nodeList.length == 0) return;
+    NodeStore.UpdateSourceAndTarget();
 
     NodeManager.DrawNodes();
 
@@ -97,17 +131,6 @@ export class MainEntry {
   //   NodeStore.linkList = [];
   //   SemanticWikiApi.downloadedArticles = [];
   // }
-
-  static BrowseBySubjectCallback(wikiArticle: MediaWikiArticle) {
-    // NodeStore.nodeList.push(wikiArticle.node);
-    NodeStore.nodeList = NodeStore.nodeList.concat(wikiArticle.GetNodes());
-    NodeStore.linkList = NodeStore.linkList.concat(wikiArticle.GetLinks());
-  }
-
-  static BacklinksCallback(nodesAndLinks: {nodeList : INode[]; linkList : Link[];}) {
-    NodeStore.nodeList = NodeStore.nodeList.concat(nodesAndLinks.nodeList);
-    NodeStore.linkList = NodeStore.linkList.concat(nodesAndLinks.linkList);
-  }
 }
 
 new MainEntry();

@@ -1,19 +1,16 @@
 import { MediaWikiArticle } from "./mediaWikiArticle";
-import { INode } from "../Model/INode";
-import { Link } from "../Model/Link";
 import { PropertyDataItem } from "./propertyDataItem";
-import { NodeType } from "../Model/nodeType";
 
 // noinspection UnnecessaryLocalVariableJS
 export class SemanticPropertyAndItems {
   public propertyName: string;
-  private readonly nicePropertyName: string;
+  readonly nicePropertyName: string;
 
   private subject: string | undefined;
   dataitems: PropertyDataItem[];
   private parentArticle!: MediaWikiArticle;
   private firstItem!: PropertyDataItem;
-  private readonly sourceNodeUrl: string;
+  readonly sourceNodeUrl: string;
 
   constructor(property: string, dataitems: PropertyDataItem[], subject: string | undefined, parentArticle: MediaWikiArticle) {
     console.log("Method enter: SemanticPropertyAndItems constructor");
@@ -54,17 +51,7 @@ export class SemanticPropertyAndItems {
       this.firstItem.item = `${this.firstItem.item}_${(this.propertyName)}`;
   }
 
-  ParsePropertyNode(dataitem: PropertyDataItem) {
-    //In the original version it was using the firstElement for the last 2 parameters
-    let name = this.parseNodeName(dataitem.item, dataitem.typeStr);
-    let hlink = this.parseHlink(dataitem.item, dataitem.typeStr, this.sourceNodeUrl);
-    let node = new INode(NodeType.Property, dataitem.item, name, "null", 0, 0, hlink);
-    return node;
-  }
 
-  ParsePropertyLink(dataitem: PropertyDataItem) {
-    return new Link(NodeType.Property, this.nicePropertyName, this.sourceNodeUrl, dataitem.item /*targetId*/, "");
-  }
 
   private NicePropertyName(): string {
     let p = this.getPropertyNiceName(this.propertyName);
@@ -106,35 +93,6 @@ export class SemanticPropertyAndItems {
         return "";
     }
   }
-  private parseNodeName(nameToParse: string, type: string) {
-    function parseNodeName() {
-      return nameToParse.split("#")[0].replace("_", " ");
-    }
 
-    let name;
-
-    switch (type) {
-      case "URI":
-        name = parseNodeName();
-        break;
-      case "Internal Link":
-        name = parseNodeName();
-        break;
-      case "Date":
-        name = nameToParse.substring(2);
-        break;
-      case "Boolean":
-        name = nameToParse === "t" ? "true" : "false";
-        break;
-      default:
-        name = parseNodeName();
-        break;
-    }
-    return name;
-  }
-
-  private parseHlink(nameToParse: string, type: string, url: string) {
-    return type === "URI" ? url : type === "Internal Link" ? `./${nameToParse.split("#")[0]}` : "";
-  }
 }
 

@@ -16737,6 +16737,120 @@ S2.define('jquery.select2',[
 
 /***/ }),
 
+/***/ "./includes/js/Bll/mediaWiki2NodesExt.ts":
+/*!***********************************************!*\
+  !*** ./includes/js/Bll/mediaWiki2NodesExt.ts ***!
+  \***********************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.MediaWiki2NodesExt = void 0;
+const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
+const nodeType_1 = __webpack_require__(/*! ../Model/nodeType */ "./includes/js/Model/nodeType.ts");
+const INode_1 = __webpack_require__(/*! ../Model/INode */ "./includes/js/Model/INode.ts");
+const semanticPropertyAndItems2Node_1 = __webpack_require__(/*! ./semanticPropertyAndItems2Node */ "./includes/js/Bll/semanticPropertyAndItems2Node.ts");
+class MediaWiki2NodesExt {
+    static getNodesAndLinks(article) {
+        app_1.MainEntry.focalNodeID = article.Id;
+        let node = this.GetNode(article);
+        let propertyList = this.ConvertPropertiesToNodesAndLinks(article);
+        let nodeList = propertyList.nodeList.concat(node);
+        let linkList = propertyList.linkList;
+        return { nodeList, linkList };
+    }
+    static GetNode(article) {
+        console.log("Method enter: GetNode");
+        let nameDoslike = article.Id.split("#")[0];
+        let nodeName = nameDoslike.replace("_", " ");
+        let node = new INode_1.INode(nodeType_1.NodeType.Article, article.Id, nodeName, "Internal Link", 10, 0, `./${nameDoslike}`);
+        node.fixed = true;
+        return node;
+    }
+    static ConvertPropertiesToNodesAndLinks(article) {
+        console.log("Method enter: HandleProperties");
+        let nodeList = [];
+        let linkList = [];
+        for (let semanticNode of article.semanticNodeList) {
+            if (semanticNode.IsSpecialProperty())
+                continue; // Non fare nulla se la proprietà è una delle proprietà speciali "_SKEY", "_MDAT" o "_ASK"
+            semanticNode.SetUri();
+            //All the nodes should be initialized before the links
+            for (let dataitem of semanticNode.dataitems) {
+                let node = semanticPropertyAndItems2Node_1.SemanticPropertyAndItems2Node.GetNode(semanticNode, dataitem);
+                nodeList.push(node);
+            }
+            for (let dataitem of semanticNode.dataitems) {
+                let link = semanticPropertyAndItems2Node_1.SemanticPropertyAndItems2Node.GetLink(semanticNode, dataitem);
+                linkList.push(link);
+            }
+        }
+        return { nodeList, linkList };
+    }
+}
+exports.MediaWiki2NodesExt = MediaWiki2NodesExt;
+
+
+/***/ }),
+
+/***/ "./includes/js/Bll/semanticPropertyAndItems2Node.ts":
+/*!**********************************************************!*\
+  !*** ./includes/js/Bll/semanticPropertyAndItems2Node.ts ***!
+  \**********************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SemanticPropertyAndItems2Node = void 0;
+const nodeType_1 = __webpack_require__(/*! ../Model/nodeType */ "./includes/js/Model/nodeType.ts");
+const INode_1 = __webpack_require__(/*! ../Model/INode */ "./includes/js/Model/INode.ts");
+const Link_1 = __webpack_require__(/*! ../Model/Link */ "./includes/js/Model/Link.ts");
+class SemanticPropertyAndItems2Node {
+    static GetNode(prop, dataitem) {
+        //In the original version it was using the firstElement for the last 2 parameters
+        let name = this.parseNodeName(dataitem.item, dataitem.typeStr);
+        let hlink = this.parseHlink(dataitem.item, dataitem.typeStr, prop.sourceNodeUrl);
+        let node = new INode_1.INode(nodeType_1.NodeType.Property, dataitem.item, name, "null", 0, 0, hlink);
+        return node;
+    }
+    static GetLink(prop, dataitem) {
+        return new Link_1.Link(nodeType_1.NodeType.Property, prop.nicePropertyName, prop.sourceNodeUrl, dataitem.item /*targetId*/, "");
+    }
+    static parseNodeName(nameToParse, type) {
+        function parseNodeName() {
+            return nameToParse.split("#")[0].replace("_", " ");
+        }
+        let name;
+        switch (type) {
+            case "URI":
+                name = parseNodeName();
+                break;
+            case "Internal Link":
+                name = parseNodeName();
+                break;
+            case "Date":
+                name = nameToParse.substring(2);
+                break;
+            case "Boolean":
+                name = nameToParse === "t" ? "true" : "false";
+                break;
+            default:
+                name = parseNodeName();
+                break;
+        }
+        return name;
+    }
+    static parseHlink(nameToParse, type, url) {
+        return type === "URI" ? url : type === "Internal Link" ? `./${nameToParse.split("#")[0]}` : "";
+    }
+}
+exports.SemanticPropertyAndItems2Node = SemanticPropertyAndItems2Node;
+
+
+/***/ }),
+
 /***/ "./includes/js/Helpers/ColorHelper.ts":
 /*!********************************************!*\
   !*** ./includes/js/Helpers/ColorHelper.ts ***!
@@ -16917,21 +17031,18 @@ class Link {
     target;
     direction;
     nodetype;
+    isValid;
+    sourceId;
+    targetId;
     constructor(nodetype, linkName, sourceId, targetId, direction) {
         this.linkName = linkName;
         this.direction = direction;
-        try {
-            if (!sourceId)
-                debugger;
-            if (!targetId)
-                debugger;
-            this.source = nodeStore_1.NodeStore.getNodeById(sourceId);
-            this.target = nodeStore_1.NodeStore.getNodeById(targetId);
-        }
-        catch (e) {
-            console.log("The nodes MUST be added to the node list before creating the links: " + e);
-        }
-        this.direction = sourceId === app_1.MainEntry.focalNodeID ? "OUT" : "IN";
+        this.isValid = false;
+        this.sourceId = sourceId;
+        this.targetId = targetId;
+        if (!sourceId || !targetId)
+            debugger;
+        //this.Fix(false);
         this.nodetype = nodetype;
         this.pointsFocalNode = targetId === app_1.MainEntry.focalNodeID;
     }
@@ -16953,18 +17064,40 @@ class Link {
         let y = this.CalcMiddlePoint(source.y, target.y);
         return { x, y };
     }
-    CalcMiddlePoint(p1, p2) {
-        return Math.min(p1, p2) + Math.abs(p2 - p1) / 2;
-    }
     debugString() {
         return `Link Name: ${this.linkName}, ` +
-            `Source ID: ${this.source.id}, ` +
-            `Target ID: ${this.target.id},` +
+            `Source ID: ${this.source?.id}, ` +
+            `Target ID: ${this.target?.id},` +
             `source type: ${typeof this.source}` +
             `target type: ${typeof this.target}` +
             `Points to Focal Node: ${this.pointsFocalNode}, ` +
             `Direction: ${this.direction}, ` +
             `nodetype: ${this.nodetype}`;
+    }
+    CalcMiddlePoint(p1, p2) {
+        return Math.min(p1, p2) + Math.abs(p2 - p1) / 2;
+    }
+    Fix(isBlocking) {
+        this.isValid = true;
+        try {
+            this.source = nodeStore_1.NodeStore.getNodeById(this.sourceId, isBlocking);
+        }
+        catch (e) {
+            console.log("The node " + this.sourceId + " was not found. Nodes MUST be added to the node list before creating the links.");
+            nodeStore_1.NodeStore.logNodeAndLinkStatus(true);
+            debugger;
+            this.isValid = false;
+        }
+        try {
+            this.target = nodeStore_1.NodeStore.getNodeById(this.targetId, isBlocking);
+        }
+        catch (e) {
+            console.log("The node " + this.targetId + " was not found. Nodes MUST be added to the node list before creating the links.");
+            nodeStore_1.NodeStore.logNodeAndLinkStatus(true);
+            debugger;
+            this.isValid = false;
+        }
+        this.direction = this.sourceId === app_1.MainEntry.focalNodeID ? "OUT" : "IN";
     }
 }
 exports.Link = Link;
@@ -16992,10 +17125,10 @@ var NodeType;
 
 /***/ }),
 
-/***/ "./includes/js/Semantic/Api/semanticWikiApi.ts":
-/*!*****************************************************!*\
-  !*** ./includes/js/Semantic/Api/semanticWikiApi.ts ***!
-  \*****************************************************/
+/***/ "./includes/js/SemanticMediaWikiApi/Api/semanticWikiApi.ts":
+/*!*****************************************************************!*\
+  !*** ./includes/js/SemanticMediaWikiApi/Api/semanticWikiApi.ts ***!
+  \*****************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -17003,15 +17136,11 @@ var NodeType;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SemanticWikiApi = void 0;
 const app_1 = __webpack_require__(/*! ../../app */ "./includes/js/app.ts");
-const INode_1 = __webpack_require__(/*! ../../Model/INode */ "./includes/js/Model/INode.ts");
-const nodeType_1 = __webpack_require__(/*! ../../Model/nodeType */ "./includes/js/Model/nodeType.ts");
-const Link_1 = __webpack_require__(/*! ../../Model/Link */ "./includes/js/Model/Link.ts");
-const mediaWikiArticle_1 = __webpack_require__(/*! ../mediaWikiArticle */ "./includes/js/Semantic/mediaWikiArticle.ts");
+const mediaWikiArticle_1 = __webpack_require__(/*! ../Types/mediaWikiArticle */ "./includes/js/SemanticMediaWikiApi/Types/mediaWikiArticle.ts");
 class SemanticWikiApi {
     static downloadedArticles = [];
     static BrowseBySubject(wikiArticleTitle, callback) {
         this.downloadedArticles = [];
-        let wikiArticle;
         $.ajax({
             url: mw.util.wikiScript("api"),
             data: {
@@ -17036,8 +17165,8 @@ class SemanticWikiApi {
                      * https://jsonformatter.org/json-parser/5e9d52
                      */
                     SemanticWikiApi.downloadedArticles.push(wikiArticleTitle);
-                    wikiArticle = new mediaWikiArticle_1.MediaWikiArticle(data.query.subject, data.query.data);
-                    callback();
+                    let wikiArticle = new mediaWikiArticle_1.MediaWikiArticle(data.query.subject, data.query.data);
+                    callback(wikiArticle);
                 }
             }
         });
@@ -17063,7 +17192,7 @@ class SemanticWikiApi {
                 }
                 else {
                     console.log("Callback data ParseBacklinks");
-                    let { nodeList, linkList } = SemanticWikiApi.ParseBacklinks(data.query.backlinks);
+                    let { nodeList, linkList } = app_1.MainEntry.ParseBacklinks(data.query.backlinks);
                     callback({ nodeList, linkList });
                 }
             }
@@ -17088,95 +17217,34 @@ class SemanticWikiApi {
             }
         });
     }
-    static ParseBacklinks(backlinks) {
-        console.log("Method enter: InitNodeAndLinks_Backlinks");
-        let nodeList = [];
-        let linkList = [];
-        for (let article of backlinks) {
-            let node = new INode_1.INode(nodeType_1.NodeType.Backlink, article.title, article.title, "Backlink", 0, 0, article.title);
-            nodeList.push(node);
-        }
-        for (let article of backlinks) {
-            let link = new Link_1.Link(nodeType_1.NodeType.Backlink, "Backlink", article.title, app_1.MainEntry.focalNodeID, "");
-            linkList.push(link);
-        }
-        return { nodeList, linkList };
-    }
 }
 exports.SemanticWikiApi = SemanticWikiApi;
 
 
 /***/ }),
 
-/***/ "./includes/js/Semantic/mediaWikiArticle.ts":
-/*!**************************************************!*\
-  !*** ./includes/js/Semantic/mediaWikiArticle.ts ***!
-  \**************************************************/
+/***/ "./includes/js/SemanticMediaWikiApi/Types/mediaWikiArticle.ts":
+/*!********************************************************************!*\
+  !*** ./includes/js/SemanticMediaWikiApi/Types/mediaWikiArticle.ts ***!
+  \********************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.MediaWikiArticle = void 0;
-const INode_1 = __webpack_require__(/*! ../Model/INode */ "./includes/js/Model/INode.ts");
-const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
-const semanticPropertyAndItems_1 = __webpack_require__(/*! ./semanticPropertyAndItems */ "./includes/js/Semantic/semanticPropertyAndItems.ts");
-const nodeType_1 = __webpack_require__(/*! ../Model/nodeType */ "./includes/js/Model/nodeType.ts");
+const semanticPropertyAndItems_1 = __webpack_require__(/*! ./semanticPropertyAndItems */ "./includes/js/SemanticMediaWikiApi/Types/semanticPropertyAndItems.ts");
 class MediaWikiArticle {
-    node;
     Id;
     semanticNodeList;
-    nodeList;
-    linkList;
     constructor(id, semanticNodeList) {
         console.log("Method enter: MediaWikiArticle constructor");
         this.Id = id; //'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
-        app_1.MainEntry.focalNodeID = id;
-        this.node = this.ParseNodeBrowseBySubject();
         this.semanticNodeList = [];
         for (const data of semanticNodeList) {
             let item = new semanticPropertyAndItems_1.SemanticPropertyAndItems(data.property, data.dataitem, data.subject, this);
             this.semanticNodeList.push(item);
         }
-        let propertyList = this.HandleProperties();
-        this.nodeList = propertyList.nodeList;
-        this.linkList = propertyList.linkList;
-    }
-    GetNodes() {
-        console.log("Method enter: MediaWikiArticle GetNodes");
-        return this.nodeList.concat(this.node);
-    }
-    GetLinks() {
-        console.log("Method enter: MediaWikiArticle GetLinks");
-        return this.linkList;
-    }
-    ParseNodeBrowseBySubject() {
-        console.log("Method enter: ParseNodeBrowseBySubject");
-        let nameDoslike = this.Id.split("#")[0];
-        let nodeName = nameDoslike.replace("_", " ");
-        let node = new INode_1.INode(nodeType_1.NodeType.Article, this.Id, nodeName, "Internal Link", 10, 0, `./${nameDoslike}`);
-        node.fixed = true;
-        return node;
-    }
-    HandleProperties() {
-        console.log("Method enter: HandleProperties");
-        let nodeList = [];
-        let linkList = [];
-        for (const semanticNode of this.semanticNodeList) {
-            if (semanticNode.IsSpecialProperty())
-                continue; // Non fare nulla se la proprietà è una delle proprietà speciali "_SKEY", "_MDAT" o "_ASK"
-            semanticNode.SetUri();
-            //All the nodes should be initialized before the links
-            for (let dataitem of semanticNode.dataitems) {
-                let node = semanticNode.ParsePropertyNode(dataitem);
-                nodeList.push(node);
-            }
-            for (let dataitem of semanticNode.dataitems) {
-                let link = semanticNode.ParsePropertyLink(dataitem);
-                linkList.push(link);
-            }
-        }
-        return { nodeList, linkList };
     }
 }
 exports.MediaWikiArticle = MediaWikiArticle;
@@ -17184,10 +17252,10 @@ exports.MediaWikiArticle = MediaWikiArticle;
 
 /***/ }),
 
-/***/ "./includes/js/Semantic/propertyDataItem.ts":
-/*!**************************************************!*\
-  !*** ./includes/js/Semantic/propertyDataItem.ts ***!
-  \**************************************************/
+/***/ "./includes/js/SemanticMediaWikiApi/Types/propertyDataItem.ts":
+/*!********************************************************************!*\
+  !*** ./includes/js/SemanticMediaWikiApi/Types/propertyDataItem.ts ***!
+  \********************************************************************/
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -17238,20 +17306,17 @@ exports.PropertyDataItem = PropertyDataItem;
 
 /***/ }),
 
-/***/ "./includes/js/Semantic/semanticPropertyAndItems.ts":
-/*!**********************************************************!*\
-  !*** ./includes/js/Semantic/semanticPropertyAndItems.ts ***!
-  \**********************************************************/
+/***/ "./includes/js/SemanticMediaWikiApi/Types/semanticPropertyAndItems.ts":
+/*!****************************************************************************!*\
+  !*** ./includes/js/SemanticMediaWikiApi/Types/semanticPropertyAndItems.ts ***!
+  \****************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SemanticPropertyAndItems = void 0;
-const INode_1 = __webpack_require__(/*! ../Model/INode */ "./includes/js/Model/INode.ts");
-const Link_1 = __webpack_require__(/*! ../Model/Link */ "./includes/js/Model/Link.ts");
-const propertyDataItem_1 = __webpack_require__(/*! ./propertyDataItem */ "./includes/js/Semantic/propertyDataItem.ts");
-const nodeType_1 = __webpack_require__(/*! ../Model/nodeType */ "./includes/js/Model/nodeType.ts");
+const propertyDataItem_1 = __webpack_require__(/*! ./propertyDataItem */ "./includes/js/SemanticMediaWikiApi/Types/propertyDataItem.ts");
 // noinspection UnnecessaryLocalVariableJS
 class SemanticPropertyAndItems {
     propertyName;
@@ -17292,16 +17357,6 @@ class SemanticPropertyAndItems {
         if (this.firstItem.item === this.sourceNodeUrl)
             this.firstItem.item = `${this.firstItem.item}_${(this.propertyName)}`;
     }
-    ParsePropertyNode(dataitem) {
-        //In the original version it was using the firstElement for the last 2 parameters
-        let name = this.parseNodeName(dataitem.item, dataitem.typeStr);
-        let hlink = this.parseHlink(dataitem.item, dataitem.typeStr, this.sourceNodeUrl);
-        let node = new INode_1.INode(nodeType_1.NodeType.Property, dataitem.item, name, "null", 0, 0, hlink);
-        return node;
-    }
-    ParsePropertyLink(dataitem) {
-        return new Link_1.Link(nodeType_1.NodeType.Property, this.nicePropertyName, this.sourceNodeUrl, dataitem.item /*targetId*/, "");
-    }
     NicePropertyName() {
         let p = this.getPropertyNiceName(this.propertyName);
         return p == "" ? this.propertyName.replace("_", " ") : p;
@@ -17339,33 +17394,6 @@ class SemanticPropertyAndItems {
             default:
                 return "";
         }
-    }
-    parseNodeName(nameToParse, type) {
-        function parseNodeName() {
-            return nameToParse.split("#")[0].replace("_", " ");
-        }
-        let name;
-        switch (type) {
-            case "URI":
-                name = parseNodeName();
-                break;
-            case "Internal Link":
-                name = parseNodeName();
-                break;
-            case "Date":
-                name = nameToParse.substring(2);
-                break;
-            case "Boolean":
-                name = nameToParse === "t" ? "true" : "false";
-                break;
-            default:
-                name = parseNodeName();
-                break;
-        }
-        return name;
-    }
-    parseHlink(nameToParse, type, url) {
-        return type === "URI" ? url : type === "Internal Link" ? `./${nameToParse.split("#")[0]}` : "";
     }
 }
 exports.SemanticPropertyAndItems = SemanticPropertyAndItems;
@@ -17729,7 +17757,7 @@ exports.LinkAndForcesManager = LinkAndForcesManager;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UiEventHandler = void 0;
 const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
-const semanticWikiApi_1 = __webpack_require__(/*! ../Semantic/Api/semanticWikiApi */ "./includes/js/Semantic/Api/semanticWikiApi.ts");
+const semanticWikiApi_1 = __webpack_require__(/*! ../SemanticMediaWikiApi/Api/semanticWikiApi */ "./includes/js/SemanticMediaWikiApi/Api/semanticWikiApi.ts");
 const legendManager_1 = __webpack_require__(/*! ./legendManager */ "./includes/js/Ui/legendManager.ts");
 const TRANSACTION_DURATION = 250;
 class UiEventHandler {
@@ -18211,14 +18239,18 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.MainEntry = void 0;
+const Link_1 = __webpack_require__(/*! ./Model/Link */ "./includes/js/Model/Link.ts");
 __webpack_require__(/*! select2 */ "./node_modules/select2/dist/js/select2.js");
-const semanticWikiApi_1 = __webpack_require__(/*! ./Semantic/Api/semanticWikiApi */ "./includes/js/Semantic/Api/semanticWikiApi.ts");
+const INode_1 = __webpack_require__(/*! ./Model/INode */ "./includes/js/Model/INode.ts");
+const semanticWikiApi_1 = __webpack_require__(/*! ./SemanticMediaWikiApi/Api/semanticWikiApi */ "./includes/js/SemanticMediaWikiApi/Api/semanticWikiApi.ts");
+const nodeType_1 = __webpack_require__(/*! ./Model/nodeType */ "./includes/js/Model/nodeType.ts");
 const nodeStore_1 = __webpack_require__(/*! ./nodeStore */ "./includes/js/nodeStore.ts");
 const Canvas_1 = __webpack_require__(/*! ./Ui/Canvas */ "./includes/js/Ui/Canvas.ts");
 const nodeManager_1 = __webpack_require__(/*! ./Ui/nodeManager */ "./includes/js/Ui/nodeManager.ts");
 const legendManager_1 = __webpack_require__(/*! ./Ui/legendManager */ "./includes/js/Ui/legendManager.ts");
 const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
 const LinkAndForcesManager_1 = __webpack_require__(/*! ./Ui/LinkAndForcesManager */ "./includes/js/Ui/LinkAndForcesManager.ts");
+const mediaWiki2NodesExt_1 = __webpack_require__(/*! ./Bll/mediaWiki2NodesExt */ "./includes/js/Bll/mediaWiki2NodesExt.ts");
 class MainEntry {
     static centerNodeSize = 50;
     static nodeSize = 10;
@@ -18263,6 +18295,30 @@ class MainEntry {
             // VisibilityHandler.hideElements();
         }
     }
+    static BrowseBySubjectCallback(wikiArticle) {
+        // NodeStore.nodeList.push(wikiArticle.node);
+        let nodesAndLinks = mediaWiki2NodesExt_1.MediaWiki2NodesExt.getNodesAndLinks(wikiArticle);
+        nodeStore_1.NodeStore.nodeList = nodeStore_1.NodeStore.nodeList.concat(nodesAndLinks.nodeList);
+        nodeStore_1.NodeStore.linkList = nodeStore_1.NodeStore.linkList.concat(nodesAndLinks.linkList);
+    }
+    static BacklinksCallback(nodesAndLinks) {
+        nodeStore_1.NodeStore.nodeList = nodeStore_1.NodeStore.nodeList.concat(nodesAndLinks.nodeList);
+        nodeStore_1.NodeStore.linkList = nodeStore_1.NodeStore.linkList.concat(nodesAndLinks.linkList);
+    }
+    static ParseBacklinks(backlinks) {
+        console.log("Method enter: ParseBacklinks");
+        let nodeList = [];
+        let linkList = [];
+        for (let article of backlinks) {
+            let node = new INode_1.INode(nodeType_1.NodeType.Backlink, article.title, article.title, "Backlink", 0, 0, article.title);
+            nodeList.push(node);
+        }
+        for (let article of backlinks) {
+            let link = new Link_1.Link(nodeType_1.NodeType.Backlink, "Backlink", article.title, MainEntry.focalNodeID, "");
+            linkList.push(link);
+        }
+        return { nodeList, linkList };
+    }
     /**
      * Draws a cluster using the provided data.
      *
@@ -18277,24 +18333,11 @@ class MainEntry {
         console.log("Called drawCluster; N° NodeStore.nodeList: " + nodeStore_1.NodeStore.nodeList.length);
         if (nodeStore_1.NodeStore.nodeList.length == 0)
             return;
+        nodeStore_1.NodeStore.UpdateSourceAndTarget();
         nodeManager_1.NodeManager.DrawNodes();
         LinkAndForcesManager_1.LinkAndForcesManager.DrawLinks();
         legendManager_1.LegendManager.DrawLegend();
         d3.select(window).on("resize.updatesvg", Canvas_1.Canvas.updateWindowSize);
-    }
-    // static resetData() {
-    //   NodeStore.nodeList = [];
-    //   NodeStore.linkList = [];
-    //   SemanticWikiApi.downloadedArticles = [];
-    // }
-    static BrowseBySubjectCallback(wikiArticle) {
-        // NodeStore.nodeList.push(wikiArticle.node);
-        nodeStore_1.NodeStore.nodeList = nodeStore_1.NodeStore.nodeList.concat(wikiArticle.GetNodes());
-        nodeStore_1.NodeStore.linkList = nodeStore_1.NodeStore.linkList.concat(wikiArticle.GetLinks());
-    }
-    static BacklinksCallback(nodesAndLinks) {
-        nodeStore_1.NodeStore.nodeList = nodeStore_1.NodeStore.nodeList.concat(nodesAndLinks.nodeList);
-        nodeStore_1.NodeStore.linkList = nodeStore_1.NodeStore.linkList.concat(nodesAndLinks.linkList);
     }
 }
 exports.MainEntry = MainEntry;
@@ -18314,14 +18357,9 @@ new MainEntry();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.NodeStore = void 0;
 const INode_1 = __webpack_require__(/*! ./Model/INode */ "./includes/js/Model/INode.ts");
-const app_1 = __webpack_require__(/*! ./app */ "./includes/js/app.ts");
 class NodeStore {
     static nodeList = [];
     static linkList = [];
-    // private constructor() {
-    //     NodeStore.nodeList = [];
-    //     NodeStore.linkList = [];
-    // }
     /*
         @param {INode[]} nodeSetApp - Set of nodes and their relevant data.
         @param {Link[]} linkSetApp - Set of links and their relevant data.
@@ -18331,27 +18369,26 @@ class NodeStore {
         console.log("Updating Source and Target of " + this.linkList.length + " links");
         // Append the source Node and the target Node to each Link
         for (let link of this.linkList) {
-            link.source = NodeStore.getNodeById(link.source.id);
-            link.target = NodeStore.getNodeById(link.target.id);
-            link.direction = link.source.id === app_1.MainEntry.focalNodeID ? "OUT" : "IN";
+            if (!link.isValid)
+                link.Fix(true);
         }
         NodeStore.isThereAnyUncompleteLink();
         // this.logNodeAndLinkStatus();
     }
-    static getNodeById(nodeId) {
+    static getNodeById(nodeId, isBlocking = false) {
         console.log("Method enter: getNodeById");
         let p = NodeStore.nodeList.find((node) => node.id === nodeId);
         if (p instanceof INode_1.INode) {
             return p;
         }
-        else {
+        else if (isBlocking) {
             console.log("N° of nodes " + NodeStore.nodeList.length);
             console.log("N° of links " + NodeStore.linkList.length);
             console.log("nodeId " + nodeId);
             console.log(NodeStore.nodeList.map(node => node.id));
             debugger;
-            throw new DOMException("Node not found");
         }
+        throw new DOMException("Node not found");
     }
     static logNodeAndLinkStatus(details) {
         console.log("N° of nodes " + NodeStore.nodeList.length);
