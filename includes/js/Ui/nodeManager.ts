@@ -37,18 +37,17 @@ export class NodeManager {
 
     // LinkAndForcesManager.forceDragBehaviour();
 
-    NodeManager.svgNodes = Canvas.svgCanvas.selectAll(".node").append("g")
+    NodeManager.svgNodes = Canvas.svgCanvas.selectAll(".node")
       .data(NodeStore.nodeList)
-      // .enter()
-      // .attr("class", "node")
+      .enter().append("g")
+      .attr("class", "node")
       .attr("id", (node: INode) => node.id)
       .attr("type_value", (node: INode) => node.type)
       .attr("color_value", (node: INode) => ColorHelper.color_hash[node.type])
       .attr("xlink:href", (node: INode) => node.hlink as string)
       .attr("fixed", node => node.IsFocalNode())
-      // .setXYPos()
-      .attr("cx", (node: INode) => node.x)
-      .attr("cy", (node: INode) => node.y)
+      // .attr("cx", (node: INode) => node.x)
+      // .attr("cy", (node: INode) => node.y)
       .on("mouseover", () => UiEventHandler.nodeMouseOver)
       .on("click", () => UiEventHandler.mouseClickNode)
       .on("mouseout", () => UiEventHandler.nodeMouseOut)
@@ -89,8 +88,8 @@ export class NodeManager {
 
   static AppendTextToNodes() {
     this.svgNodes.append("text")
-      .attr("x", (d: INode) => /*d.IsFocalNode() ?*/ d.x)
-      .attr("y", (d: INode) => /*d.IsFocalNode() ? 0 : -10*/ d.y)
+      .attr("x", (d: INode) => /*d.IsFocalNode() ?*/ 10)
+      .attr("y", (d: INode) => /*d.IsFocalNode() ? 0 : -10*/ 10)
       .attr("text-anchor", (d: INode) => d.IsFocalNode() ? "middle" : "start") //Not visible, just an attribute
       .style("font-family", "Arial, Helvetica, sans-serif")
       .style("font", "normal 16px Arial")
@@ -117,8 +116,8 @@ export class NodeManager {
       .attr("type_value", (d: INode) => d.type)
       .attr("color_value", (d: INode) => ColorHelper.color_hash[d.type])
       .attr("fixed", d => d.fixed)
-      .attr("cx", d => d.IsFocalNode() ? Canvas.width / 2 : d.x)
-      .attr("cy", d => d.IsFocalNode() ? Canvas.heigth / 2 : d.y)
+      // .attr("cx", d => d.IsFocalNode() ? Canvas.width / 2 : d.x)
+      // .attr("cy", d => d.IsFocalNode() ? Canvas.heigth / 2 : d.y)
       .attr("class", (d: INode) => {
         const strippedString = d.type.replace(/ /g, "_");
         // return "nodeCircle-" + strippedString; })

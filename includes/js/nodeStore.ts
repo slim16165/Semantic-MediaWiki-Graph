@@ -15,6 +15,12 @@ export class NodeStore {
         console.log("Method enter: UpdateSourceAndTarget")
         console.log("Updating Source and Target of " + this.linkList.length + " links");
         // Append the source Node and the target Node to each Link
+        for (let node of this.nodeList)
+        {
+            node.x = Math.random() * (500 - 20 + 1) + 20
+            node.y = Math.random() * (500 - 20 + 1) + 20
+        }
+
         for (let link of this.linkList)
         {
             if(!link.isValid)
@@ -41,8 +47,7 @@ export class NodeStore {
     }
 
     static logNodeAndLinkStatus(details : boolean) {
-        console.log("N° of nodes " + NodeStore.nodeList.length);
-        console.log("N° of links " + NodeStore.linkList.length);
+        console.log("N° of nodes " + NodeStore.nodeList.length + "; N° of links " + NodeStore.linkList.length);
 
         if(details) {
             console.log("Node Status:");

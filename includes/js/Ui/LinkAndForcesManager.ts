@@ -16,7 +16,7 @@ export class LinkAndForcesManager {
     console.log("Method enter: DrawLinks");
     NodeStore.UpdateSourceAndTarget();
 
-
+    //JSON.stringify(NodeStore);
 
     // Append text to Link edges
     this.AppendTextToLinkEdges();
@@ -26,7 +26,6 @@ export class LinkAndForcesManager {
     this.clickText = false;
 
     // Create a force layout and bind Nodes and Links
-    //TODO: da erorre, per ora commento
     this.CreateAForceLayoutAndBindNodesAndLinks()
       .on("tick", () => {
         this.Tick();
@@ -100,14 +99,14 @@ export class LinkAndForcesManager {
           .forceLink(NodeStore.linkList)
           .id((d) => {
             return (d as INode).name
-          })
+          }).strength(0.5)
           // .distance()
           // .strength(this.props.linkStrength)
       )
       .force("charge", d3.forceManyBody())
       .force("gravity", d3.forceManyBody())
       .force("friction", d3.forceManyBody())
-      .force("center", d3.forceCenter())
+      .force("center", d3.forceCenter(Canvas.width/2, Canvas.heigth/2))
       .alphaTarget(0.03);
 
     // const linkForce = d3.forceLink().id((d: any) => d.id);
@@ -191,14 +190,26 @@ export class LinkAndForcesManager {
 
   static updateNodePositionsOnUi() {
     NodeManager.svgNodes
-      .attr("cx", (d: any) => d.x)
-      .attr("cy", (d: any) => d.y);
+      .attr("transform", function(d) {
+        return `translate(${d.x},${d.y})`;
+      })
+    // Canvas.svgCanvas.selectAll(".gLink")
+    //   .attr("cx", (d: any) => d.x)
+    //   .attr("cy", (d: any) => d.y)
+    //   .data(NodeStore.linkList)
+    //   .enter().append("g")
+    //   .attr("cx", (d: any) => d.x)
+    //   .attr("cy", (d: any) => d.y);
+
+    // NodeManager.svgNodes
+    //   .attr("cx", (d: any) => d.x)
+    //   .attr("cy", (d: any) => d.y);
   }
 
   static updateLinkPositionsOnUi() {
 
     this.svgLinks
-      .each((link: Link) => LinkAndForcesManager.checkValues(link))
+      //.each((link: Link) => LinkAndForcesManager.checkValues(link))
       .attr("x1", (link: Link) => link.source.x)
       .attr("y1", (link: Link) => link.source.y)
       .attr("x2", (link: Link) => link.target.x)

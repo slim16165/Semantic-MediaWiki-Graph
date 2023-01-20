@@ -7,6 +7,7 @@ import { Canvas } from "./Canvas";
 import { CustomHTMLElement } from "../Model/OtherTypes";
 import { VisibilityHandler } from "./visibilityHandler";
 import { INode } from "../Model/INode";
+import { LinkAndForcesManager } from "./LinkAndForcesManager";
 
 export class LegendManager {
 
@@ -21,6 +22,19 @@ export class LegendManager {
 
     // Create legend text that acts as label keys...
     LegendManager.CreateLegendTextThatActsAsLabelKeys(sortedColors);
+
+    d3.select("input[type=range]")
+      .on("input", function(){inputted(this)});
+
+    function inputted(x: any) {
+      // @ts-ignore
+      LinkAndForcesManager.simulation.force("link").strength(x.value);
+      LinkAndForcesManager.simulation.alpha(1).restart();
+
+      LinkAndForcesManager.simulation.force("link", d3.forceLink().strength(x.value));
+      LinkAndForcesManager.simulation.alphaTarget(0);
+      LinkAndForcesManager.simulation.alphaMin(1);
+    }
   }
 
   public static clickLegend(selector:  Selection<SVGGElement, INode, SVGGElement, INode>) {

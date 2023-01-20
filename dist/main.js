@@ -17563,13 +17563,13 @@ class LinkAndForcesManager {
     static DrawLinks() {
         console.log("Method enter: DrawLinks");
         nodeStore_1.NodeStore.UpdateSourceAndTarget();
+        //JSON.stringify(NodeStore);
         // Append text to Link edges
         this.AppendTextToLinkEdges();
         // Draw lines for Links between Nodes
         this.DrawLinesForLinksBetweenNodes();
         this.clickText = false;
         // Create a force layout and bind Nodes and Links
-        //TODO: da erorre, per ora commento
         this.CreateAForceLayoutAndBindNodesAndLinks()
             .on("tick", () => {
             this.Tick();
@@ -17631,14 +17631,14 @@ class LinkAndForcesManager {
             .forceLink(nodeStore_1.NodeStore.linkList)
             .id((d) => {
             return d.name;
-        })
+        }).strength(0.5)
         // .distance()
         // .strength(this.props.linkStrength)
         )
             .force("charge", d3.forceManyBody())
             .force("gravity", d3.forceManyBody())
             .force("friction", d3.forceManyBody())
-            .force("center", d3.forceCenter())
+            .force("center", d3.forceCenter(Canvas_1.Canvas.width / 2, Canvas_1.Canvas.heigth / 2))
             .alphaTarget(0.03);
         // const linkForce = d3.forceLink().id((d: any) => d.id);
         // const width = Canvas.width;
@@ -17711,12 +17711,23 @@ class LinkAndForcesManager {
     }
     static updateNodePositionsOnUi() {
         nodeManager_1.NodeManager.svgNodes
-            .attr("cx", (d) => d.x)
-            .attr("cy", (d) => d.y);
+            .attr("transform", function (d) {
+            return `translate(${d.x},${d.y})`;
+        });
+        // Canvas.svgCanvas.selectAll(".gLink")
+        //   .attr("cx", (d: any) => d.x)
+        //   .attr("cy", (d: any) => d.y)
+        //   .data(NodeStore.linkList)
+        //   .enter().append("g")
+        //   .attr("cx", (d: any) => d.x)
+        //   .attr("cy", (d: any) => d.y);
+        // NodeManager.svgNodes
+        //   .attr("cx", (d: any) => d.x)
+        //   .attr("cy", (d: any) => d.y);
     }
     static updateLinkPositionsOnUi() {
         this.svgLinks
-            .each((link) => LinkAndForcesManager.checkValues(link))
+            //.each((link: Link) => LinkAndForcesManager.checkValues(link))
             .attr("x1", (link) => link.source.x)
             .attr("y1", (link) => link.source.y)
             .attr("x2", (link) => link.target.x)
@@ -17857,6 +17868,7 @@ const ColorHelper_1 = __webpack_require__(/*! ../Helpers/ColorHelper */ "./inclu
 const nodeManager_1 = __webpack_require__(/*! ./nodeManager */ "./includes/js/Ui/nodeManager.ts");
 const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts");
 const visibilityHandler_1 = __webpack_require__(/*! ./visibilityHandler */ "./includes/js/Ui/visibilityHandler.ts");
+const LinkAndForcesManager_1 = __webpack_require__(/*! ./LinkAndForcesManager */ "./includes/js/Ui/LinkAndForcesManager.ts");
 class LegendManager {
     static DrawLegend() {
         const sortedColors = ColorHelper_1.ColorHelper.GetColors("colorScale20");
@@ -17866,6 +17878,16 @@ class LegendManager {
         LegendManager.PlotTheBulletCircles(sortedColors);
         // Create legend text that acts as label keys...
         LegendManager.CreateLegendTextThatActsAsLabelKeys(sortedColors);
+        d3.select("input[type=range]")
+            .on("input", function () { inputted(this); });
+        function inputted(x) {
+            // @ts-ignore
+            LinkAndForcesManager_1.LinkAndForcesManager.simulation.force("link").strength(x.value);
+            LinkAndForcesManager_1.LinkAndForcesManager.simulation.alpha(1).restart();
+            LinkAndForcesManager_1.LinkAndForcesManager.simulation.force("link", d3.forceLink().strength(x.value));
+            LinkAndForcesManager_1.LinkAndForcesManager.simulation.alphaTarget(0);
+            LinkAndForcesManager_1.LinkAndForcesManager.simulation.alphaMin(1);
+        }
     }
     static clickLegend(selector) {
         const typeValue = selector.attr("type_value");
@@ -18025,18 +18047,17 @@ class NodeManager {
         In summary enter() allows to select and operate on data elements that haven't been associated yet to DOM elements.
         * */
         // LinkAndForcesManager.forceDragBehaviour();
-        NodeManager.svgNodes = Canvas_1.Canvas.svgCanvas.selectAll(".node").append("g")
+        NodeManager.svgNodes = Canvas_1.Canvas.svgCanvas.selectAll(".node")
             .data(nodeStore_1.NodeStore.nodeList)
-            // .enter()
-            // .attr("class", "node")
+            .enter().append("g")
+            .attr("class", "node")
             .attr("id", (node) => node.id)
             .attr("type_value", (node) => node.type)
             .attr("color_value", (node) => ColorHelper_1.ColorHelper.color_hash[node.type])
             .attr("xlink:href", (node) => node.hlink)
             .attr("fixed", node => node.IsFocalNode())
-            // .setXYPos()
-            .attr("cx", (node) => node.x)
-            .attr("cy", (node) => node.y)
+            // .attr("cx", (node: INode) => node.x)
+            // .attr("cy", (node: INode) => node.y)
             .on("mouseover", () => UiEventHandler_1.UiEventHandler.nodeMouseOver)
             .on("click", () => UiEventHandler_1.UiEventHandler.mouseClickNode)
             .on("mouseout", () => UiEventHandler_1.UiEventHandler.nodeMouseOut)
@@ -18068,8 +18089,8 @@ class NodeManager {
     }
     static AppendTextToNodes() {
         this.svgNodes.append("text")
-            .attr("x", (d) => /*d.IsFocalNode() ?*/ d.x)
-            .attr("y", (d) => /*d.IsFocalNode() ? 0 : -10*/ d.y)
+            .attr("x", (d) => /*d.IsFocalNode() ?*/ 10)
+            .attr("y", (d) => /*d.IsFocalNode() ? 0 : -10*/ 10)
             .attr("text-anchor", (d) => d.IsFocalNode() ? "middle" : "start") //Not visible, just an attribute
             .style("font-family", "Arial, Helvetica, sans-serif")
             .style("font", "normal 16px Arial")
@@ -18095,8 +18116,8 @@ class NodeManager {
             .attr("type_value", (d) => d.type)
             .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
             .attr("fixed", d => d.fixed)
-            .attr("cx", d => d.IsFocalNode() ? Canvas_1.Canvas.width / 2 : d.x)
-            .attr("cy", d => d.IsFocalNode() ? Canvas_1.Canvas.heigth / 2 : d.y)
+            // .attr("cx", d => d.IsFocalNode() ? Canvas.width / 2 : d.x)
+            // .attr("cy", d => d.IsFocalNode() ? Canvas.heigth / 2 : d.y)
             .attr("class", (d) => {
             const strippedString = d.type.replace(/ /g, "_");
             // return "nodeCircle-" + strippedString; })
@@ -18368,6 +18389,10 @@ class NodeStore {
         console.log("Method enter: UpdateSourceAndTarget");
         console.log("Updating Source and Target of " + this.linkList.length + " links");
         // Append the source Node and the target Node to each Link
+        for (let node of this.nodeList) {
+            node.x = Math.random() * (500 - 20 + 1) + 20;
+            node.y = Math.random() * (500 - 20 + 1) + 20;
+        }
         for (let link of this.linkList) {
             if (!link.isValid)
                 link.Fix(true);
@@ -18391,8 +18416,7 @@ class NodeStore {
         throw new DOMException("Node not found");
     }
     static logNodeAndLinkStatus(details) {
-        console.log("N° of nodes " + NodeStore.nodeList.length);
-        console.log("N° of links " + NodeStore.linkList.length);
+        console.log("N° of nodes " + NodeStore.nodeList.length + "; N° of links " + NodeStore.linkList.length);
         if (details) {
             console.log("Node Status:");
             let debugString = "";

@@ -67,7 +67,8 @@ class SpecialSemanticMediaWikiGraph extends SpecialPage
 </br>
 </br>
 <div class='wrapper' id='cluster_chart'>
-    <div class='chart' style='height:600px'></div>
+    <div class='chart' style='height:600px'/>
+    <label><input style="width:240px;" type="range" min="0" max="1" step="any" value="0.5"> Link Strength</label>
 </div>
 
 </body>
