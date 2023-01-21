@@ -17198,7 +17198,7 @@ class SemanticWikiApi {
             }
         });
     }
-    static AllPagesCall() {
+    static AllPagesCall(callback) {
         $.ajax({
             url: mw.util.wikiScript("api"),
             data: {
@@ -17213,7 +17213,7 @@ class SemanticWikiApi {
                 if (!(!(data?.edit && data.edit.result === "Success") && !(data?.error))) {
                     return;
                 }
-                app_1.MainEntry.PopulateSelectorWithWikiArticleUi(data.query.allpages);
+                callback(data.query.allpages);
             }
         });
     }
@@ -17519,10 +17519,10 @@ exports.Canvas = Canvas;
 
 /***/ }),
 
-/***/ "./includes/js/Ui/LinkAndForcesManager.ts":
-/*!************************************************!*\
-  !*** ./includes/js/Ui/LinkAndForcesManager.ts ***!
-  \************************************************/
+/***/ "./includes/js/Ui/ForcesManager.ts":
+/*!*****************************************!*\
+  !*** ./includes/js/Ui/ForcesManager.ts ***!
+  \*****************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -17551,54 +17551,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.LinkAndForcesManager = void 0;
-const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
+exports.ForcesManager = void 0;
 const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
+const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
 const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts");
 const nodeManager_1 = __webpack_require__(/*! ./nodeManager */ "./includes/js/Ui/nodeManager.ts");
-class LinkAndForcesManager {
+const LinkManager_1 = __webpack_require__(/*! ./LinkManager */ "./includes/js/Ui/LinkManager.ts");
+class ForcesManager {
     static simulation;
-    static svgLinks;
-    static clickText;
-    static DrawLinks() {
-        console.log("Method enter: DrawLinks");
-        nodeStore_1.NodeStore.UpdateSourceAndTarget();
-        //JSON.stringify(NodeStore);
-        // Append text to Link edges
-        this.AppendTextToLinkEdges();
-        // Draw lines for Links between Nodes
-        this.DrawLinesForLinksBetweenNodes();
-        this.clickText = false;
-        // Create a force layout and bind Nodes and Links
-        this.CreateAForceLayoutAndBindNodesAndLinks()
-            .on("tick", () => {
-            this.Tick();
-        });
-        //Build the Arrows
-        this.buildArrows();
-    }
-    /**
-     * Builds the arrows for the specified SVG canvas.
-     */
-    static buildArrows() {
-        /*
-        * Il tipo marker è un tipo di elemento SVG (Scalable Vector Graphics). Viene utilizzato per definire un segno o un simbolo da inserire in un altro elemento SVG, ad esempio una linea o un percorso. In questo caso, il codice sta creando un marker che verrà inserito come "punta di freccia" in tutti gli elementi di classe gLink.
-        Il marker viene creato con l'elemento marker di SVG, che ha un insieme di attributi che ne definiscono l'aspetto e il comportamento. Gli attributi id, viewBox, refX, refY, markerWidth e markerHeight sono tutti attributi standard del tag marker di SVG, mentre l'attributo orient è un attributo non standard che viene utilizzato per specificare l'orientamento del simbolo all'interno del marker.
-        L'attributo id viene utilizzato per assegnare un identificatore univoco al marker, che può essere utilizzato per fare riferimento al marker in altri punti del codice o nei fogli di stile CSS. L'attributo viewBox definisce l'area di visualizzazione del marker e il suo contenuto. L'attributo refX e refY vengono utilizzati per specificare le coordinate del punto di riferimento del marker, ovvero il punto del marker che verrà ancorato al percorso o all'elemento che lo utilizza. Gli attributi markerWidth e markerHeight definiscono la dimensione del marker.
-        Una volta creato il marker, viene aggiunto un elemento path che definisce la forma del simbolo all'interno del marker. In questo caso, la forma del simbolo è una freccia, definita dal valore "M0,-5L10,0L0,5" dell'attributo d dell'elemento path.*/
-        let selection = Canvas_1.Canvas.svgCanvas.selectAll(".gLink")
-            .data(nodeStore_1.NodeStore.linkList)
-            .append("marker")
-            .attr("id", (d, i) => `arrow_${i}`)
-            .attr("viewBox", "0 -5 10 10")
-            .attr("refX", (d) => d.pointsFocalNode ? 55 : 20)
-            .attr("refY", 0)
-            .attr("markerWidth", 8)
-            .attr("markerHeight", 8)
-            .attr("orient", "auto")
-            .append("svg:path")
-            .attr("d", "M0,-5L10,0L0,5");
-    }
     static CreateAForceLayoutAndBindNodesAndLinks() {
         /* Convert the values of an object into a format that can be used to compare or sort the values.
               Specifically, if the value passed is nonzero and its type is an object, then the valueOf() method is used to obtain the primitive value of the object.
@@ -17631,7 +17591,7 @@ class LinkAndForcesManager {
             .forceLink(nodeStore_1.NodeStore.linkList)
             .id((d) => {
             return d.name;
-        }).strength(0.5)
+        }).strength(0.05)
         // .distance()
         // .strength(this.props.linkStrength)
         )
@@ -17640,11 +17600,7 @@ class LinkAndForcesManager {
             .force("friction", d3.forceManyBody())
             .force("center", d3.forceCenter(Canvas_1.Canvas.width / 2, Canvas_1.Canvas.heigth / 2))
             .alphaTarget(0.03);
-        // const linkForce = d3.forceLink().id((d: any) => d.id);
-        // const width = Canvas.width;
-        // const height = Canvas.heigth;
         // linkForce.distance(() => width < height ? width / 3 : height / 3);
-        // this.simulation.force("link", linkForce);
         return this.simulation;
     }
     static MyDrag(simulation) {
@@ -17669,11 +17625,72 @@ class LinkAndForcesManager {
             .on("drag", dragged)
             .on("end", dragended);
     }
+    static Tick() {
+        console.log("Method enter: Tick");
+        nodeStore_1.NodeStore.logNodeAndLinkStatus(false);
+        ForcesManager.updateNodePositionsOnUi();
+        ForcesManager.updateLinkPositionsOnUi();
+        // Questo pezzo di codice si occupa di aggiungere del testo ai link e di posizionarlo nella parte centrale del link stesso.
+        // Il testo viene posizionato in modo che sia metà strada tra il nodo di partenza e quello di destinazione. Se il nodo di destinazione ha una coordinata x maggiore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y). Se invece il nodo di destinazione ha una coordinata x minore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y).
+        // LinkAndForcesManager.setLinkTextInMiddle("link");
+    }
+    static updateNodePositionsOnUi() {
+        nodeManager_1.NodeManager.svgNodes
+            .attr("transform", function (d) {
+            return `translate(${d.x},${d.y})`;
+        });
+    }
+    static updateLinkPositionsOnUi() {
+        LinkManager_1.LinkManager.svgLinks
+            //.each((link: Link) => LinkAndForcesManager.checkValues(link))
+            .attr("x1", (link) => link.source.x)
+            .attr("y1", (link) => link.source.y)
+            .attr("x2", (link) => link.target.x)
+            .attr("y2", (link) => link.target.y);
+        LinkManager_1.LinkManager.svgLinks.append("text")
+            .attr("font-family", "Arial, Helvetica, sans-serif")
+            .call(() => LinkManager_1.LinkManager.setLinkTextInMiddle);
+    }
+    static checkValues(link) {
+        if (!link.source || !link.target || isNaN(link.source.x) || isNaN(link.source.y))
+            debugger;
+    }
+}
+exports.ForcesManager = ForcesManager;
+
+
+/***/ }),
+
+/***/ "./includes/js/Ui/LinkManager.ts":
+/*!***************************************!*\
+  !*** ./includes/js/Ui/LinkManager.ts ***!
+  \***************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.LinkManager = void 0;
+const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
+const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts");
+class LinkManager {
+    static svgLinks;
+    static clickText;
+    static DrawLinks() {
+        console.log("Method enter: DrawLinks");
+        // Draw lines for Links between Nodes
+        this.DrawLinesForLinksBetweenNodes();
+        // Append text to Link edges
+        this.AppendTextToLinkEdges();
+        this.clickText = false;
+        //Build the Arrows
+        this.buildArrows();
+    }
     static DrawLinesForLinksBetweenNodes() {
         this.svgLinks = Canvas_1.Canvas.svgCanvas.selectAll(".gLink")
             .data(nodeStore_1.NodeStore.linkList)
             .enter().append("g")
-            // .attr("class", "gLink")
+            .attr("class", "gLink")
             .attr("class", "link")
             .attr("endNode", (d) => d.target.id)
             .attr("startNode", (d) => d.source.id)
@@ -17690,8 +17707,7 @@ class LinkAndForcesManager {
     }
     static AppendTextToLinkEdges() {
         console.log("Method enter: AppendTextToLinkEdges");
-        Canvas_1.Canvas.svgCanvas.selectAll(".gLink")
-            .data(nodeStore_1.NodeStore.linkList)
+        this.svgLinks
             .append("text")
             .attr("font-family", "Arial, Helvetica, sans-serif")
             .call(() => this.setLinkTextInMiddle)
@@ -17700,42 +17716,26 @@ class LinkAndForcesManager {
             .attr("dy", ".35em")
             .text((link) => link.linkName);
     }
-    static Tick() {
-        console.log("Method enter: Tick");
-        nodeStore_1.NodeStore.logNodeAndLinkStatus(false);
-        LinkAndForcesManager.updateNodePositionsOnUi();
-        LinkAndForcesManager.updateLinkPositionsOnUi();
-        // Questo pezzo di codice si occupa di aggiungere del testo ai link e di posizionarlo nella parte centrale del link stesso.
-        // Il testo viene posizionato in modo che sia metà strada tra il nodo di partenza e quello di destinazione. Se il nodo di destinazione ha una coordinata x maggiore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y). Se invece il nodo di destinazione ha una coordinata x minore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y).
-        // LinkAndForcesManager.setLinkTextInMiddle("link");
-    }
-    static updateNodePositionsOnUi() {
-        nodeManager_1.NodeManager.svgNodes
-            .attr("transform", function (d) {
-            return `translate(${d.x},${d.y})`;
-        });
-        // Canvas.svgCanvas.selectAll(".gLink")
-        //   .attr("cx", (d: any) => d.x)
-        //   .attr("cy", (d: any) => d.y)
-        //   .data(NodeStore.linkList)
-        //   .enter().append("g")
-        //   .attr("cx", (d: any) => d.x)
-        //   .attr("cy", (d: any) => d.y);
-        // NodeManager.svgNodes
-        //   .attr("cx", (d: any) => d.x)
-        //   .attr("cy", (d: any) => d.y);
-    }
-    static updateLinkPositionsOnUi() {
-        this.svgLinks
-            //.each((link: Link) => LinkAndForcesManager.checkValues(link))
-            .attr("x1", (link) => link.source.x)
-            .attr("y1", (link) => link.source.y)
-            .attr("x2", (link) => link.target.x)
-            .attr("y2", (link) => link.target.y);
-    }
-    static checkValues(link) {
-        if (!link.source || !link.target || isNaN(link.source.x) || isNaN(link.source.y))
-            debugger;
+    /**
+     * Builds the arrows for the specified SVG canvas.
+     */
+    static buildArrows() {
+        /*
+        * Il tipo marker è un tipo di elemento SVG (Scalable Vector Graphics). Viene utilizzato per definire un segno o un simbolo da inserire in un altro elemento SVG, ad esempio una linea o un percorso. In questo caso, il codice sta creando un marker che verrà inserito come "punta di freccia" in tutti gli elementi di classe gLink.
+        Il marker viene creato con l'elemento marker di SVG, che ha un insieme di attributi che ne definiscono l'aspetto e il comportamento. Gli attributi id, viewBox, refX, refY, markerWidth e markerHeight sono tutti attributi standard del tag marker di SVG, mentre l'attributo orient è un attributo non standard che viene utilizzato per specificare l'orientamento del simbolo all'interno del marker.
+        L'attributo id viene utilizzato per assegnare un identificatore univoco al marker, che può essere utilizzato per fare riferimento al marker in altri punti del codice o nei fogli di stile CSS. L'attributo viewBox definisce l'area di visualizzazione del marker e il suo contenuto. L'attributo refX e refY vengono utilizzati per specificare le coordinate del punto di riferimento del marker, ovvero il punto del marker che verrà ancorato al percorso o all'elemento che lo utilizza. Gli attributi markerWidth e markerHeight definiscono la dimensione del marker.
+        Una volta creato il marker, viene aggiunto un elemento path che definisce la forma del simbolo all'interno del marker. In questo caso, la forma del simbolo è una freccia, definita dal valore "M0,-5L10,0L0,5" dell'attributo d dell'elemento path.*/
+        let selection = this.svgLinks
+            .append("marker")
+            .attr("id", (d, i) => `arrow_${i}`)
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", (d) => d.pointsFocalNode ? 55 : 20)
+            .attr("refY", 0)
+            .attr("markerWidth", 8)
+            .attr("markerHeight", 8)
+            .attr("orient", "auto")
+            .append("svg:path")
+            .attr("d", "M0,-5L10,0L0,5");
     }
     /**
      Calculates and sets the position of the text element for the given link.
@@ -17752,7 +17752,7 @@ class LinkAndForcesManager {
             .attr("y", center.y);
     }
 }
-exports.LinkAndForcesManager = LinkAndForcesManager;
+exports.LinkManager = LinkManager;
 
 
 /***/ }),
@@ -17868,7 +17868,7 @@ const ColorHelper_1 = __webpack_require__(/*! ../Helpers/ColorHelper */ "./inclu
 const nodeManager_1 = __webpack_require__(/*! ./nodeManager */ "./includes/js/Ui/nodeManager.ts");
 const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts");
 const visibilityHandler_1 = __webpack_require__(/*! ./visibilityHandler */ "./includes/js/Ui/visibilityHandler.ts");
-const LinkAndForcesManager_1 = __webpack_require__(/*! ./LinkAndForcesManager */ "./includes/js/Ui/LinkAndForcesManager.ts");
+const ForcesManager_1 = __webpack_require__(/*! ./ForcesManager */ "./includes/js/Ui/ForcesManager.ts");
 class LegendManager {
     static DrawLegend() {
         const sortedColors = ColorHelper_1.ColorHelper.GetColors("colorScale20");
@@ -17879,14 +17879,14 @@ class LegendManager {
         // Create legend text that acts as label keys...
         LegendManager.CreateLegendTextThatActsAsLabelKeys(sortedColors);
         d3.select("input[type=range]")
-            .on("input", function () { inputted(this); });
-        function inputted(x) {
+            .on("input", function () { changeForceStrength(this.value); });
+        function changeForceStrength(val) {
             // @ts-ignore
-            LinkAndForcesManager_1.LinkAndForcesManager.simulation.force("link").strength(x.value);
-            LinkAndForcesManager_1.LinkAndForcesManager.simulation.alpha(1).restart();
-            LinkAndForcesManager_1.LinkAndForcesManager.simulation.force("link", d3.forceLink().strength(x.value));
-            LinkAndForcesManager_1.LinkAndForcesManager.simulation.alphaTarget(0);
-            LinkAndForcesManager_1.LinkAndForcesManager.simulation.alphaMin(1);
+            ForcesManager_1.ForcesManager.simulation.force("link").strength(val);
+            ForcesManager_1.ForcesManager.simulation.alpha(1).restart();
+            ForcesManager_1.ForcesManager.simulation.force("link", d3.forceLink().strength(val));
+            ForcesManager_1.ForcesManager.simulation.alphaTarget(0);
+            ForcesManager_1.ForcesManager.simulation.alphaMin(1);
         }
     }
     static clickLegend(selector) {
@@ -17927,11 +17927,14 @@ class LegendManager {
             .attr("class", (d) => {
             const strippedString = d.replace(/ /g, "_");
             return `legendBullet-${strippedString}`;
+        })
+            // @ts-ignore
+            .on("mouseover", function (d) { LegendManager.typeMouseOver(d3.select(this), 20); })
+            // @ts-ignore
+            .on("mouseout", function (d) { LegendManager.typeMouseOut(d3.select(this), 20); })
+            .on("click", function () {
+            LegendManager.clickLegend(d3.select(this));
         });
-        //TODO: disabilito
-        // .on("mouseover", function(d) {LegendManager.typeMouseOver(d3.select(this), d.nodeSize)})
-        // .on("mouseout", function(d) { LegendManager.typeMouseOut(d3.select(this), d.nodeSize); })
-        // .on("click", function() { LegendManager.clickLegend(d3.select(this)); });
     }
     static typeMouseOver(selector, nodeSize) {
         const typeValue = selector.attr("type_value");
@@ -17965,10 +17968,13 @@ class LegendManager {
             return `legendText-${strippedString}`;
         })
             .style("fill", "Black")
-            .style("font", "normal 14px Arial");
-        //TODO: commento
-        // .on("mouseover", function(d) { LegendManager.typeMouseOver(d3.select(this), d.nodeSize) })
-        // .on("mouseout", function(d) { LegendManager.typeMouseOut(d3.select(this), d.nodeSize) });
+            .style("font", "normal 14px Arial")
+            .on("mouseover", function (d) {
+            LegendManager.typeMouseOver(d3.select(this), d.nodeSize);
+        })
+            .on("mouseout", function (d) {
+            LegendManager.typeMouseOut(d3.select(this), d.nodeSize);
+        });
     }
     static PrintLegendTitle() {
         Canvas_1.Canvas.svgCanvas.append("text").attr("class", "region")
@@ -18024,7 +18030,7 @@ const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts
 const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
 const UiEventHandler_1 = __webpack_require__(/*! ./UiEventHandler */ "./includes/js/Ui/UiEventHandler.ts");
 const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
-const LinkAndForcesManager_1 = __webpack_require__(/*! ./LinkAndForcesManager */ "./includes/js/Ui/LinkAndForcesManager.ts");
+const ForcesManager_1 = __webpack_require__(/*! ./ForcesManager */ "./includes/js/Ui/ForcesManager.ts");
 class NodeManager {
     static svgNodes;
     static DrawNodes() {
@@ -18061,7 +18067,7 @@ class NodeManager {
             .on("mouseover", () => UiEventHandler_1.UiEventHandler.nodeMouseOver)
             .on("click", () => UiEventHandler_1.UiEventHandler.mouseClickNode)
             .on("mouseout", () => UiEventHandler_1.UiEventHandler.nodeMouseOut)
-            .call(LinkAndForcesManager_1.LinkAndForcesManager.MyDrag(LinkAndForcesManager_1.LinkAndForcesManager.simulation))
+            .call(ForcesManager_1.ForcesManager.MyDrag(ForcesManager_1.ForcesManager.simulation))
             // .attr("transform", function(d) {
             //   return `translate(${d.x},${d.y})`;
             // })
@@ -18089,6 +18095,7 @@ class NodeManager {
     }
     static AppendTextToNodes() {
         this.svgNodes.append("text")
+            //the text (inside each group) is offset of 10 px
             .attr("x", (d) => /*d.IsFocalNode() ?*/ 10)
             .attr("y", (d) => /*d.IsFocalNode() ? 0 : -10*/ 10)
             .attr("text-anchor", (d) => d.IsFocalNode() ? "middle" : "start") //Not visible, just an attribute
@@ -18112,12 +18119,11 @@ class NodeManager {
     }
     static AppendCirclesToNodes() {
         this.svgNodes.append("circle")
+            //the circle (inside each group) is centered to the center of the group
             .attr("r", (d) => d.IsFocalNode() ? app_1.MainEntry.centerNodeSize : app_1.MainEntry.nodeSize)
             .attr("type_value", (d) => d.type)
             .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
             .attr("fixed", d => d.fixed)
-            // .attr("cx", d => d.IsFocalNode() ? Canvas.width / 2 : d.x)
-            // .attr("cy", d => d.IsFocalNode() ? Canvas.heigth / 2 : d.y)
             .attr("class", (d) => {
             const strippedString = d.type.replace(/ /g, "_");
             // return "nodeCircle-" + strippedString; })
@@ -18270,8 +18276,9 @@ const Canvas_1 = __webpack_require__(/*! ./Ui/Canvas */ "./includes/js/Ui/Canvas
 const nodeManager_1 = __webpack_require__(/*! ./Ui/nodeManager */ "./includes/js/Ui/nodeManager.ts");
 const legendManager_1 = __webpack_require__(/*! ./Ui/legendManager */ "./includes/js/Ui/legendManager.ts");
 const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
-const LinkAndForcesManager_1 = __webpack_require__(/*! ./Ui/LinkAndForcesManager */ "./includes/js/Ui/LinkAndForcesManager.ts");
+const LinkManager_1 = __webpack_require__(/*! ./Ui/LinkManager */ "./includes/js/Ui/LinkManager.ts");
 const mediaWiki2NodesExt_1 = __webpack_require__(/*! ./Bll/mediaWiki2NodesExt */ "./includes/js/Bll/mediaWiki2NodesExt.ts");
+const ForcesManager_1 = __webpack_require__(/*! ./Ui/ForcesManager */ "./includes/js/Ui/ForcesManager.ts");
 class MainEntry {
     static centerNodeSize = 50;
     static nodeSize = 10;
@@ -18282,17 +18289,18 @@ class MainEntry {
         MainEntry.InitialPageLoad();
     }
     static InitialPageLoad() {
-        //
-        semanticWikiApi_1.SemanticWikiApi.AllPagesCall();
-        $(() => {
-            this.HandleOnClick();
-        });
+        //Downloads the list of articles from Semantic MediaWiki and calls the provided callback function
+        semanticWikiApi_1.SemanticWikiApi.AllPagesCall(MainEntry.PopulateSelectorWithWikiArticleUi);
     }
     static PopulateSelectorWithWikiArticleUi(articles) {
         for (const article of articles) {
             $("#wikiArticle").append(`<option value="${article.title}">${article.title}</option>`);
         }
-        $("#visualiseSite").on("click", () => { this.HandleOnClick(); });
+        $("#visualiseSite")
+            .on("click", (event) => {
+            event.preventDefault();
+            MainEntry.HandleOnClick();
+        });
         // require("select2");
         //
         // $("#wikiArticle").select2({
@@ -18354,9 +18362,15 @@ class MainEntry {
         console.log("Called drawCluster; N° NodeStore.nodeList: " + nodeStore_1.NodeStore.nodeList.length);
         if (nodeStore_1.NodeStore.nodeList.length == 0)
             return;
-        nodeStore_1.NodeStore.UpdateSourceAndTarget();
+        nodeStore_1.NodeStore.ConnectLinkSourceAndTarget();
+        //This part relates to the UI
         nodeManager_1.NodeManager.DrawNodes();
-        LinkAndForcesManager_1.LinkAndForcesManager.DrawLinks();
+        LinkManager_1.LinkManager.DrawLinks();
+        // Create a force layout and bind Nodes and Links
+        ForcesManager_1.ForcesManager.CreateAForceLayoutAndBindNodesAndLinks()
+            .on("tick", () => {
+            ForcesManager_1.ForcesManager.Tick();
+        });
         legendManager_1.LegendManager.DrawLegend();
         d3.select(window).on("resize.updatesvg", Canvas_1.Canvas.updateWindowSize);
     }
@@ -18385,7 +18399,7 @@ class NodeStore {
         @param {INode[]} nodeSetApp - Set of nodes and their relevant data.
         @param {Link[]} linkSetApp - Set of links and their relevant data.
      */
-    static UpdateSourceAndTarget() {
+    static ConnectLinkSourceAndTarget() {
         console.log("Method enter: UpdateSourceAndTarget");
         console.log("Updating Source and Target of " + this.linkList.length + " links");
         // Append the source Node and the target Node to each Link

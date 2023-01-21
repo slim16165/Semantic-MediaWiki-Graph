@@ -1,56 +1,14 @@
-import { NodeStore } from "../nodeStore";
+import { Simulation } from "d3";
 import * as d3 from "d3";
-import { Selection, Simulation, SimulationNodeDatum } from "d3";
-import { Canvas } from "./Canvas";
-import { Link } from "../Model/Link";
-import { Point } from "../Model/OtherTypes";
-import { NodeManager } from "./nodeManager";
+import { NodeStore } from "../nodeStore";
 import { INode } from "../Model/INode";
+import { Canvas } from "./Canvas";
+import { NodeManager } from "./nodeManager";
+import { Link } from "../Model/Link";
+import { LinkManager } from "./LinkManager";
 
-export class LinkAndForcesManager {
+export class ForcesManager{
   static simulation: Simulation<any, any>;
-  static svgLinks: Selection<any, Link, any, any>;
-  private static clickText: boolean;
-
-  static DrawLinks() {
-    console.log("Method enter: DrawLinks");
-
-    // Draw lines for Links between Nodes
-    this.DrawLinesForLinksBetweenNodes();
-
-    // Append text to Link edges
-    this.AppendTextToLinkEdges();
-
-    this.clickText = false;
-
-    //Build the Arrows
-    this.buildArrows();
-  }
-
-
-  /**
-   * Builds the arrows for the specified SVG canvas.
-   */
-  public static buildArrows(): void {
-    /*
-    * Il tipo marker è un tipo di elemento SVG (Scalable Vector Graphics). Viene utilizzato per definire un segno o un simbolo da inserire in un altro elemento SVG, ad esempio una linea o un percorso. In questo caso, il codice sta creando un marker che verrà inserito come "punta di freccia" in tutti gli elementi di classe gLink.
-    Il marker viene creato con l'elemento marker di SVG, che ha un insieme di attributi che ne definiscono l'aspetto e il comportamento. Gli attributi id, viewBox, refX, refY, markerWidth e markerHeight sono tutti attributi standard del tag marker di SVG, mentre l'attributo orient è un attributo non standard che viene utilizzato per specificare l'orientamento del simbolo all'interno del marker.
-    L'attributo id viene utilizzato per assegnare un identificatore univoco al marker, che può essere utilizzato per fare riferimento al marker in altri punti del codice o nei fogli di stile CSS. L'attributo viewBox definisce l'area di visualizzazione del marker e il suo contenuto. L'attributo refX e refY vengono utilizzati per specificare le coordinate del punto di riferimento del marker, ovvero il punto del marker che verrà ancorato al percorso o all'elemento che lo utilizza. Gli attributi markerWidth e markerHeight definiscono la dimensione del marker.
-    Una volta creato il marker, viene aggiunto un elemento path che definisce la forma del simbolo all'interno del marker. In questo caso, la forma del simbolo è una freccia, definita dal valore "M0,-5L10,0L0,5" dell'attributo d dell'elemento path.*/
-
-    let selection = Canvas.svgCanvas.selectAll(".gLink")
-      .data(NodeStore.linkList)
-      .append("marker")
-      .attr("id", (d: any, i: number) => `arrow_${i}`)
-      .attr("viewBox", "0 -5 10 10")
-      .attr("refX", (d: Link) => d.pointsFocalNode ? 55 : 20)
-      .attr("refY", 0)
-      .attr("markerWidth", 8)
-      .attr("markerHeight", 8)
-      .attr("orient", "auto")
-      .append("svg:path")
-      .attr("d", "M0,-5L10,0L0,5");
-  }
 
   public static  CreateAForceLayoutAndBindNodesAndLinks(): Simulation<any, any> {
     /* Convert the values of an object into a format that can be used to compare or sort the values.
@@ -86,14 +44,14 @@ export class LinkAndForcesManager {
 
     this.simulation = d3.forceSimulation()
       .nodes(NodeStore.nodeList)
-        .force('link',
+      .force('link',
         d3
           .forceLink(NodeStore.linkList)
           .id((d) => {
             return (d as INode).name
           }).strength(0.05)
-          // .distance()
-          // .strength(this.props.linkStrength)
+        // .distance()
+        // .strength(this.props.linkStrength)
       )
       .force("charge", d3.forceManyBody())
       .force("gravity", d3.forceManyBody())
@@ -129,45 +87,12 @@ export class LinkAndForcesManager {
       .on("end", dragended);
   }
 
-  private static DrawLinesForLinksBetweenNodes() {
-    this.svgLinks = Canvas.svgCanvas.selectAll(".gLink")
-      .data(NodeStore.linkList)
-      .enter().append("g")
-      .attr("class", "gLink")
-      .attr("class", "link")
-      .attr("endNode", (d: Link) => d.target.id)
-      .attr("startNode", (d: Link) => d.source.id)
-      .attr("targetType", (d: Link) => d.target.type)
-      .attr("sourceType", (d: Link) => d.source.type)
-      .append("line")
-      .style("stroke", "#ccc")
-      .style("stroke-width", "1.5px")
-      .attr("marker-end", (d: Link, index: number) => `url(#arrow_${index})`)
-      .attr("x1", (l: Link) => l.source.x)
-      .attr("y1", (l: Link) => l.source.y)
-      .attr("x2", (l: Link) => l.target.x)
-      .attr("y2", (l: Link) => l.target.y);
-  }
-
-  private static AppendTextToLinkEdges() {
-    console.log("Method enter: AppendTextToLinkEdges");
-
-    this.svgLinks
-      .append("text")
-      .attr("font-family", "Arial, Helvetica, sans-serif")
-      .call(() => this.setLinkTextInMiddle)
-      .attr("fill", "Black")
-      .style("font", "normal 12px Arial")
-      .attr("dy", ".35em")
-      .text((link: Link) => link.linkName);
-  }
-
   static Tick() {
     console.log("Method enter: Tick");
     NodeStore.logNodeAndLinkStatus(false);
 
-    LinkAndForcesManager.updateNodePositionsOnUi();
-    LinkAndForcesManager.updateLinkPositionsOnUi();
+    ForcesManager.updateNodePositionsOnUi();
+    ForcesManager.updateLinkPositionsOnUi();
 
     // Questo pezzo di codice si occupa di aggiungere del testo ai link e di posizionarlo nella parte centrale del link stesso.
     // Il testo viene posizionato in modo che sia metà strada tra il nodo di partenza e quello di destinazione. Se il nodo di destinazione ha una coordinata x maggiore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y). Se invece il nodo di destinazione ha una coordinata x minore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y).
@@ -183,7 +108,7 @@ export class LinkAndForcesManager {
 
   static updateLinkPositionsOnUi() {
 
-    this.svgLinks
+    LinkManager.svgLinks
       //.each((link: Link) => LinkAndForcesManager.checkValues(link))
       .attr("x1", (link: Link) => link.source.x)
       .attr("y1", (link: Link) => link.source.y)
@@ -191,30 +116,13 @@ export class LinkAndForcesManager {
       .attr("y2", (link: Link) => link.target.y);
 
 
-    this.svgLinks.append("text")
+    LinkManager.svgLinks.append("text")
       .attr("font-family", "Arial, Helvetica, sans-serif")
-      .call(() => this.setLinkTextInMiddle)
+      .call(() => LinkManager.setLinkTextInMiddle)
   }
 
   private static checkValues(link: Link) {
     if(!link.source || !link.target ||  isNaN(link.source.x) || isNaN(link.source.y))
       debugger;
-  }
-
-
-  /**
-   Calculates and sets the position of the text element for the given link.
-   @returns {void}
-   */
-  private static setLinkTextInMiddle(link: Selection<HTMLAnchorElement, Link, HTMLAnchorElement, Link>) {
-    if (link.empty()) {
-      console.log("link is empty");
-      return;
-    }
-
-    let center: Point = link.datum().CalculateMidpoint();
-    link
-      .attr("x", center.x)
-      .attr("y", center.y);
   }
 }

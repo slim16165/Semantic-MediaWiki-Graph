@@ -9,10 +9,11 @@ import { Canvas } from "./Ui/Canvas";
 import { NodeManager } from "./Ui/nodeManager";
 import { LegendManager } from "./Ui/legendManager";
 import * as d3 from "d3";
-import { LinkAndForcesManager } from "./Ui/LinkAndForcesManager";
+import { LinkManager } from "./Ui/LinkManager";
 import { VisibilityHandler } from "./Ui/visibilityHandler";
 import { MediaWikiArticle } from "./SemanticMediaWikiApi/Types/mediaWikiArticle";
 import { MediaWiki2NodesExt } from "./Bll/mediaWiki2NodesExt";
+import { ForcesManager } from "./Ui/ForcesManager";
 
 export class MainEntry {
 
@@ -120,12 +121,12 @@ export class MainEntry {
     //This part relates to the UI
     NodeManager.DrawNodes();
 
-    LinkAndForcesManager.DrawLinks();
+    LinkManager.DrawLinks();
 
     // Create a force layout and bind Nodes and Links
-    LinkAndForcesManager.CreateAForceLayoutAndBindNodesAndLinks()
+    ForcesManager.CreateAForceLayoutAndBindNodesAndLinks()
       .on("tick", () => {
-        LinkAndForcesManager.Tick();
+        ForcesManager.Tick();
       });
 
     LegendManager.DrawLegend();

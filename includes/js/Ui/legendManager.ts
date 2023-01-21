@@ -7,7 +7,8 @@ import { Canvas } from "./Canvas";
 import { CustomHTMLElement } from "../Model/OtherTypes";
 import { VisibilityHandler } from "./visibilityHandler";
 import { INode } from "../Model/INode";
-import { LinkAndForcesManager } from "./LinkAndForcesManager";
+import { LinkManager } from "./LinkManager";
+import { ForcesManager } from "./ForcesManager";
 
 export class LegendManager {
 
@@ -28,12 +29,12 @@ export class LegendManager {
 
     function changeForceStrength(val: number) {
       // @ts-ignore
-      LinkAndForcesManager.simulation.force("link").strength(val);
-      LinkAndForcesManager.simulation.alpha(1).restart();
+      ForcesManager.simulation.force("link").strength(val);
+      ForcesManager.simulation.alpha(1).restart();
 
-      LinkAndForcesManager.simulation.force("link", d3.forceLink().strength(val));
-      LinkAndForcesManager.simulation.alphaTarget(0);
-      LinkAndForcesManager.simulation.alphaMin(1);
+      ForcesManager.simulation.force("link", d3.forceLink().strength(val));
+      ForcesManager.simulation.alphaTarget(0);
+      ForcesManager.simulation.alphaMin(1);
     }
   }
 
