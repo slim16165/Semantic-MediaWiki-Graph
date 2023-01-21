@@ -1,6 +1,6 @@
 import { Selection } from "d3";
 import { MainEntry } from "../app";
-import { SemanticWikiApi } from "../Semantic/semanticWikiApi";
+import { SemanticWikiApi } from "../SemanticMediaWikiApi/Api/semanticWikiApi";
 import { INode } from "../Model/INode";
 import { LegendManager } from "./legendManager";
 
@@ -13,8 +13,8 @@ export class UiEventHandler {
 
     if (!clickText && typeValue === 'Internal Link') {
       const nodeName = selector.datum().name;
-      if (!MainEntry.downloadedArticles.includes(nodeName)) {
-        SemanticWikiApi.BrowseBySubject(nodeName);
+      if (!SemanticWikiApi.downloadedArticles.includes(nodeName)) {
+        SemanticWikiApi.BrowseBySubject(nodeName, MainEntry.BrowseBySubjectCallback);
       }
     }
 

@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import { BaseType, DragBehavior, Selection } from "d3";
+import { BaseType, drag, DragBehavior, Selection } from "d3";
 import { ColorHelper } from "../Helpers/ColorHelper";
 import { Canvas } from "./Canvas";
 import { NodeStore } from "../nodeStore";
@@ -35,28 +35,26 @@ export class NodeManager {
     In summary enter() allows to select and operate on data elements that haven't been associated yet to DOM elements.
     * */
 
-
+    // LinkAndForcesManager.forceDragBehaviour();
 
     NodeManager.svgNodes = Canvas.svgCanvas.selectAll(".node")
       .data(NodeStore.nodeList)
-      .enter()
-      .append("g")
+      .enter().append("g")
       .attr("class", "node")
       .attr("id", (node: INode) => node.id)
       .attr("type_value", (node: INode) => node.type)
       .attr("color_value", (node: INode) => ColorHelper.color_hash[node.type])
       .attr("xlink:href", (node: INode) => node.hlink as string)
       .attr("fixed", node => node.IsFocalNode())
-      // .setXYPos()
       // .attr("cx", (node: INode) => node.x)
       // .attr("cy", (node: INode) => node.y)
       .on("mouseover", () => UiEventHandler.nodeMouseOver)
       .on("click", () => UiEventHandler.mouseClickNode)
       .on("mouseout", () => UiEventHandler.nodeMouseOut)
-      .call(LinkAndForcesManager.forceDragBehaviour)
-      .attr("transform", function(d) {
-        return `translate(${d.x},${d.y})`;
-      })
+      .call(LinkAndForcesManager.MyDrag(LinkAndForcesManager.simulation))
+      // .attr("transform", function(d) {
+      //   return `translate(${d.x},${d.y})`;
+      // })
       .append("a");
 
     return this.svgNodes;
@@ -86,12 +84,11 @@ export class NodeManager {
     }
   }
 
-
-
   static AppendTextToNodes() {
     this.svgNodes.append("text")
-      .attr("x", (d: INode) => /*d.IsFocalNode() ?*/ d.x)
-      .attr("y", (d: INode) => /*d.IsFocalNode() ? 0 : -10*/ d.y)
+      //the text (inside each group) is offset of 10 px
+      .attr("x", (d: INode) => /*d.IsFocalNode() ?*/ 10)
+      .attr("y", (d: INode) => /*d.IsFocalNode() ? 0 : -10*/ 10)
       .attr("text-anchor", (d: INode) => d.IsFocalNode() ? "middle" : "start") //Not visible, just an attribute
       .style("font-family", "Arial, Helvetica, sans-serif")
       .style("font", "normal 16px Arial")
@@ -114,12 +111,11 @@ export class NodeManager {
 
   static AppendCirclesToNodes() {
     this.svgNodes.append("circle")
+      //the circle (inside each group) is centered to the center of the group
       .attr("r", (d: INode) => d.IsFocalNode() ? MainEntry.centerNodeSize : MainEntry.nodeSize)
       .attr("type_value", (d: INode) => d.type)
       .attr("color_value", (d: INode) => ColorHelper.color_hash[d.type])
       .attr("fixed", d => d.fixed)
-      .attr("cx", d => d.IsFocalNode() ? Canvas.width / 2 : d.x)
-      .attr("cy", d => d.IsFocalNode() ? Canvas.heigth / 2 : d.y)
       .attr("class", (d: INode) => {
         const strippedString = d.type.replace(/ /g, "_");
         // return "nodeCircle-" + strippedString; })

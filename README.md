@@ -1,8 +1,52 @@
 # 🚀 Semantic-MediaWiki-Graph
 
-### The link to the user documentation
+## The link to the user documentation
 
 https://www.mediawiki.org/wiki/Extension:Semantic_MediaWiki_Graph
+
+MediaWiki Extension: SemanticMediaWikiGraph
+This extension for MediaWiki allows users to create and visualize a graph of semantic data stored in the wiki using a combination of JavaScript libraries and PHP.
+
+## Features
+
+Provides a user interface for creating and visualizing a graph of semantic data stored in the wiki using a combination of JavaScript libraries and PHP
+Includes options for customizing the graph layout and display
+Can be used with the Semantic MediaWiki extension to query and display semantic data in the graph
+
+## Installation
+
+Download the extension files and place them in the extensions directory of your MediaWiki installation.
+Add the following line to your `LocalSettings.php` file:
+```
+wfLoadExtension( 'SemanticMediaWikiGraph' );
+```
+
+Configure the extension by setting any necessary options in LocalSettings.php
+
+## Requirements
+
+MediaWiki 1.35+
+Semantic MediaWiki extension (if you want to use semantic data)
+JavaScript Libraries (`d3.js`)
+
+## Usage
+
+To create a graph, navigate to Special:SemanticMediaWikiGraph in the wiki and configure the graph options.
+Once the graph is created, it can be accessed and modified through the Special:SemanticMediaWikiGraph page.
+The graph can also be embedded on other pages using the <semanticmediawikigraph> tag.
+Contribution
+You can submit issues, bugs, or feature requests through the GitHub repository
+You can also fork the repository and submit pull requests with your contributions.
+Licensing
+This extension is licensed under the GNU General Public License v3.0.
+
+## Additional information
+
+The dist folder contains the compiled and minified version of the JavaScript code.
+The includes folder contains the PHP code for the extension.
+The node_modules folder contains the npm packages used for development.
+The .github, .idea, .vs, .vscode folders are for internal use and development environment.
+
 
 ### Developer information
 This project has been created using **webpack-cli**, you can now run

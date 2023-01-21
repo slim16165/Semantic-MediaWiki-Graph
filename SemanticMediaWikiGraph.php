@@ -16,9 +16,9 @@ EOT;
 $wgExtensionCredits[defined('SEMANTIC_EXTENSION_TYPE') ? 'semantic' : 'specialpage'][] = array(
     'path' => __FILE__,
     'name' => 'Semantic MediaWiki Graph',
-    'author' => '[http://www.aifb.kit.edu/web/Tobias_Weller Tobias Weller]',
+    'author' => '[http://www.aifb.kit.edu/web/Tobias_Weller Tobias Weller], Gianluigi Salvi',
     'description' => 'Provides special pages for browsing Semantic MediaWiki links.',
-    'version' => '1.0',
+    'version' => '2-alpha',
     'license-name' => "Apache License 2.0",   // Short name of the license, links LICENSE or COPYING file if existing - string, added in 1.23.0
     'url' => "https://www.mediawiki.org/wiki/Extension:SemanticMediaWiki_Graph",
 );

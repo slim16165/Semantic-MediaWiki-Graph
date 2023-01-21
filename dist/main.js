@@ -16737,6 +16737,120 @@ S2.define('jquery.select2',[
 
 /***/ }),
 
+/***/ "./includes/js/Bll/mediaWiki2NodesExt.ts":
+/*!***********************************************!*\
+  !*** ./includes/js/Bll/mediaWiki2NodesExt.ts ***!
+  \***********************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.MediaWiki2NodesExt = void 0;
+const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
+const nodeType_1 = __webpack_require__(/*! ../Model/nodeType */ "./includes/js/Model/nodeType.ts");
+const INode_1 = __webpack_require__(/*! ../Model/INode */ "./includes/js/Model/INode.ts");
+const semanticPropertyAndItems2Node_1 = __webpack_require__(/*! ./semanticPropertyAndItems2Node */ "./includes/js/Bll/semanticPropertyAndItems2Node.ts");
+class MediaWiki2NodesExt {
+    static getNodesAndLinks(article) {
+        app_1.MainEntry.focalNodeID = article.Id;
+        let node = this.GetNode(article);
+        let propertyList = this.ConvertPropertiesToNodesAndLinks(article);
+        let nodeList = propertyList.nodeList.concat(node);
+        let linkList = propertyList.linkList;
+        return { nodeList, linkList };
+    }
+    static GetNode(article) {
+        console.log("Method enter: GetNode");
+        let nameDoslike = article.Id.split("#")[0];
+        let nodeName = nameDoslike.replace("_", " ");
+        let node = new INode_1.INode(nodeType_1.NodeType.Article, article.Id, nodeName, "Internal Link", 10, 0, `./${nameDoslike}`);
+        node.fixed = true;
+        return node;
+    }
+    static ConvertPropertiesToNodesAndLinks(article) {
+        console.log("Method enter: HandleProperties");
+        let nodeList = [];
+        let linkList = [];
+        for (let semanticNode of article.semanticNodeList) {
+            if (semanticNode.IsSpecialProperty())
+                continue; // Non fare nulla se la proprietà è una delle proprietà speciali "_SKEY", "_MDAT" o "_ASK"
+            semanticNode.SetUri();
+            //All the nodes should be initialized before the links
+            for (let dataitem of semanticNode.dataitems) {
+                let node = semanticPropertyAndItems2Node_1.SemanticPropertyAndItems2Node.GetNode(semanticNode, dataitem);
+                nodeList.push(node);
+            }
+            for (let dataitem of semanticNode.dataitems) {
+                let link = semanticPropertyAndItems2Node_1.SemanticPropertyAndItems2Node.GetLink(semanticNode, dataitem);
+                linkList.push(link);
+            }
+        }
+        return { nodeList, linkList };
+    }
+}
+exports.MediaWiki2NodesExt = MediaWiki2NodesExt;
+
+
+/***/ }),
+
+/***/ "./includes/js/Bll/semanticPropertyAndItems2Node.ts":
+/*!**********************************************************!*\
+  !*** ./includes/js/Bll/semanticPropertyAndItems2Node.ts ***!
+  \**********************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SemanticPropertyAndItems2Node = void 0;
+const nodeType_1 = __webpack_require__(/*! ../Model/nodeType */ "./includes/js/Model/nodeType.ts");
+const INode_1 = __webpack_require__(/*! ../Model/INode */ "./includes/js/Model/INode.ts");
+const Link_1 = __webpack_require__(/*! ../Model/Link */ "./includes/js/Model/Link.ts");
+class SemanticPropertyAndItems2Node {
+    static GetNode(prop, dataitem) {
+        //In the original version it was using the firstElement for the last 2 parameters
+        let name = this.parseNodeName(dataitem.item, dataitem.typeStr);
+        let hlink = this.parseHlink(dataitem.item, dataitem.typeStr, prop.sourceNodeUrl);
+        let node = new INode_1.INode(nodeType_1.NodeType.Property, dataitem.item, name, "null", 0, 0, hlink);
+        return node;
+    }
+    static GetLink(prop, dataitem) {
+        return new Link_1.Link(nodeType_1.NodeType.Property, prop.nicePropertyName, prop.sourceNodeUrl, dataitem.item /*targetId*/, "");
+    }
+    static parseNodeName(nameToParse, type) {
+        function parseNodeName() {
+            return nameToParse.split("#")[0].replace("_", " ");
+        }
+        let name;
+        switch (type) {
+            case "URI":
+                name = parseNodeName();
+                break;
+            case "Internal Link":
+                name = parseNodeName();
+                break;
+            case "Date":
+                name = nameToParse.substring(2);
+                break;
+            case "Boolean":
+                name = nameToParse === "t" ? "true" : "false";
+                break;
+            default:
+                name = parseNodeName();
+                break;
+        }
+        return name;
+    }
+    static parseHlink(nameToParse, type, url) {
+        return type === "URI" ? url : type === "Internal Link" ? `./${nameToParse.split("#")[0]}` : "";
+    }
+}
+exports.SemanticPropertyAndItems2Node = SemanticPropertyAndItems2Node;
+
+
+/***/ }),
+
 /***/ "./includes/js/Helpers/ColorHelper.ts":
 /*!********************************************!*\
   !*** ./includes/js/Helpers/ColorHelper.ts ***!
@@ -16853,8 +16967,8 @@ class INode {
         this.id = id;
         this.name = name;
         //Randomize initial position
-        this.x = Math.floor(Math.random() * (500 - 20 + 1) + 20);
-        this.y = Math.floor(Math.random() * (500 - 20 + 1) + 20);
+        this.x = x;
+        this.y = y;
         this.hlink = hlink;
         this.type = type;
         this.notetype = nodeType;
@@ -16907,47 +17021,36 @@ exports.INode = INode;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Link = void 0;
 const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
+const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
 /* Connection between two Nodes
 * */
 class Link {
     linkName;
-    sourceId;
-    targetId;
     pointsFocalNode;
     source;
     target;
     direction;
     nodetype;
-    constructor(nodetype, linkName, sourceId, targetId, source, target, direction) {
-        this.sourceId = sourceId;
+    isValid;
+    sourceId;
+    targetId;
+    constructor(nodetype, linkName, sourceId, targetId, direction) {
         this.linkName = linkName;
-        this.targetId = targetId;
         this.direction = direction;
-        this.UpdateSourceAndTarget(source, target);
+        this.isValid = false;
+        this.sourceId = sourceId;
+        this.targetId = targetId;
+        if (!sourceId || !targetId)
+            debugger;
+        //this.Fix(false);
         this.nodetype = nodetype;
         this.pointsFocalNode = targetId === app_1.MainEntry.focalNodeID;
-    }
-    UpdateSourceAndTarget(source, target) {
-        try {
-            if (source)
-                this.source = source;
-            // else
-            //     this.source = NodeStore.getNodeById(this.sourceId);
-            if (target)
-                this.target = target;
-            // else
-            //     this.target = NodeStore.getNodeById(this.targetId);
-        }
-        catch (e) {
-            console.log("Early link initialization error: " + e);
-        }
-        this.direction = this.sourceId === app_1.MainEntry.focalNodeID ? "OUT" : "IN";
     }
     // noinspection JSUnusedGlobalSymbols
     static cloneEdge(array) {
         const newArr = [];
         array.forEach((item) => {
-            newArr.push(new Link(item.nodetype, item.linkName, item.sourceId, item.targetId, item.source, item.target, item.direction));
+            newArr.push(new Link(item.nodetype, item.linkName, item.source.id, item.target.id, item.direction));
         });
         return newArr;
     }
@@ -16961,18 +17064,40 @@ class Link {
         let y = this.CalcMiddlePoint(source.y, target.y);
         return { x, y };
     }
-    CalcMiddlePoint(p1, p2) {
-        return Math.min(p1, p2) + Math.abs(p2 - p1) / 2;
-    }
     debugString() {
         return `Link Name: ${this.linkName}, ` +
-            `Source ID: ${this.sourceId}, ` +
-            `Target ID: ${this.targetId},` +
+            `Source ID: ${this.source?.id}, ` +
+            `Target ID: ${this.target?.id},` +
             `source type: ${typeof this.source}` +
             `target type: ${typeof this.target}` +
             `Points to Focal Node: ${this.pointsFocalNode}, ` +
             `Direction: ${this.direction}, ` +
             `nodetype: ${this.nodetype}`;
+    }
+    CalcMiddlePoint(p1, p2) {
+        return Math.min(p1, p2) + Math.abs(p2 - p1) / 2;
+    }
+    Fix(isBlocking) {
+        this.isValid = true;
+        try {
+            this.source = nodeStore_1.NodeStore.getNodeById(this.sourceId, isBlocking);
+        }
+        catch (e) {
+            console.log("The node " + this.sourceId + " was not found. Nodes MUST be added to the node list before creating the links.");
+            nodeStore_1.NodeStore.logNodeAndLinkStatus(true);
+            debugger;
+            this.isValid = false;
+        }
+        try {
+            this.target = nodeStore_1.NodeStore.getNodeById(this.targetId, isBlocking);
+        }
+        catch (e) {
+            console.log("The node " + this.targetId + " was not found. Nodes MUST be added to the node list before creating the links.");
+            nodeStore_1.NodeStore.logNodeAndLinkStatus(true);
+            debugger;
+            this.isValid = false;
+        }
+        this.direction = this.sourceId === app_1.MainEntry.focalNodeID ? "OUT" : "IN";
     }
 }
 exports.Link = Link;
@@ -17000,51 +17125,125 @@ var NodeType;
 
 /***/ }),
 
-/***/ "./includes/js/Semantic/mediaWikiArticle.ts":
-/*!**************************************************!*\
-  !*** ./includes/js/Semantic/mediaWikiArticle.ts ***!
-  \**************************************************/
+/***/ "./includes/js/SemanticMediaWikiApi/Api/semanticWikiApi.ts":
+/*!*****************************************************************!*\
+  !*** ./includes/js/SemanticMediaWikiApi/Api/semanticWikiApi.ts ***!
+  \*****************************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SemanticWikiApi = void 0;
+const app_1 = __webpack_require__(/*! ../../app */ "./includes/js/app.ts");
+const mediaWikiArticle_1 = __webpack_require__(/*! ../Types/mediaWikiArticle */ "./includes/js/SemanticMediaWikiApi/Types/mediaWikiArticle.ts");
+class SemanticWikiApi {
+    static downloadedArticles = [];
+    static BrowseBySubject(wikiArticleTitle, callback) {
+        this.downloadedArticles = [];
+        $.ajax({
+            url: mw.util.wikiScript("api"),
+            data: {
+                action: "browsebysubject",
+                subject: wikiArticleTitle,
+                format: "json"
+            },
+            type: "GET",
+            async: false,
+            success: function (data) {
+                if (data?.edit && data.edit.result === "Success") {
+                    // debugger;
+                }
+                else if (data?.error) {
+                    alert(data);
+                    // debugger;
+                }
+                else {
+                    /**
+                     *  }
+                     * JSON.stringify(data)
+                     * https://jsonformatter.org/json-parser/5e9d52
+                     */
+                    SemanticWikiApi.downloadedArticles.push(wikiArticleTitle);
+                    let wikiArticle = new mediaWikiArticle_1.MediaWikiArticle(data.query.subject, data.query.data);
+                    callback(wikiArticle);
+                }
+            }
+        });
+    }
+    static QueryBackLinks(wikiArticle, callback) {
+        $.ajax({
+            url: mw.util.wikiScript("api"),
+            data: {
+                action: "query",
+                list: "backlinks",
+                bltitle: wikiArticle,
+                format: "json"
+            },
+            type: "GET",
+            async: false,
+            success: function (data) {
+                if (data?.edit && data.edit.result === "Success") {
+                    // debugger;
+                }
+                else if (data?.error) {
+                    alert((data));
+                    // debugger;
+                }
+                else {
+                    console.log("Callback data ParseBacklinks");
+                    let { nodeList, linkList } = app_1.MainEntry.ParseBacklinks(data.query.backlinks);
+                    callback({ nodeList, linkList });
+                }
+            }
+        });
+    }
+    static AllPagesCall() {
+        $.ajax({
+            url: mw.util.wikiScript("api"),
+            data: {
+                action: "query",
+                list: "allpages",
+                aplimit: 1000,
+                format: "json"
+            },
+            type: "GET",
+            async: false,
+            success(data) {
+                if (!(!(data?.edit && data.edit.result === "Success") && !(data?.error))) {
+                    return;
+                }
+                app_1.MainEntry.PopulateSelectorWithWikiArticleUi(data.query.allpages);
+            }
+        });
+    }
+}
+exports.SemanticWikiApi = SemanticWikiApi;
+
+
+/***/ }),
+
+/***/ "./includes/js/SemanticMediaWikiApi/Types/mediaWikiArticle.ts":
+/*!********************************************************************!*\
+  !*** ./includes/js/SemanticMediaWikiApi/Types/mediaWikiArticle.ts ***!
+  \********************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.MediaWikiArticle = void 0;
-const INode_1 = __webpack_require__(/*! ../Model/INode */ "./includes/js/Model/INode.ts");
-const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
-const semanticPropertyAndItems_1 = __webpack_require__(/*! ./semanticPropertyAndItems */ "./includes/js/Semantic/semanticPropertyAndItems.ts");
-const nodeType_1 = __webpack_require__(/*! ../Model/nodeType */ "./includes/js/Model/nodeType.ts");
-const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
+const semanticPropertyAndItems_1 = __webpack_require__(/*! ./semanticPropertyAndItems */ "./includes/js/SemanticMediaWikiApi/Types/semanticPropertyAndItems.ts");
 class MediaWikiArticle {
-    node;
     Id;
     semanticNodeList;
     constructor(id, semanticNodeList) {
+        console.log("Method enter: MediaWikiArticle constructor");
         this.Id = id; //'Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##'
-        app_1.MainEntry.focalNodeID = id;
-        this.node = this.ParseNodeBrowseBySubject();
         this.semanticNodeList = [];
         for (const data of semanticNodeList) {
             let item = new semanticPropertyAndItems_1.SemanticPropertyAndItems(data.property, data.dataitem, data.subject, this);
             this.semanticNodeList.push(item);
-        }
-    }
-    ParseNodeBrowseBySubject() {
-        let nameDoslike = this.Id.split("#")[0];
-        let nodeName = nameDoslike.replace("_", " ");
-        let node = new INode_1.INode(nodeType_1.NodeType.Article, this.Id, nodeName, "Internal Link", 10, 0, `./${nameDoslike}`);
-        node.fixed = true;
-        return node;
-    }
-    HandleProperties() {
-        for (const semanticNode of this.semanticNodeList) {
-            if (semanticNode.IsSpecialProperty())
-                continue; // Non fare nulla se la proprietà è una delle proprietà speciali "_SKEY", "_MDAT" o "_ASK"
-            semanticNode.SemanticNodeParse();
-            for (let dataitem of semanticNode.nodeAndLinks) {
-                nodeStore_1.NodeStore.nodeList.push(dataitem.node);
-                nodeStore_1.NodeStore.linkList.push(dataitem.link);
-            }
         }
     }
 }
@@ -17053,40 +17252,10 @@ exports.MediaWikiArticle = MediaWikiArticle;
 
 /***/ }),
 
-/***/ "./includes/js/Semantic/myData.ts":
-/*!****************************************!*\
-  !*** ./includes/js/Semantic/myData.ts ***!
-  \****************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.MyData = void 0;
-const mediaWikiArticle_1 = __webpack_require__(/*! ./mediaWikiArticle */ "./includes/js/Semantic/mediaWikiArticle.ts");
-const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
-class MyData {
-    mediawikiArticle;
-    query;
-    constructor(callback) {
-        this.query = callback.query;
-    }
-    Parse() {
-        this.mediawikiArticle = new mediaWikiArticle_1.MediaWikiArticle(this.query.subject, this.query.data);
-        let wikiArticle = this.mediawikiArticle;
-        wikiArticle.HandleProperties();
-        nodeStore_1.NodeStore.nodeList.push(wikiArticle.node);
-    }
-}
-exports.MyData = MyData;
-
-
-/***/ }),
-
-/***/ "./includes/js/Semantic/propertyDataItem.ts":
-/*!**************************************************!*\
-  !*** ./includes/js/Semantic/propertyDataItem.ts ***!
-  \**************************************************/
+/***/ "./includes/js/SemanticMediaWikiApi/Types/propertyDataItem.ts":
+/*!********************************************************************!*\
+  !*** ./includes/js/SemanticMediaWikiApi/Types/propertyDataItem.ts ***!
+  \********************************************************************/
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -17137,20 +17306,17 @@ exports.PropertyDataItem = PropertyDataItem;
 
 /***/ }),
 
-/***/ "./includes/js/Semantic/semanticPropertyAndItems.ts":
-/*!**********************************************************!*\
-  !*** ./includes/js/Semantic/semanticPropertyAndItems.ts ***!
-  \**********************************************************/
+/***/ "./includes/js/SemanticMediaWikiApi/Types/semanticPropertyAndItems.ts":
+/*!****************************************************************************!*\
+  !*** ./includes/js/SemanticMediaWikiApi/Types/semanticPropertyAndItems.ts ***!
+  \****************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SemanticPropertyAndItems = void 0;
-const INode_1 = __webpack_require__(/*! ../Model/INode */ "./includes/js/Model/INode.ts");
-const Link_1 = __webpack_require__(/*! ../Model/Link */ "./includes/js/Model/Link.ts");
-const propertyDataItem_1 = __webpack_require__(/*! ./propertyDataItem */ "./includes/js/Semantic/propertyDataItem.ts");
-const nodeType_1 = __webpack_require__(/*! ../Model/nodeType */ "./includes/js/Model/nodeType.ts");
+const propertyDataItem_1 = __webpack_require__(/*! ./propertyDataItem */ "./includes/js/SemanticMediaWikiApi/Types/propertyDataItem.ts");
 // noinspection UnnecessaryLocalVariableJS
 class SemanticPropertyAndItems {
     propertyName;
@@ -17159,9 +17325,9 @@ class SemanticPropertyAndItems {
     dataitems;
     parentArticle;
     firstItem;
-    nodeAndLinks;
     sourceNodeUrl;
     constructor(property, dataitems, subject, parentArticle) {
+        console.log("Method enter: SemanticPropertyAndItems constructor");
         this.propertyName = property;
         this.nicePropertyName = this.NicePropertyName();
         //Solo per alcune proprietà sono presenti dataitems e subject
@@ -17173,7 +17339,6 @@ class SemanticPropertyAndItems {
         this.subject = subject;
         this.parentArticle = parentArticle;
         this.sourceNodeUrl = parentArticle.Id;
-        this.nodeAndLinks = [];
     }
     IsSpecialProperty() {
         /*
@@ -17185,27 +17350,12 @@ class SemanticPropertyAndItems {
               */
         return ["_SKEY", "_MDAT", "_ASK"].includes(this.propertyName);
     }
-    SemanticNodeParse() {
-        this.SetUri();
-        for (let dataitem of this.dataitems) {
-            let node = this.ParsePropertyNode(dataitem);
-            let link = new Link_1.Link(nodeType_1.NodeType.Property, this.nicePropertyName, this.sourceNodeUrl, dataitem.item /*targetId*/, null, null, "");
-            this.nodeAndLinks.push({ node: node, link: link });
-        }
-    }
     SetUri() {
         if (!this.dataitems || this.dataitems.length == 0)
             return;
         this.firstItem = this.dataitems[0];
         if (this.firstItem.item === this.sourceNodeUrl)
             this.firstItem.item = `${this.firstItem.item}_${(this.propertyName)}`;
-    }
-    ParsePropertyNode(dataitem) {
-        //In the original version it was using the firstElement for the last 2 parameters
-        let name = this.parseNodeName(dataitem.item, dataitem.typeStr);
-        let hlink = this.parseHlink(dataitem.item, dataitem.typeStr, this.sourceNodeUrl);
-        let node = new INode_1.INode(nodeType_1.NodeType.Property, dataitem.item, name, "null", 0, 0, hlink);
-        return node;
     }
     NicePropertyName() {
         let p = this.getPropertyNiceName(this.propertyName);
@@ -17245,162 +17395,8 @@ class SemanticPropertyAndItems {
                 return "";
         }
     }
-    parseNodeName(nameToParse, type) {
-        function parseNodeName() {
-            return nameToParse.split("#")[0].replace("_", " ");
-        }
-        let name;
-        switch (type) {
-            case "URI":
-                name = parseNodeName();
-                break;
-            case "Internal Link":
-                name = parseNodeName();
-                break;
-            case "Date":
-                name = nameToParse.substring(2);
-                break;
-            case "Boolean":
-                name = nameToParse === "t" ? "true" : "false";
-                break;
-            default:
-                name = parseNodeName();
-                break;
-        }
-        return name;
-    }
-    parseHlink(nameToParse, type, url) {
-        return type === "URI" ? url : type === "Internal Link" ? `./${nameToParse.split("#")[0]}` : "";
-    }
 }
 exports.SemanticPropertyAndItems = SemanticPropertyAndItems;
-
-
-/***/ }),
-
-/***/ "./includes/js/Semantic/semanticWikiApi.ts":
-/*!*************************************************!*\
-  !*** ./includes/js/Semantic/semanticWikiApi.ts ***!
-  \*************************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SemanticWikiApi = void 0;
-const nodeStore_1 = __webpack_require__(/*! ../nodeStore */ "./includes/js/nodeStore.ts");
-const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
-const visibilityHandler_1 = __webpack_require__(/*! ../Ui/visibilityHandler */ "./includes/js/Ui/visibilityHandler.ts");
-const myData_1 = __webpack_require__(/*! ./myData */ "./includes/js/Semantic/myData.ts");
-class SemanticWikiApi {
-    static BrowseBySubject(wikiArticleTitle) {
-        app_1.MainEntry.downloadedArticles = [];
-        $.ajax({
-            url: mw.util.wikiScript("api"),
-            data: {
-                action: "browsebysubject",
-                subject: wikiArticleTitle,
-                format: "json"
-            },
-            type: "GET",
-            success: execSuccessCallback
-        });
-        function execSuccessCallback(data) {
-            if (data?.edit && data.edit.result === "Success") {
-                // debugger;
-            }
-            else if (data?.error) {
-                alert(data);
-                // debugger;
-            }
-            else {
-                SemanticWikiApi.BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle, new myData_1.MyData(data));
-            }
-        }
-    }
-    static BrowseBySubjectSuccessCallback_InitWikiArticle(wikiArticleTitle, data) {
-        /**
-         *  }
-         * JSON.stringify(data)
-         * https://jsonformatter.org/json-parser/5e9d52
-         */
-        app_1.MainEntry.resetData();
-        app_1.MainEntry.downloadedArticles.push(wikiArticleTitle);
-        data.Parse();
-        // MyClass.force.stop();
-        SemanticWikiApi.QueryBackLinks(wikiArticleTitle); //tramite questa chiama → MyClass.InitNodeAndLinks(data.query.backlinks);
-        $("#cluster_chart .chart").empty();
-        //  var k = cloneNode(nodeSet);
-        //  var m = cloneEdge(linkSet);
-        console.log("BrowseBySubject");
-        app_1.MainEntry.drawCluster("Drawing1");
-        //drawCluster.update();
-        visibilityHandler_1.VisibilityHandler.hideElements();
-        // const elem: JQuery<HTMLElement> = $(`[id=${MyClass.focalNodeID}] a`);
-        // // @ts-ignore
-        // elem[0].__data__.px = Canvas.width / 2;
-        // // @ts-ignore
-        // elem[0].__data__.py = Canvas.height / 2;
-    }
-    static QueryBackLinks(wikiArticle) {
-        $.ajax({
-            url: mw.util.wikiScript("api"),
-            data: {
-                action: "query",
-                list: "backlinks",
-                bltitle: wikiArticle,
-                format: "json"
-            },
-            type: "GET",
-            success: BacklinksCallback
-        });
-        function BacklinksCallback(data) {
-            if (data?.edit && data.edit.result === "Success") {
-                // debugger;
-            }
-            else if (data?.error) {
-                alert((data));
-                // debugger;
-            }
-            else {
-                app_1.MainEntry.InitNodeAndLinks_Backlinks(data.query.backlinks);
-            }
-            $("#cluster_chart .chart").empty();
-            //  var k = cloneNode(nodeSet);
-            //  var m = cloneEdge(linkSet);
-            nodeStore_1.NodeStore.UpdateSourceAndTarget2();
-            console.log("BacklinksCallback");
-            app_1.MainEntry.drawCluster("Drawing1");
-            //drawCluster.update();
-            visibilityHandler_1.VisibilityHandler.hideElements();
-        }
-    }
-    static AllPagesCall() {
-        $.ajax({
-            url: mw.util.wikiScript("api"),
-            data: {
-                action: "query",
-                list: "allpages",
-                aplimit: 1000,
-                format: "json"
-            },
-            type: "GET",
-            success(data) {
-                if (!(!(data?.edit && data.edit.result === "Success") && !(data?.error))) {
-                    return;
-                }
-                app_1.MainEntry.PopulateSelectorWithWikiArticleUi(data.query.allpages);
-            }
-        });
-    }
-}
-exports.SemanticWikiApi = SemanticWikiApi;
-class testUnit {
-    static test() {
-        const jsonString = "{\"query\":{\"subject\":\"Abbandono_dei_principi_giornalistici,_nascita_delle_Fuck_News_ed_episodi_vari#0##\",\"data\":[{\"property\":\"_INST\",\"dataitem\":[{\"type\":9,\"item\":\"Polarizzazione#14##\"},{\"type\":9,\"item\":\"Social_network#14##\"},{\"type\":9,\"item\":\"Cancel_Culture#14##\"},{\"type\":9,\"item\":\"Episodio#14##\"},{\"type\":9,\"item\":\"Razzismo#14##\"}]},{\"property\":\"_MDAT\",\"dataitem\":[{\"type\":6,\"item\":\"1/2022/12/21/9/38/54/0\"}]},{\"property\":\"_SKEY\",\"dataitem\":[{\"type\":2,\"item\":\"Abbandono dei principi giornalistici, nascita delle Fuck News ed episodi vari\"}]}],\"serializer\":\"SMW\\\\Serializers\\\\SemanticDataSerializer\",\"version\":2}}";
-        // const myData = new MyData(jsonString);
-    }
-}
 
 
 /***/ }),
@@ -17561,45 +17557,25 @@ const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/ind
 const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts");
 const nodeManager_1 = __webpack_require__(/*! ./nodeManager */ "./includes/js/Ui/nodeManager.ts");
 class LinkAndForcesManager {
-    static force;
+    static simulation;
     static svgLinks;
     static clickText;
-    static forceDragBehaviour() {
-        LinkAndForcesManager.CreateAForceLayoutAndBindNodesAndLinks();
-    }
     static DrawLinks() {
-        nodeStore_1.NodeStore.UpdateSourceAndTarget2();
-        nodeStore_1.NodeStore.isThereAnyUncompleteLink();
+        console.log("Method enter: DrawLinks");
+        nodeStore_1.NodeStore.UpdateSourceAndTarget();
+        //JSON.stringify(NodeStore);
         // Append text to Link edges
         this.AppendTextToLinkEdges();
         // Draw lines for Links between Nodes
         this.DrawLinesForLinksBetweenNodes();
         this.clickText = false;
         // Create a force layout and bind Nodes and Links
-        //TODO: da erorre, per ora commento
         this.CreateAForceLayoutAndBindNodesAndLinks()
             .on("tick", () => {
             this.Tick();
         });
         //Build the Arrows
         this.buildArrows();
-    }
-    static updateNodePositions() {
-        // this.svgNodes.datum().updatePositions();
-        nodeManager_1.NodeManager.svgNodes
-            .exit()
-            .attr("cx", (d) => d.x)
-            .attr("cy", (d) => d.y);
-        nodeManager_1.NodeManager.svgNodes.attr("transform", function (d) {
-            return "translate(" + d.x / 5 + "," + d.y / 5 + ")";
-        });
-    }
-    static updateLinkPositions() {
-        this.svgLinks
-            .attr("x1", (link) => link.source.x)
-            .attr("y1", (link) => link.source.y)
-            .attr("x2", (link) => link.target.x)
-            .attr("y2", (link) => link.target.y);
     }
     /**
      * Builds the arrows for the specified SVG canvas.
@@ -17624,53 +17600,83 @@ class LinkAndForcesManager {
             .attr("d", "M0,-5L10,0L0,5");
     }
     static CreateAForceLayoutAndBindNodesAndLinks() {
-        this.force = d3.forceSimulation()
+        /* Convert the values of an object into a format that can be used to compare or sort the values.
+              Specifically, if the value passed is nonzero and its type is an object, then the valueOf() method is used to obtain the primitive value of the object.
+              Otherwise, the original value is returned.       */
+        function intern(value) {
+            return value !== null && typeof value === "object" ? value.valueOf() : value;
+        }
+        //     //A map (aka Dictionary) is created from the nodes object using nodeId as the key, and then each value in the map is converted using the intern() function.
+        //     const Nodes = nodes.map((node: { id: any; }) => node.id);
+        //     const LinkSources = links.map((link: { source: any; }) => link.source);
+        //     const LinkTargets = links.map((link: { target: any; }) => link.target);
+        //
+        //
+        // // Replace the input nodes and links with mutable objects for the simulation.
+        //     let nodes = nodes.map((_, i) => ({id: Nodes[i]}));
+        //     let links = links.map((_, i) => ({source: LinkSources[i], target: LinkTargets[i]}));
+        // Compute default domains.
+        // if (NodeGroups && nodeGroups === undefined) nodeGroups = d3.sort(NodeGroups);
+        // Construct the scales.
+        // const color = nodeGroup == null ? null : d3.scaleOrdinal(nodeGroups, colors);
+        /* Construct the forces.
+          d3.forceManyBody() creates a repulsion force between all nodes, where each node repels itself from its neighbors. This function needs no parameters,
+          so forceNode represents a repulsion force between nodes.
+          d3.forceLink(links) creates a force of attraction between nodes, based on the specified links.
+          This function accepts an array of links as a parameter.
+          forceLink.id(({index: i}) => Nodes[i]) specifies that the unique identifier of the nodes for the force pull is the index of the node in the Nodes array.*/
+        this.simulation = d3.forceSimulation()
             .nodes(nodeStore_1.NodeStore.nodeList)
-            .force("link", d3.forceLink(nodeStore_1.NodeStore.linkList))
-            .force("charge", d3.forceManyBody().strength(-10))
-            .force("gravity", d3.forceManyBody().strength(.01))
-            .force("friction", d3.forceManyBody().strength(.2))
-            //commento
-            .force("link", d3.forceLink(nodeStore_1.NodeStore.linkList))
+            .force('link', d3
+            .forceLink(nodeStore_1.NodeStore.linkList)
+            .id((d) => {
+            return d.name;
+        }).strength(0.5)
+        // .distance()
+        // .strength(this.props.linkStrength)
+        )
+            .force("charge", d3.forceManyBody())
+            .force("gravity", d3.forceManyBody())
+            .force("friction", d3.forceManyBody())
             .force("center", d3.forceCenter(Canvas_1.Canvas.width / 2, Canvas_1.Canvas.heigth / 2))
             .alphaTarget(0.03);
-        const linkForce = d3.forceLink().id((d) => d.id);
-        const chart = d3.select(".chart");
-        const width = Canvas_1.Canvas.width;
-        const height = Canvas_1.Canvas.heigth;
-        linkForce.distance(() => width < height ? width / 3 : height / 3);
-        this.force.force("link", linkForce);
-        // function dragStarted(d: { fx: number; x: number; fy: number; y: number; }) {
-        //   if (!d3.event.active) LinkAndForcesManager.force.alphaTarget(0.3).restart();
-        //   d.fx = d.x;
-        //   d.fy = d.y;
-        // }
-        //
-        // function dragged(d: { fx: number; x: number; fy: number; y: number; }) {
-        //   d.fx = d3.event.x;
-        //   d.fy = d3.event.y;
-        // }
-        //
-        // function dragEnded(d: { fx: number; x: number; fy: number; y: number; }) {
-        //   if (!d3.event.active) LinkAndForcesManager.force.alphaTarget(0);
-        //   d.fx = d.x;
-        //   d.fy = d.y;
-        // }
-        //
-        // d3.drag()
-        //   .on("start", () => dragStarted)
-        //   .on("drag", () => dragged)
-        //   .on("end", () => dragEnded);
-        return this.force;
+        // const linkForce = d3.forceLink().id((d: any) => d.id);
+        // const width = Canvas.width;
+        // const height = Canvas.heigth;
+        // linkForce.distance(() => width < height ? width / 3 : height / 3);
+        // this.simulation.force("link", linkForce);
+        return this.simulation;
+    }
+    static MyDrag(simulation) {
+        function dragstarted(event) {
+            if (!event.active)
+                simulation.alphaTarget(0.3).restart();
+            event.subject.fx = event.subject.x;
+            event.subject.fy = event.subject.y;
+        }
+        function dragged(event) {
+            event.subject.fx = event.x;
+            event.subject.fy = event.y;
+        }
+        function dragended(event) {
+            if (!event.active)
+                simulation.alphaTarget(0);
+            event.subject.fx = null;
+            event.subject.fy = null;
+        }
+        return d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended);
     }
     static DrawLinesForLinksBetweenNodes() {
         this.svgLinks = Canvas_1.Canvas.svgCanvas.selectAll(".gLink")
             .data(nodeStore_1.NodeStore.linkList)
             .enter().append("g")
             // .attr("class", "gLink")
-            // .attr("class", "link")
-            .attr("endNode", (d) => d.targetId)
-            .attr("startNode", (d) => d.sourceId)
+            .attr("class", "link")
+            .attr("endNode", (d) => d.target.id)
+            .attr("startNode", (d) => d.source.id)
             .attr("targetType", (d) => d.target.type)
             .attr("sourceType", (d) => d.source.type)
             .append("line")
@@ -17683,6 +17689,7 @@ class LinkAndForcesManager {
             .attr("y2", (l) => l.target.y);
     }
     static AppendTextToLinkEdges() {
+        console.log("Method enter: AppendTextToLinkEdges");
         Canvas_1.Canvas.svgCanvas.selectAll(".gLink")
             .data(nodeStore_1.NodeStore.linkList)
             .append("text")
@@ -17694,24 +17701,53 @@ class LinkAndForcesManager {
             .text((link) => link.linkName);
     }
     static Tick() {
-        //TODO: blocco l'aggiornamento delle posizioni dei nodi
-        LinkAndForcesManager.updateNodePositions();
-        LinkAndForcesManager.updateLinkPositions();
+        console.log("Method enter: Tick");
+        nodeStore_1.NodeStore.logNodeAndLinkStatus(false);
+        LinkAndForcesManager.updateNodePositionsOnUi();
+        LinkAndForcesManager.updateLinkPositionsOnUi();
         // Questo pezzo di codice si occupa di aggiungere del testo ai link e di posizionarlo nella parte centrale del link stesso.
         // Il testo viene posizionato in modo che sia metà strada tra il nodo di partenza e quello di destinazione. Se il nodo di destinazione ha una coordinata x maggiore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y). Se invece il nodo di destinazione ha una coordinata x minore di quella del nodo di partenza, allora il testo viene posizionato a metà strada tra le due coordinate x (e lo stesso vale per le coordinate y).
-        // this.setLinkTextInMiddle();
+        // LinkAndForcesManager.setLinkTextInMiddle("link");
+    }
+    static updateNodePositionsOnUi() {
+        nodeManager_1.NodeManager.svgNodes
+            .attr("transform", function (d) {
+            return `translate(${d.x},${d.y})`;
+        });
+        // Canvas.svgCanvas.selectAll(".gLink")
+        //   .attr("cx", (d: any) => d.x)
+        //   .attr("cy", (d: any) => d.y)
+        //   .data(NodeStore.linkList)
+        //   .enter().append("g")
+        //   .attr("cx", (d: any) => d.x)
+        //   .attr("cy", (d: any) => d.y);
+        // NodeManager.svgNodes
+        //   .attr("cx", (d: any) => d.x)
+        //   .attr("cy", (d: any) => d.y);
+    }
+    static updateLinkPositionsOnUi() {
+        this.svgLinks
+            //.each((link: Link) => LinkAndForcesManager.checkValues(link))
+            .attr("x1", (link) => link.source.x)
+            .attr("y1", (link) => link.source.y)
+            .attr("x2", (link) => link.target.x)
+            .attr("y2", (link) => link.target.y);
+    }
+    static checkValues(link) {
+        if (!link.source || !link.target || isNaN(link.source.x) || isNaN(link.source.y))
+            debugger;
     }
     /**
      Calculates and sets the position of the text element for the given link.
      @returns {void}
      */
-    static setLinkTextInMiddle(linkText) {
-        if (linkText.empty()) {
-            console.log("linkText is empty");
+    static setLinkTextInMiddle(link) {
+        if (link.empty()) {
+            console.log("link is empty");
             return;
         }
-        let center = linkText.datum().CalculateMidpoint();
-        linkText
+        let center = link.datum().CalculateMidpoint();
+        link
             .attr("x", center.x)
             .attr("y", center.y);
     }
@@ -17732,7 +17768,7 @@ exports.LinkAndForcesManager = LinkAndForcesManager;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UiEventHandler = void 0;
 const app_1 = __webpack_require__(/*! ../app */ "./includes/js/app.ts");
-const semanticWikiApi_1 = __webpack_require__(/*! ../Semantic/semanticWikiApi */ "./includes/js/Semantic/semanticWikiApi.ts");
+const semanticWikiApi_1 = __webpack_require__(/*! ../SemanticMediaWikiApi/Api/semanticWikiApi */ "./includes/js/SemanticMediaWikiApi/Api/semanticWikiApi.ts");
 const legendManager_1 = __webpack_require__(/*! ./legendManager */ "./includes/js/Ui/legendManager.ts");
 const TRANSACTION_DURATION = 250;
 class UiEventHandler {
@@ -17741,8 +17777,8 @@ class UiEventHandler {
         const typeValue = selector.attr("type_value");
         if (!clickText && typeValue === 'Internal Link') {
             const nodeName = selector.datum().name;
-            if (!app_1.MainEntry.downloadedArticles.includes(nodeName)) {
-                semanticWikiApi_1.SemanticWikiApi.BrowseBySubject(nodeName);
+            if (!semanticWikiApi_1.SemanticWikiApi.downloadedArticles.includes(nodeName)) {
+                semanticWikiApi_1.SemanticWikiApi.BrowseBySubject(nodeName, app_1.MainEntry.BrowseBySubjectCallback);
             }
         }
         clickText = false;
@@ -17832,6 +17868,7 @@ const ColorHelper_1 = __webpack_require__(/*! ../Helpers/ColorHelper */ "./inclu
 const nodeManager_1 = __webpack_require__(/*! ./nodeManager */ "./includes/js/Ui/nodeManager.ts");
 const Canvas_1 = __webpack_require__(/*! ./Canvas */ "./includes/js/Ui/Canvas.ts");
 const visibilityHandler_1 = __webpack_require__(/*! ./visibilityHandler */ "./includes/js/Ui/visibilityHandler.ts");
+const LinkAndForcesManager_1 = __webpack_require__(/*! ./LinkAndForcesManager */ "./includes/js/Ui/LinkAndForcesManager.ts");
 class LegendManager {
     static DrawLegend() {
         const sortedColors = ColorHelper_1.ColorHelper.GetColors("colorScale20");
@@ -17841,6 +17878,16 @@ class LegendManager {
         LegendManager.PlotTheBulletCircles(sortedColors);
         // Create legend text that acts as label keys...
         LegendManager.CreateLegendTextThatActsAsLabelKeys(sortedColors);
+        d3.select("input[type=range]")
+            .on("input", function () { inputted(this); });
+        function inputted(x) {
+            // @ts-ignore
+            LinkAndForcesManager_1.LinkAndForcesManager.simulation.force("link").strength(x.value);
+            LinkAndForcesManager_1.LinkAndForcesManager.simulation.alpha(1).restart();
+            LinkAndForcesManager_1.LinkAndForcesManager.simulation.force("link", d3.forceLink().strength(x.value));
+            LinkAndForcesManager_1.LinkAndForcesManager.simulation.alphaTarget(0);
+            LinkAndForcesManager_1.LinkAndForcesManager.simulation.alphaMin(1);
+        }
     }
     static clickLegend(selector) {
         const typeValue = selector.attr("type_value");
@@ -17999,26 +18046,25 @@ class NodeManager {
         on("click", () => this.mouseClickNode), on("mouseout", () => this.nodeMouseOut) are associated with the created group.
         In summary enter() allows to select and operate on data elements that haven't been associated yet to DOM elements.
         * */
+        // LinkAndForcesManager.forceDragBehaviour();
         NodeManager.svgNodes = Canvas_1.Canvas.svgCanvas.selectAll(".node")
             .data(nodeStore_1.NodeStore.nodeList)
-            .enter()
-            .append("g")
+            .enter().append("g")
             .attr("class", "node")
             .attr("id", (node) => node.id)
             .attr("type_value", (node) => node.type)
             .attr("color_value", (node) => ColorHelper_1.ColorHelper.color_hash[node.type])
             .attr("xlink:href", (node) => node.hlink)
             .attr("fixed", node => node.IsFocalNode())
-            // .setXYPos()
             // .attr("cx", (node: INode) => node.x)
             // .attr("cy", (node: INode) => node.y)
             .on("mouseover", () => UiEventHandler_1.UiEventHandler.nodeMouseOver)
             .on("click", () => UiEventHandler_1.UiEventHandler.mouseClickNode)
             .on("mouseout", () => UiEventHandler_1.UiEventHandler.nodeMouseOut)
-            .call(LinkAndForcesManager_1.LinkAndForcesManager.forceDragBehaviour)
-            .attr("transform", function (d) {
-            return `translate(${d.x},${d.y})`;
-        })
+            .call(LinkAndForcesManager_1.LinkAndForcesManager.MyDrag(LinkAndForcesManager_1.LinkAndForcesManager.simulation))
+            // .attr("transform", function(d) {
+            //   return `translate(${d.x},${d.y})`;
+            // })
             .append("a");
         return this.svgNodes;
     }
@@ -18043,8 +18089,8 @@ class NodeManager {
     }
     static AppendTextToNodes() {
         this.svgNodes.append("text")
-            .attr("x", (d) => /*d.IsFocalNode() ?*/ d.x)
-            .attr("y", (d) => /*d.IsFocalNode() ? 0 : -10*/ d.y)
+            .attr("x", (d) => /*d.IsFocalNode() ?*/ 10)
+            .attr("y", (d) => /*d.IsFocalNode() ? 0 : -10*/ 10)
             .attr("text-anchor", (d) => d.IsFocalNode() ? "middle" : "start") //Not visible, just an attribute
             .style("font-family", "Arial, Helvetica, sans-serif")
             .style("font", "normal 16px Arial")
@@ -18070,8 +18116,8 @@ class NodeManager {
             .attr("type_value", (d) => d.type)
             .attr("color_value", (d) => ColorHelper_1.ColorHelper.color_hash[d.type])
             .attr("fixed", d => d.fixed)
-            .attr("cx", d => d.IsFocalNode() ? Canvas_1.Canvas.width / 2 : d.x)
-            .attr("cy", d => d.IsFocalNode() ? Canvas_1.Canvas.heigth / 2 : d.y)
+            // .attr("cx", d => d.IsFocalNode() ? Canvas.width / 2 : d.x)
+            // .attr("cy", d => d.IsFocalNode() ? Canvas.heigth / 2 : d.y)
             .attr("class", (d) => {
             const strippedString = d.type.replace(/ /g, "_");
             // return "nodeCircle-" + strippedString; })
@@ -18121,8 +18167,8 @@ class VisibilityHandler {
     }
     static SomethingRelatedToNodeVisibility(el) {
         let link = el.__data__;
-        const valSource = link.sourceId;
-        const valTarget = link.targetId;
+        const valSource = link.source.id;
+        const valTarget = link.target.id;
         let indexEdge;
         const indexSource = this.invisibleNode.indexOf(valSource);
         const indexTarget = this.invisibleNode.indexOf(valTarget);
@@ -18155,8 +18201,8 @@ class VisibilityHandler {
     static MakeInvisible2(el) {
         //      debugger;
         let data = el.__data__;
-        const valSource = data.sourceId;
-        const valTarget = data.targetId;
+        const valSource = data.source.id;
+        const valTarget = data.target.id;
         //if beide
         const indexSource = VisibilityHandler.invisibleNode.indexOf(valSource);
         const indexTarget = VisibilityHandler.invisibleNode.indexOf(valTarget);
@@ -18217,7 +18263,7 @@ exports.MainEntry = void 0;
 const Link_1 = __webpack_require__(/*! ./Model/Link */ "./includes/js/Model/Link.ts");
 __webpack_require__(/*! select2 */ "./node_modules/select2/dist/js/select2.js");
 const INode_1 = __webpack_require__(/*! ./Model/INode */ "./includes/js/Model/INode.ts");
-const semanticWikiApi_1 = __webpack_require__(/*! ./Semantic/semanticWikiApi */ "./includes/js/Semantic/semanticWikiApi.ts");
+const semanticWikiApi_1 = __webpack_require__(/*! ./SemanticMediaWikiApi/Api/semanticWikiApi */ "./includes/js/SemanticMediaWikiApi/Api/semanticWikiApi.ts");
 const nodeType_1 = __webpack_require__(/*! ./Model/nodeType */ "./includes/js/Model/nodeType.ts");
 const nodeStore_1 = __webpack_require__(/*! ./nodeStore */ "./includes/js/nodeStore.ts");
 const Canvas_1 = __webpack_require__(/*! ./Ui/Canvas */ "./includes/js/Ui/Canvas.ts");
@@ -18225,8 +18271,8 @@ const nodeManager_1 = __webpack_require__(/*! ./Ui/nodeManager */ "./includes/js
 const legendManager_1 = __webpack_require__(/*! ./Ui/legendManager */ "./includes/js/Ui/legendManager.ts");
 const d3 = __importStar(__webpack_require__(/*! d3 */ "./node_modules/d3/src/index.js"));
 const LinkAndForcesManager_1 = __webpack_require__(/*! ./Ui/LinkAndForcesManager */ "./includes/js/Ui/LinkAndForcesManager.ts");
+const mediaWiki2NodesExt_1 = __webpack_require__(/*! ./Bll/mediaWiki2NodesExt */ "./includes/js/Bll/mediaWiki2NodesExt.ts");
 class MainEntry {
-    static downloadedArticles = [];
     static centerNodeSize = 50;
     static nodeSize = 10;
     static scale = 1;
@@ -18243,16 +18289,56 @@ class MainEntry {
         });
     }
     static PopulateSelectorWithWikiArticleUi(articles) {
-        MainEntry.downloadedArticles = [];
         for (const article of articles) {
             $("#wikiArticle").append(`<option value="${article.title}">${article.title}</option>`);
         }
+        $("#visualiseSite").on("click", () => { this.HandleOnClick(); });
         // require("select2");
         //
         // $("#wikiArticle").select2({
         //     placeholder: "Select a Wiki Article",
         //     allowClear: true
         // });
+    }
+    static HandleOnClick() {
+        //Get the select  ed article in the combobox
+        let wikiArticleTitle = $("#wikiArticle").val();
+        if (wikiArticleTitle === "") {
+            // Error Message
+            $("#error_msg").show();
+        }
+        else {
+            $("#error_msg").hide();
+            semanticWikiApi_1.SemanticWikiApi.BrowseBySubject(wikiArticleTitle, MainEntry.BrowseBySubjectCallback);
+            semanticWikiApi_1.SemanticWikiApi.QueryBackLinks(wikiArticleTitle, MainEntry.BacklinksCallback);
+            MainEntry.drawCluster("Drawing1", "BrowseBySubject");
+            //drawCluster.update();
+            // VisibilityHandler.hideElements();
+        }
+    }
+    static BrowseBySubjectCallback(wikiArticle) {
+        // NodeStore.nodeList.push(wikiArticle.node);
+        let nodesAndLinks = mediaWiki2NodesExt_1.MediaWiki2NodesExt.getNodesAndLinks(wikiArticle);
+        nodeStore_1.NodeStore.nodeList = nodeStore_1.NodeStore.nodeList.concat(nodesAndLinks.nodeList);
+        nodeStore_1.NodeStore.linkList = nodeStore_1.NodeStore.linkList.concat(nodesAndLinks.linkList);
+    }
+    static BacklinksCallback(nodesAndLinks) {
+        nodeStore_1.NodeStore.nodeList = nodeStore_1.NodeStore.nodeList.concat(nodesAndLinks.nodeList);
+        nodeStore_1.NodeStore.linkList = nodeStore_1.NodeStore.linkList.concat(nodesAndLinks.linkList);
+    }
+    static ParseBacklinks(backlinks) {
+        console.log("Method enter: ParseBacklinks");
+        let nodeList = [];
+        let linkList = [];
+        for (let article of backlinks) {
+            let node = new INode_1.INode(nodeType_1.NodeType.Backlink, article.title, article.title, "Backlink", 0, 0, article.title);
+            nodeList.push(node);
+        }
+        for (let article of backlinks) {
+            let link = new Link_1.Link(nodeType_1.NodeType.Backlink, "Backlink", article.title, MainEntry.focalNodeID, "");
+            linkList.push(link);
+        }
+        return { nodeList, linkList };
     }
     /**
      * Draws a cluster using the provided data.
@@ -18262,45 +18348,17 @@ class MainEntry {
      *              0 = No Sort.  Maintain original order.
      *              1 = Sort by arc value size.
      */
-    static drawCluster(drawingName) {
+    static drawCluster(drawingName, calledBy) {
         new Canvas_1.Canvas();
+        console.log("Method enter: drawCluster called by " + calledBy);
         console.log("Called drawCluster; N° NodeStore.nodeList: " + nodeStore_1.NodeStore.nodeList.length);
         if (nodeStore_1.NodeStore.nodeList.length == 0)
             return;
+        nodeStore_1.NodeStore.UpdateSourceAndTarget();
         nodeManager_1.NodeManager.DrawNodes();
         LinkAndForcesManager_1.LinkAndForcesManager.DrawLinks();
         legendManager_1.LegendManager.DrawLegend();
         d3.select(window).on("resize.updatesvg", Canvas_1.Canvas.updateWindowSize);
-    }
-    static InitNodeAndLinks_Backlinks(backlinks) {
-        for (let article of backlinks) {
-            let node = new INode_1.INode(nodeType_1.NodeType.Backlink, article.title, article.title, "Backlink", 0, 0, article.title);
-            let link = new Link_1.Link(nodeType_1.NodeType.Backlink, "Backlink", article.title, MainEntry.focalNodeID, null, null, "");
-            nodeStore_1.NodeStore.nodeList.push(node);
-            nodeStore_1.NodeStore.linkList.push(link);
-        }
-    }
-    static resetData() {
-        nodeStore_1.NodeStore.nodeList = [];
-        nodeStore_1.NodeStore.linkList = [];
-        MainEntry.downloadedArticles = [];
-    }
-    static HandleOnClick() {
-        $("#visualiseSite").on("click", () => {
-            //#if DEBUG
-            semanticWikiApi_1.SemanticWikiApi.BrowseBySubject("Abbandono dei principi giornalistici, nascita delle Fuck News ed episodi vari");
-            //#endif
-            //Get the selected article in the combobox
-            let wikiArticleTitle = $("#wikiArticle").val();
-            if (wikiArticleTitle === "") {
-                // Error Message
-                $("#error_msg").show();
-            }
-            else {
-                $("#error_msg").hide();
-                semanticWikiApi_1.SemanticWikiApi.BrowseBySubject(wikiArticleTitle);
-            }
-        });
     }
 }
 exports.MainEntry = MainEntry;
@@ -18320,64 +18378,64 @@ new MainEntry();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.NodeStore = void 0;
 const INode_1 = __webpack_require__(/*! ./Model/INode */ "./includes/js/Model/INode.ts");
-const app_1 = __webpack_require__(/*! ./app */ "./includes/js/app.ts");
 class NodeStore {
     static nodeList = [];
     static linkList = [];
-    // private constructor() {
-    //     NodeStore.nodeList = [];
-    //     NodeStore.linkList = [];
-    // }
     /*
         @param {INode[]} nodeSetApp - Set of nodes and their relevant data.
         @param {Link[]} linkSetApp - Set of links and their relevant data.
      */
-    static UpdateSourceAndTarget2() {
+    static UpdateSourceAndTarget() {
+        console.log("Method enter: UpdateSourceAndTarget");
         console.log("Updating Source and Target of " + this.linkList.length + " links");
         // Append the source Node and the target Node to each Link
-        for (const link of this.linkList) {
-            NodeStore.UpdateSourceAndTarget(link);
+        for (let node of this.nodeList) {
+            node.x = Math.random() * (500 - 20 + 1) + 20;
+            node.y = Math.random() * (500 - 20 + 1) + 20;
         }
+        for (let link of this.linkList) {
+            if (!link.isValid)
+                link.Fix(true);
+        }
+        NodeStore.isThereAnyUncompleteLink();
         // this.logNodeAndLinkStatus();
     }
-    static UpdateSourceAndTarget(link) {
-        link.source = NodeStore.getNodeById(link.sourceId);
-        link.target = NodeStore.getNodeById(link.targetId);
-        link.direction = link.sourceId === app_1.MainEntry.focalNodeID ? "OUT" : "IN";
-    }
-    static getNodeById(sourceId) {
-        let p = NodeStore.nodeList.find((node) => node.id === sourceId);
+    static getNodeById(nodeId, isBlocking = false) {
+        console.log("Method enter: getNodeById");
+        let p = NodeStore.nodeList.find((node) => node.id === nodeId);
         if (p instanceof INode_1.INode) {
             return p;
         }
-        else {
+        else if (isBlocking) {
             console.log("N° of nodes " + NodeStore.nodeList.length);
             console.log("N° of links " + NodeStore.linkList.length);
-            console.log("sourceId " + sourceId);
+            console.log("nodeId " + nodeId);
             console.log(NodeStore.nodeList.map(node => node.id));
-            throw new DOMException("Node not found");
+            debugger;
         }
+        throw new DOMException("Node not found");
     }
-    static logNodeAndLinkStatus() {
-        console.log("Node Status:");
-        let debugString = "";
-        NodeStore.nodeList.forEach((node) => {
-            debugString += node.debugString() + "\n";
-        });
-        debugString += "Link Status:\n";
-        NodeStore.linkList.forEach((link) => {
-            debugString += link.debugString() + "\n";
-        });
-        console.log(debugString);
+    static logNodeAndLinkStatus(details) {
+        console.log("N° of nodes " + NodeStore.nodeList.length + "; N° of links " + NodeStore.linkList.length);
+        if (details) {
+            console.log("Node Status:");
+            let debugString = "";
+            NodeStore.nodeList.forEach((node) => {
+                debugString += node.debugString() + "\n";
+            });
+            debugString += "Link Status:\n";
+            NodeStore.linkList.forEach((link) => {
+                debugString += link.debugString() + "\n";
+            });
+            console.log(debugString);
+        }
     }
     static isThereAnyUncompleteLink() {
         for (const link of NodeStore.linkList) {
             if (!link.source) {
-                console.log("SourceId missing " + link.sourceId);
                 debugger;
             }
             if (!link.target) {
-                console.log("SourceId missing " + link.targetId);
                 debugger;
             }
         }

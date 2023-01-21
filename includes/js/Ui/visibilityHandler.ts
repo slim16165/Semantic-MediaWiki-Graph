@@ -29,8 +29,8 @@ export class VisibilityHandler{
 
   private static SomethingRelatedToNodeVisibility(el: CustomHTMLElement) {
     let link = el.__data__ as Link;
-    const valSource = link.sourceId;
-    const valTarget = link.targetId;
+    const valSource = link.source.id;
+    const valTarget = link.target.id;
     let indexEdge: number;
 
     const indexSource = this.invisibleNode.indexOf(valSource);
@@ -65,8 +65,8 @@ export class VisibilityHandler{
   static MakeInvisible2(el: CustomHTMLElement) {
     //      debugger;
     let data = el.__data__ as Link;
-    const valSource = data.sourceId;
-    const valTarget = data.targetId;
+    const valSource = data.source.id;
+    const valTarget = data.target.id;
     //if beide
     const indexSource = VisibilityHandler.invisibleNode.indexOf(valSource);
     const indexTarget = VisibilityHandler.invisibleNode.indexOf(valTarget);

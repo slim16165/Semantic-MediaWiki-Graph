@@ -6,6 +6,7 @@
   "knownSymbols": {
   },
   "compilerOptions": {
+      "experimentalDecorators": true,
     /* Visit https://aka.ms/tsconfig to read more about this file */
 
     /* Projects */
@@ -124,6 +125,6 @@
     "newLine": "lf",
     "pretty": true,
     "allowJs": true,
-    "checkJs": true,
+    "checkJs": true
   }
 }
