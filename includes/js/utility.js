@@ -308,77 +308,8 @@ function askNode(wikiArticle) {
                 });
                 for (let i = 0; i < data.query.data.length; i++) {
 
-                    var item = data.query.data[i];
-
-                    if (item.property.indexOf("_") !== 0) {
-                        if (item.dataitem[0].item === data.query.subject) {
-                            item.dataitem[0].item = item.dataitem[0].item + "_" + item.property;
-                        }
-                        for (let j = 0; j < item.dataitem.length; j++) {
-                            const type = getNodeTypeName(item.property, item.dataitem[j].type);
-                            if (type === 'Boolean') {
-                                if (item.dataitem[j].item === 't') {
-                                    item.dataitem[j].item = 'true';
-                                } else {
-                                    item.dataitem[j].item = 'false';
-                                }
-                            }
-                            if (type === 'URI') {
-                                nodeSet.push({
-                                    id: item.dataitem[j].item,
-                                    name: item.dataitem[j].item.split("#")[0].replace("_", " "),
-                                    type: type,
-                                    hlink: item.dataitem[0].item
-                                });
-                            } else if (type === "Internal Link") {
-                                nodeSet.push({
-                                    id: item.dataitem[j].item,
-                                    name: item.dataitem[j].item.split("#")[0].replace("_", " "),
-                                    type: type,
-                                    hlink: "./" + item.dataitem[0].item
-                                });
-                            } else if (type === "Date") {
-                                nodeSet.push({
-                                    id: item.dataitem[j].item,
-                                    name: item.dataitem[j].item.substring(2),
-                                    type: type,
-                                });
-                            } else {
-                                nodeSet.push({
-                                    id: item.dataitem[j].item,
-                                    name: item.dataitem[j].item.split("#")[0].replace("_", " "),
-                                    type: type,
-                                    //hlink: "./" + item.dataitem[0].item
-                                });
-                            }
-                            linkSet.push({
-                                sourceId: data.query.subject,
-                                linkName: nicePropertyName(item.property),
-                                targetId: item.dataitem[j].item
-                            });
-                        }
-
-                    }
-
-                }
-                force.stop();
-                //  backlinks(wikiArticle);
-
-                $('#cluster_chart .chart').empty();
-                //  var k = cloneNode(nodeSet);
-                //  var m = cloneEdge(linkSet);
-                drawCluster('Drawing1', focalNodeID, nodeSet, linkSet, '#cluster_chart .chart', 'colorScale20');
-                //drawCluster.update();
-                hideElements();
-            }
-        }
-    });
-
-}
-
-
-function cloneNode(array) {
-    const newArr = [];
+    function cloneNode(array) {
+        const newArr = [];
 
     array.forEach(function(item) {
         if (item.hlink !== 'undefined') {
@@ -493,18 +424,111 @@ function loadWikiArticles() {
                 });
 
             }
-        }
-    });
-}
+        });
+    }
+});
 
 function colorScaleMW(type) {
     return color[type];
 }
 
+function askNode(wikiArticle) {
+    $.ajax({
+        url: mw.util.wikiScript('api'),
+        data: {
+            action: 'browsebysubject',
+            subject: wikiArticle,
+            format: 'json'
+        },
+        type: 'GET',
+        success: function (data) {
+            if (data && data.edit && data.edit.result === 'Success') {
+                debugger;
+            } else if (data && data.error) {
+                alert(data);
+                debugger;
+            } else {
+                done.push(wikiArticle);
+
+                focalNodeID = data.query.subject;
+                nodeSet.forEach(function (item) {
+                    if (item.id === focalNodeID) {
+                        item.fixed = true;
+                    }
+                });
+                for (let i = 0; i < data.query.data.length; i++) {
+
+                    var item = data.query.data[i];
+
+                    if (item.property.indexOf("_") !== 0) {
+                        if (item.dataitem[0].item === data.query.subject) {
+                            item.dataitem[0].item = item.dataitem[0].item + "_" + item.property;
+                        }
+                        for (let j = 0; j < item.dataitem.length; j++) {
+                            const type = getNodeTypeName(item.property, item.dataitem[j].type);
+                            if (type === 'Boolean') {
+                                if (item.dataitem[j].item === 't') {
+                                    item.dataitem[j].item = 'true';
+                                } else {
+                                    item.dataitem[j].item = 'false';
+                                }
+                            }
+                            if (type === 'URI') {
+                                nodeSet.push({
+                                    id: item.dataitem[j].item,
+                                    name: item.dataitem[j].item.split("#")[0].replace("_", " "),
+                                    type: type,
+                                    hlink: item.dataitem[0].item
+                                });
+                            } else if (type === "Internal Link") {
+                                nodeSet.push({
+                                    id: item.dataitem[j].item,
+                                    name: item.dataitem[j].item.split("#")[0].replace("_", " "),
+                                    type: type,
+                                    hlink: "./" + item.dataitem[0].item
+                                });
+                            } else if (type === "Date") {
+                                nodeSet.push({
+                                    id: item.dataitem[j].item,
+                                    name: item.dataitem[j].item.substring(2),
+                                    type: type,
+                                });
+                            } else {
+                                nodeSet.push({
+                                    id: item.dataitem[j].item,
+                                    name: item.dataitem[j].item.split("#")[0].replace("_", " "),
+                                    type: type,
+                                    //hlink: "./" + item.dataitem[0].item
+                                });
+                            }
+                            linkSet.push({
+                                sourceId: data.query.subject,
+                                linkName: nicePropertyName(item.property),
+                                targetId: item.dataitem[j].item
+                            });
+                        }
+
+                    }
+
+                }
+                force.stop();
+                //  backlinks(wikiArticle);
+
+                $('#cluster_chart .chart').empty();
+                //  var k = cloneNode(nodeSet);
+                //  var m = cloneEdge(linkSet);
+                drawCluster('Drawing1', focalNodeID, nodeSet, linkSet, '#cluster_chart .chart', 'colorScale20');
+                //drawCluster.update();
+                hideElements();
+            }
+        }
+    });
+
+}
 
 function hideElements() {
     const lis = $(".node");
-    $(".node").each(function(index, el) {
+    $(".node").each(function (index, el) {
         const invIndex = invisibleType.indexOf(el.__data__.type);
         if (invIndex > -1) {
             $(this).toggle();
@@ -513,11 +537,9 @@ function hideElements() {
                 invisibleNode.push(el.__data__.id);
             }
         }
-
-
     });
 
-    $(".gLink").each(function(index, el) {
+    $(".gLink").each(function (index, el) {
         //      debugger;
         const valSource = el.__data__.sourceId;
         const valTarget = el.__data__.targetId;
