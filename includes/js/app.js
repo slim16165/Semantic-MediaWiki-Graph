@@ -338,6 +338,12 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
         //document.writeln(d.type);
     });
 
+    if (typeof d3 === 'undefined') {
+        console.log('d3 is not loaded');
+    } else {
+        console.log('d3 is loaded');
+    }
+
     // Create a canvas...
     var svgCanvas = d3.select(selectString)
         .append("svg:svg")
@@ -345,6 +351,7 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
             scale = d3.event.scale;
             svgCanvas.attr("transform", " scale(" + d3.event.scale + ")");
         }))
+
         .attr("width", width)
         .attr("height", height)
         .attr("id", "svgCanvas")
