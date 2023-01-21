@@ -6,7 +6,8 @@ import { NodeStore } from "../nodeStore";
 import { INode } from "../Model/INode";
 import { UiEventHandler } from "./UiEventHandler";
 import { MainEntry } from "../app";
-import { LinkAndForcesManager } from "./LinkAndForcesManager";
+import { LinkManager } from "./LinkManager";
+import { ForcesManager } from "./ForcesManager";
 
 export class NodeManager {
   static svgNodes: Selection<HTMLAnchorElement, INode, HTMLAnchorElement, INode>;
@@ -51,7 +52,7 @@ export class NodeManager {
       .on("mouseover", () => UiEventHandler.nodeMouseOver)
       .on("click", () => UiEventHandler.mouseClickNode)
       .on("mouseout", () => UiEventHandler.nodeMouseOut)
-      .call(LinkAndForcesManager.MyDrag(LinkAndForcesManager.simulation))
+      .call(ForcesManager.MyDrag(ForcesManager.simulation))
       // .attr("transform", function(d) {
       //   return `translate(${d.x},${d.y})`;
       // })
