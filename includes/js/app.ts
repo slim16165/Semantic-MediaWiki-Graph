@@ -28,12 +28,8 @@ export class MainEntry {
   }
 
   static InitialPageLoad(): void {
-    //
-    SemanticWikiApi.AllPagesCall();
-
-    $(() => {
-      this.HandleOnClick();
-    });
+    //Downloads the list of articles from Semantic MediaWiki and calls the provided callback function
+    SemanticWikiApi.AllPagesCall(MainEntry.PopulateSelectorWithWikiArticleUi);
   }
 
   static PopulateSelectorWithWikiArticleUi(articles: Article[]) {
@@ -41,7 +37,11 @@ export class MainEntry {
       $("#wikiArticle").append(`<option value="${article.title}">${article.title}</option>`);
     }
 
-    $("#visualiseSite").on("click", () => { this.HandleOnClick(); });
+    $("#visualiseSite")
+      .on("click", (event ) => {
+        event.preventDefault()
+        MainEntry.HandleOnClick();
+      });
 
     // require("select2");
     //
@@ -115,11 +115,18 @@ export class MainEntry {
     console.log("Method enter: drawCluster called by " + calledBy);
     console.log("Called drawCluster; N° NodeStore.nodeList: " + NodeStore.nodeList.length);
     if (NodeStore.nodeList.length == 0) return;
-    NodeStore.UpdateSourceAndTarget();
+    NodeStore.ConnectLinkSourceAndTarget();
 
+    //This part relates to the UI
     NodeManager.DrawNodes();
 
     LinkAndForcesManager.DrawLinks();
+
+    // Create a force layout and bind Nodes and Links
+    LinkAndForcesManager.CreateAForceLayoutAndBindNodesAndLinks()
+      .on("tick", () => {
+        LinkAndForcesManager.Tick();
+      });
 
     LegendManager.DrawLegend();
 

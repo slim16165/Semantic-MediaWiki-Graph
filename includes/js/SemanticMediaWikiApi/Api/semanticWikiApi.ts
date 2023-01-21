@@ -68,7 +68,7 @@ export class SemanticWikiApi {
     });
   }
 
-  public static AllPagesCall() {
+  public static AllPagesCall(callback: (articles: Article[]) => void) {
     $.ajax({
       url: mw.util.wikiScript("api") as string,
       data: {
@@ -83,7 +83,8 @@ export class SemanticWikiApi {
         if (!(!(data?.edit && data.edit.result === "Success") && !(data?.error))) {
           return;
         }
-        MainEntry.PopulateSelectorWithWikiArticleUi(data.query.allpages);
+
+        callback(data.query.allpages);
       }
     });
   }

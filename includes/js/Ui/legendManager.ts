@@ -24,14 +24,14 @@ export class LegendManager {
     LegendManager.CreateLegendTextThatActsAsLabelKeys(sortedColors);
 
     d3.select("input[type=range]")
-      .on("input", function(){inputted(this)});
+      .on("input", function(){ changeForceStrength((this as any).value); });
 
-    function inputted(x: any) {
+    function changeForceStrength(val: number) {
       // @ts-ignore
-      LinkAndForcesManager.simulation.force("link").strength(x.value);
+      LinkAndForcesManager.simulation.force("link").strength(val);
       LinkAndForcesManager.simulation.alpha(1).restart();
 
-      LinkAndForcesManager.simulation.force("link", d3.forceLink().strength(x.value));
+      LinkAndForcesManager.simulation.force("link", d3.forceLink().strength(val));
       LinkAndForcesManager.simulation.alphaTarget(0);
       LinkAndForcesManager.simulation.alphaMin(1);
     }
@@ -80,10 +80,12 @@ export class LegendManager {
         const strippedString = d.replace(/ /g, "_");
         return `legendBullet-${strippedString}`;
       })
-      //TODO: disabilito
-      // .on("mouseover", function(d) {LegendManager.typeMouseOver(d3.select(this), d.nodeSize)})
-      // .on("mouseout", function(d) { LegendManager.typeMouseOut(d3.select(this), d.nodeSize); })
-      // .on("click", function() { LegendManager.clickLegend(d3.select(this)); });
+      // @ts-ignore
+      .on("mouseover", function(d) {LegendManager.typeMouseOver(d3.select(this), 20); })
+      // @ts-ignore
+      .on("mouseout", function(d) { LegendManager.typeMouseOut(d3.select(this), 20); })
+      .on("click", function() { // @ts-ignore
+        LegendManager.clickLegend(d3.select(this)); });
   }
 
   public static typeMouseOver(selector:  Selection<SVGGElement, INode, SVGGElement, INode>, nodeSize: number) {
@@ -124,9 +126,10 @@ export class LegendManager {
       })
       .style("fill", "Black")
       .style("font", "normal 14px Arial")
-      //TODO: commento
-      // .on("mouseover", function(d) { LegendManager.typeMouseOver(d3.select(this), d.nodeSize) })
-      // .on("mouseout", function(d) { LegendManager.typeMouseOut(d3.select(this), d.nodeSize) });
+      .on("mouseover", function(d) {  // @ts-ignore
+        LegendManager.typeMouseOver(d3.select(this), d.nodeSize) })
+      .on("mouseout", function(d) {   // @ts-ignore
+        LegendManager.typeMouseOut(d3.select(this), d.nodeSize) });
   }
 
   private static PrintLegendTitle() {

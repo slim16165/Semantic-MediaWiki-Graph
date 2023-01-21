@@ -14,22 +14,14 @@ export class LinkAndForcesManager {
 
   static DrawLinks() {
     console.log("Method enter: DrawLinks");
-    NodeStore.UpdateSourceAndTarget();
 
-    //JSON.stringify(NodeStore);
+    // Draw lines for Links between Nodes
+    this.DrawLinesForLinksBetweenNodes();
 
     // Append text to Link edges
     this.AppendTextToLinkEdges();
 
-    // Draw lines for Links between Nodes
-    this.DrawLinesForLinksBetweenNodes();
     this.clickText = false;
-
-    // Create a force layout and bind Nodes and Links
-    this.CreateAForceLayoutAndBindNodesAndLinks()
-      .on("tick", () => {
-        this.Tick();
-      });
 
     //Build the Arrows
     this.buildArrows();
@@ -60,7 +52,7 @@ export class LinkAndForcesManager {
       .attr("d", "M0,-5L10,0L0,5");
   }
 
-  private static  CreateAForceLayoutAndBindNodesAndLinks(): Simulation<any, any> {
+  public static  CreateAForceLayoutAndBindNodesAndLinks(): Simulation<any, any> {
     /* Convert the values of an object into a format that can be used to compare or sort the values.
           Specifically, if the value passed is nonzero and its type is an object, then the valueOf() method is used to obtain the primitive value of the object.
           Otherwise, the original value is returned.       */
@@ -99,7 +91,7 @@ export class LinkAndForcesManager {
           .forceLink(NodeStore.linkList)
           .id((d) => {
             return (d as INode).name
-          }).strength(0.5)
+          }).strength(0.05)
           // .distance()
           // .strength(this.props.linkStrength)
       )
@@ -108,13 +100,7 @@ export class LinkAndForcesManager {
       .force("friction", d3.forceManyBody())
       .force("center", d3.forceCenter(Canvas.width/2, Canvas.heigth/2))
       .alphaTarget(0.03);
-
-    // const linkForce = d3.forceLink().id((d: any) => d.id);
-
-    // const width = Canvas.width;
-    // const height = Canvas.heigth;
     // linkForce.distance(() => width < height ? width / 3 : height / 3);
-    // this.simulation.force("link", linkForce);
 
     return this.simulation;
   }
@@ -147,7 +133,7 @@ export class LinkAndForcesManager {
     this.svgLinks = Canvas.svgCanvas.selectAll(".gLink")
       .data(NodeStore.linkList)
       .enter().append("g")
-      // .attr("class", "gLink")
+      .attr("class", "gLink")
       .attr("class", "link")
       .attr("endNode", (d: Link) => d.target.id)
       .attr("startNode", (d: Link) => d.source.id)
@@ -165,8 +151,8 @@ export class LinkAndForcesManager {
 
   private static AppendTextToLinkEdges() {
     console.log("Method enter: AppendTextToLinkEdges");
-    Canvas.svgCanvas.selectAll(".gLink")
-      .data(NodeStore.linkList)
+
+    this.svgLinks
       .append("text")
       .attr("font-family", "Arial, Helvetica, sans-serif")
       .call(() => this.setLinkTextInMiddle)
@@ -176,7 +162,7 @@ export class LinkAndForcesManager {
       .text((link: Link) => link.linkName);
   }
 
-  private static Tick() {
+  static Tick() {
     console.log("Method enter: Tick");
     NodeStore.logNodeAndLinkStatus(false);
 
@@ -193,17 +179,6 @@ export class LinkAndForcesManager {
       .attr("transform", function(d) {
         return `translate(${d.x},${d.y})`;
       })
-    // Canvas.svgCanvas.selectAll(".gLink")
-    //   .attr("cx", (d: any) => d.x)
-    //   .attr("cy", (d: any) => d.y)
-    //   .data(NodeStore.linkList)
-    //   .enter().append("g")
-    //   .attr("cx", (d: any) => d.x)
-    //   .attr("cy", (d: any) => d.y);
-
-    // NodeManager.svgNodes
-    //   .attr("cx", (d: any) => d.x)
-    //   .attr("cy", (d: any) => d.y);
   }
 
   static updateLinkPositionsOnUi() {
@@ -214,6 +189,11 @@ export class LinkAndForcesManager {
       .attr("y1", (link: Link) => link.source.y)
       .attr("x2", (link: Link) => link.target.x)
       .attr("y2", (link: Link) => link.target.y);
+
+
+    this.svgLinks.append("text")
+      .attr("font-family", "Arial, Helvetica, sans-serif")
+      .call(() => this.setLinkTextInMiddle)
   }
 
   private static checkValues(link: Link) {

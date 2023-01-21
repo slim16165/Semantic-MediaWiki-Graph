@@ -11,7 +11,7 @@ export class NodeStore {
         @param {INode[]} nodeSetApp - Set of nodes and their relevant data.
         @param {Link[]} linkSetApp - Set of links and their relevant data.
      */
-    public static UpdateSourceAndTarget() {
+    public static ConnectLinkSourceAndTarget() {
         console.log("Method enter: UpdateSourceAndTarget")
         console.log("Updating Source and Target of " + this.linkList.length + " links");
         // Append the source Node and the target Node to each Link

@@ -84,10 +84,9 @@ export class NodeManager {
     }
   }
 
-
-
   static AppendTextToNodes() {
     this.svgNodes.append("text")
+      //the text (inside each group) is offset of 10 px
       .attr("x", (d: INode) => /*d.IsFocalNode() ?*/ 10)
       .attr("y", (d: INode) => /*d.IsFocalNode() ? 0 : -10*/ 10)
       .attr("text-anchor", (d: INode) => d.IsFocalNode() ? "middle" : "start") //Not visible, just an attribute
@@ -112,12 +111,11 @@ export class NodeManager {
 
   static AppendCirclesToNodes() {
     this.svgNodes.append("circle")
+      //the circle (inside each group) is centered to the center of the group
       .attr("r", (d: INode) => d.IsFocalNode() ? MainEntry.centerNodeSize : MainEntry.nodeSize)
       .attr("type_value", (d: INode) => d.type)
       .attr("color_value", (d: INode) => ColorHelper.color_hash[d.type])
       .attr("fixed", d => d.fixed)
-      // .attr("cx", d => d.IsFocalNode() ? Canvas.width / 2 : d.x)
-      // .attr("cy", d => d.IsFocalNode() ? Canvas.heigth / 2 : d.y)
       .attr("class", (d: INode) => {
         const strippedString = d.type.replace(/ /g, "_");
         // return "nodeCircle-" + strippedString; })
