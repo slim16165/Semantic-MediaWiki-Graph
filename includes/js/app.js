@@ -19,23 +19,24 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
     //              1 = Sort by arc value size.
 
     // Color Scale Handling...
-    let colorScale = d3.scale.category20c();
+    let colorScale = d3.scaleOrdinal(d3.schemeCategory20c);
     switch (colors) {
         case "colorScale10":
-            colorScale = d3.scale.category10();
+            colorScale = d3.scaleOrdinal(d3.schemeCategory10);
             break;
         case "colorScale20":
-            colorScale = d3.scale.category20();
+            colorScale = d3.scaleOrdinal(d3.schemeCategory20);
             break;
         case "colorScale20b":
-            colorScale = d3.scale.category20b();
+            colorScale = d3.scaleOrdinal(d3.schemeCategory20b);
             break;
         case "colorScale20c":
-            colorScale = d3.scale.category20c();
+            colorScale = d3.scaleOrdinal(d3.schemeCategory20c);
             break;
         default:
-            colorScale = d3.scale.category20c();
+            colorScale = d3.scaleOrdinal(d3.schemeCategory20c);
     };
+
 
     var width = $(".chart")[0].clientWidth;
     var height = $(".chart")[0].clientHeight;
@@ -45,65 +46,40 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
     var scale = 1;
 
     var clickLegend = function() {
-
-        var thisObject = d3.select(this);
-        var typeValue = thisObject.attr("type_value");
+        d3.event.preventDefault();
+        var typeValue = d3.select(this).attr("type_value");
         var strippedTypeValue = typeValue.replace(/ /g, "_");
-        var colorValue = thisObject.attr("color_value");
-        var k = d3.selectAll(".node [type_value='" + typeValue + "']");
-
-        var legendBulletSelector = "." + "legendBullet-" + strippedTypeValue;
-        //    var selectedBullet = d3.selectAll(legendBulletSelector);
-        //  selectedBullet.style("fill", "none");
-        //    selectedBullet.style("stroke", colorValue);
-        //    selectedBullet.style("stroke-width", "3");
-        //  debugger;
-        //      $(".node [type_value='" + typeValue + "']").toggle();
-        //  [type_value='" + typeValue + "']")
-        //      var lis = $(".node");
         var invIndexType = invisibleType.indexOf(typeValue);
         if (invIndexType > -1) {
             invisibleType.splice(typeValue, 1);
         } else {
             invisibleType.push(typeValue);
         }
-        $(".node").each(function(index, el) {
-            if (el.__data__.type == typeValue) {
-                var invIndex = invisibleNode.indexOf(el.__data__.id);
+        d3.selectAll(".node").filter(function(d){
+            if (d.type == typeValue) {
+                var invIndex = invisibleNode.indexOf(d.id);
                 if (invIndex > -1) {
                     invisibleNode.splice(invIndex, 1);
                 } else {
-                    invisibleNode.push(el.__data__.id);
+                    invisibleNode.push(d.id);
                 }
-                $(this).toggle();
+                return true;
             }
-
+        }).style("display", function(d){
+            if (invisibleNode.indexOf(d.id) > -1) return "none";
+            return "block";
         });
 
-        $(".gLink").each(function(index, el) {
-            //      debugger;
-            var valSource = el.__data__.sourceId;
-            var valTarget = el.__data__.targetId;
-            //if beide
-            var indexSource = invisibleNode.indexOf(valSource);
-            var indexTarget = invisibleNode.indexOf(valTarget);
-            var indexEdge = invisibleEdge.indexOf(valSource + "_" + valTarget + "_" + el.__data__.linkName);
-
-            if ((indexSource > -1 || indexTarget > -1) && indexEdge == -1) {
-                //Einer der beiden Knoten ist unsichtbar, aber Kante noch nicht
-                $(this).toggle();
-                invisibleEdge.push(valSource + "_" + valTarget + "_" + el.__data__.linkName);
-            } else if (indexSource == -1 && indexTarget == -1 && indexEdge == -1) {
-                //Beide Knoten sind nicht unsichtbar und Kante ist nicht unsichtbar
-            } else if (indexSource == -1 && indexTarget == -1 && indexEdge > -1) {
-                //Knoten sind nicht unsichtbar, aber Kante ist es
-                $(this).toggle();
-                invisibleEdge.splice(indexEdge, 1);
+        d3.selectAll(".gLink").style("display", function(d){
+            var valSource = d.sourceId;
+            var valTarget = d.targetId;
+            if (invisibleNode.indexOf(valSource) > -1 || invisibleNode.indexOf(valTarget) > -1 || invisibleEdge.indexOf(valSource + "_" + valTarget + "_" + d.linkName) > -1) {
+                return "none";
             }
-
+            return "block";
         });
-
     };
+
 
     var typeMouseOver = function() {
 
@@ -114,14 +90,14 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
         var legendBulletSelector = "." + "legendBullet-" + strippedTypeValue;
         var selectedBullet = d3.selectAll(legendBulletSelector);
         //document.writeln(legendBulletSelector);
-        selectedBullet.style("fill", "Maroon");
+        selectedBullet.style("fill", "Maroon", null);
         selectedBullet.attr("r", 1.2 * 6);
 
         var legendTextSelector = "." + "legendText-" + strippedTypeValue;
         var selectedLegendText = d3.selectAll(legendTextSelector);
         //document.writeln(legendBulletSelector);
-        selectedLegendText.style("font", "bold 14px Arial")
-        selectedLegendText.style("fill", "Maroon");
+        selectedLegendText.style("font", "bold 14px Arial");
+        selectedLegendText.style("fill", "Maroon", null);
 
         var nodeTextSelector = "." + "nodeText-" + strippedTypeValue;
         var selectedNodeText = d3.selectAll(nodeTextSelector);
