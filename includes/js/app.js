@@ -178,7 +178,7 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
         var nodeTextSelector = "." + "nodeText-" + strippedTypeValue;
         var selectedNodeText = d3.selectAll(nodeTextSelector);
         //document.writeln(pie3SliceSelector);
-        selectedNodeText.style("font", "normal 16px Arial")
+        selectedNodeText.style("font", "normal 16px Arial");
         selectedNodeText.style("fill", "Blue");
 
         var nodeCircleSelector = "." + "nodeCircle-" + strippedTypeValue;
@@ -201,8 +201,7 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
         var selectedFocalNodeText = d3.selectAll(focalNodeTextSelector);
         //document.writeln(pie3SliceSelector);
         selectedFocalNodeText.style("fill", "Blue");
-        selectedFocalNodeText.style("font", "normal 14px Arial")
-
+        selectedFocalNodeText.style("font", "normal 14px Arial");
     };
 
 
@@ -254,10 +253,23 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
                     return 15;
                 }
             });
-        d3.select(this).select("text").transition()
-            .duration(250)
-            .style("font", "bold 20px Arial")
-            .attr("fill", "Blue");
+
+        // //Workaround for D3 v2. D3 v2, potrebbe causare problemi con font size troppo grandi per valori di "t" molto bassi
+        // var fontScale = d3.scale.linear()
+        //     .domain([0, 1])
+        //     .range([6, 20]); // range of font sizes
+        // var text = d3.select(this).select("text");
+        // text.transition()
+        //     .duration(250)
+        //     .styleTween("font-size", function(t) {
+        //         return d3.interpolate(this.style.fontSize, fontScale(t) + "px");
+        //     })
+        //     .style("font-weight", "bold")
+        //     .style("font-family", "Arial")
+        //     .attr("fill", "Blue");
+
+
+
 
         var legendBulletSelector = "." + "legendBullet-" + strippedTypeValue;
         var selectedBullet = d3.selectAll(legendBulletSelector);
@@ -290,7 +302,7 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
             });
         d3.select(this).select("text").transition()
             .duration(250)
-            .style("font", "normal 16px Arial")
+            .style("font", "normal Arial")
             .attr("fill", "Blue");
 
         var legendBulletSelector = "." + "legendBullet-" + strippedTypeValue;
@@ -302,9 +314,8 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
         var legendTextSelector = "." + "legendText-" + strippedTypeValue;
         var selectedLegendText = d3.selectAll(legendTextSelector);
         //document.writeln(legendBulletSelector);
-        selectedLegendText.style("font", "normal 14px Arial")
+        selectedLegendText.style("font", "normal 14px Arial");
         selectedLegendText.style("fill", "Black");
-
     };
 
     // Create a hash that maps colors to types...
