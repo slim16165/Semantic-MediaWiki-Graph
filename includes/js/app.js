@@ -19,7 +19,7 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
     //              1 = Sort by arc value size.
 
     // Color Scale Handling...
-    var colorScale = d3.scale.category20c();
+    let colorScale = d3.scale.category20c();
     switch (colors) {
         case "colorScale10":
             colorScale = d3.scale.category10();
@@ -270,8 +270,7 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
         //document.writeln(legendBulletSelector);
         selectedLegendText.style("font", "bold 14px Arial")
         selectedLegendText.style("fill", "Maroon");
-
-    }
+    };
 
     var nodeMouseOut = function() {
 
@@ -306,7 +305,7 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
         selectedLegendText.style("font", "normal 14px Arial")
         selectedLegendText.style("fill", "Black");
 
-    }
+    };
 
     // Create a hash that maps colors to types...
     nodeSetApp.forEach(function(d, i) {
@@ -356,7 +355,7 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
         .attr("height", height)
         .attr("id", "svgCanvas")
         .append("svg:g")
-        .attr("class", "focalNodeCanvas")
+        .attr("class", "focalNodeCanvas");
 
     var node_hash = [];
     var type_hash = [];
@@ -391,7 +390,7 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
             if (width < height) {
                 return width * 1 / 3;
             } else {
-                return height * 1 / 3
+                return height * 1 / 3;
             }
         }) // Controls edge length
         .size([width, height])
@@ -420,7 +419,7 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
         .style("stroke", "#ccc")
         .style("stroke-width", "1.5px")
         .attr("marker-end", function(d, i) {
-            return "url(#arrow_" + i + ")"
+            return "url(#arrow_" + i + ")";
         })
         .attr("x1", function(d) {
             return d.source.x;
@@ -483,7 +482,7 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
         //.attr("y", function(d) { if (d.id==focalNodeID) { return height/2; } else { return d.y; } })
         .attr("class", function(d, i) {
             var str = d.type;
-            var strippedString = str.replace(/ /g, "_")
+            var strippedString = str.replace(/ /g, "_");
                 //return "nodeCircle-" + strippedString; })
             if (d.id == focalNodeID) {
                 return "focalNodeCircle";
@@ -701,7 +700,7 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
         })
         .attr("class", function(d) {
             var str = d;
-            var strippedString = str.replace(/ /g, "_")
+            var strippedString = str.replace(/ /g, "_");
             return "legendBullet-" + strippedString;
         })
         .on('mouseover', typeMouseOver)
@@ -734,7 +733,7 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
         })
         .attr("class", function(d) {
             var str = d;
-            var strippedString = str.replace(/ /g, "_")
+            var strippedString = str.replace(/ /g, "_");
             return "legendText-" + strippedString;
         })
         .style("fill", "Black")
@@ -744,8 +743,8 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
 
 
     function updateWindow() {
-        width = $(".chart")[0].clientWidth - 60
-        height = $(".chart")[0].clientHeight - 60
+        width = $(".chart")[0].clientWidth - 60;
+        height = $(".chart")[0].clientHeight - 60;
 
         svgCanvas.attr("width", width).attr("height", height);
         $('#svgCanvas').width(width + 90);
@@ -753,4 +752,4 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
     }
     d3.select(window).on('resize.updatesvg', updateWindow);
 
-};
+}
