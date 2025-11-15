@@ -11,7 +11,12 @@ const isProduction = process.env.NODE_ENV == "production";
 const config = {
   entry: "./includes/js/app.ts",
   output: {
-    path: path.resolve(__dirname, "dist")
+    path: path.resolve(__dirname, "dist"),
+    filename: "main.js",
+    library: {
+      type: "umd",
+      name: "SMWGraph"
+    }
   },
   devServer: {
     open: true,
@@ -47,7 +52,15 @@ const config = {
     ]
   },
   resolve: {
-    extensions: [".tsx", ".ts", ".jsx", ".js", "..."]
+    extensions: [".tsx", ".ts", ".jsx", ".js", "..."],
+    alias: {
+      "@": path.resolve(__dirname, "includes/js")
+    }
+  },
+  externals: {
+    // Exclude MediaWiki globals from bundle (they're provided by ResourceLoader)
+    "jquery": "jQuery",
+    "mediawiki": "mw"
   }
 };
 
