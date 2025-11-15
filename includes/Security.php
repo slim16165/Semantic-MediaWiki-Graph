@@ -29,6 +29,17 @@ class Security {
         // X-XSS-Protection
         $out->addHeader('X-XSS-Protection', '1; mode=block');
         
+        // Strict Transport Security (HSTS) - only for HTTPS
+        if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
+            $out->addHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+        }
+        
+        // Referrer Policy
+        $out->addHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+        
+        // Permissions Policy (formerly Feature Policy)
+        $out->addHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+        
         // Content Security Policy
         $csp = self::buildCSP();
         if ($csp) {
@@ -42,6 +53,8 @@ class Security {
             if ($origin && in_array($origin, $allowedOrigins)) {
                 $out->addHeader('Access-Control-Allow-Origin', $origin);
                 $out->addHeader('Access-Control-Allow-Credentials', 'true');
+                $out->addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+                $out->addHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
             }
         }
     }
@@ -52,17 +65,42 @@ class Security {
      * @return string|null
      */
     private static function buildCSP() {
-        // Basic CSP - can be customized via config
+        // Enhanced CSP with nonce support for inline scripts
+        $nonce = self::generateNonce();
         $directives = [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Needed for D3.js
+            "script-src 'self' 'nonce-{$nonce}' 'unsafe-inline' 'unsafe-eval'", // Needed for D3.js
             "style-src 'self' 'unsafe-inline'",
-            "img-src 'self' data:",
+            "img-src 'self' data: https:",
             "font-src 'self' data:",
             "connect-src 'self'",
+            "frame-ancestors 'none'",
+            "base-uri 'self'",
+            "form-action 'self'",
         ];
         
         return implode('; ', $directives);
+    }
+    
+    /**
+     * Generate CSP nonce
+     * 
+     * @return string Nonce value
+     */
+    private static function generateNonce(): string {
+        if (!isset($GLOBALS['smwgraph_csp_nonce'])) {
+            $GLOBALS['smwgraph_csp_nonce'] = base64_encode(random_bytes(16));
+        }
+        return $GLOBALS['smwgraph_csp_nonce'];
+    }
+    
+    /**
+     * Get CSP nonce for inline scripts
+     * 
+     * @return string Nonce value
+     */
+    public static function getCSPNonce(): string {
+        return self::generateNonce();
     }
     
     /**
@@ -219,6 +257,76 @@ class Security {
         }
         
         return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    }
+    
+    /**
+     * Audit log security event
+     * 
+     * @param string $event Event type
+     * @param array $context Additional context
+     * @return void
+     */
+    public static function auditLog(string $event, array $context = []): void {
+        $logData = [
+            'event' => $event,
+            'timestamp' => date('c'),
+            'ip' => self::getClientIP(),
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+            'request_uri' => $_SERVER['REQUEST_URI'] ?? 'unknown',
+            'context' => $context
+        ];
+        
+        // Log security events
+        Logger::warning('Security audit: ' . $event, $logData);
+        
+        // Store in audit log file (if configured)
+        $auditLogFile = Config::get('AuditLogFile', null);
+        if ($auditLogFile) {
+            $logLine = json_encode($logData) . "\n";
+            @file_put_contents($auditLogFile, $logLine, FILE_APPEND | LOCK_EX);
+        }
+    }
+    
+    /**
+     * Validate and sanitize file upload
+     * 
+     * @param array $file $_FILES array entry
+     * @param array $allowedTypes Allowed MIME types
+     * @param int $maxSize Maximum file size in bytes
+     * @return array|false Sanitized file info or false on error
+     */
+    public static function validateFileUpload(array $file, array $allowedTypes = [], int $maxSize = 10485760) {
+        // Check for upload errors
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            self::auditLog('file_upload_error', ['error_code' => $file['error']]);
+            return false;
+        }
+        
+        // Check file size
+        if ($file['size'] > $maxSize) {
+            self::auditLog('file_upload_size_exceeded', ['size' => $file['size'], 'max' => $maxSize]);
+            return false;
+        }
+        
+        // Validate MIME type
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mimeType = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+        
+        if (!empty($allowedTypes) && !in_array($mimeType, $allowedTypes)) {
+            self::auditLog('file_upload_invalid_type', ['type' => $mimeType, 'allowed' => $allowedTypes]);
+            return false;
+        }
+        
+        // Sanitize filename
+        $filename = self::sanitizeInput(basename($file['name']), false);
+        
+        return [
+            'name' => $filename,
+            'type' => $mimeType,
+            'size' => $file['size'],
+            'tmp_name' => $file['tmp_name']
+        ];
     }
 }
 
