@@ -7,35 +7,20 @@ Questo documento descrive tutte le branch attive del repository Semantic MediaWi
 ### `main`
 **Branch principale di produzione**
 
-- **Tecnologie**: JavaScript vanilla (ES6+), D3.js v7, PHP 7.4+
+- **Tecnologie**: TypeScript, D3.js v7, Webpack, PHP 7.4+
 - **Stato**: Stabile, in produzione
 - **Caratteristiche**:
   - Architettura enterprise con classi PHP modulari (Config, Logger, Security, Cache)
-  - JavaScript vanilla senza dipendenze npm/TypeScript
-  - Compatibile con MediaWiki ResourceLoader
-  - Gestione errori migliorata (no alert(), error handling robusto)
-  - Event handling corretto ($(document).ready, event.preventDefault)
-  - Documentazione completa (API, Configuration, Security)
-
-**Quando usare**: Per deployment in produzione senza dipendenze Node.js/TypeScript.
-
----
-
-### `migration-to-ts`
-**Versione TypeScript con architettura modulare**
-
-- **Tecnologie**: TypeScript, D3.js v7, Webpack, npm
-- **Stato**: Sviluppo avanzato, tag `v2-alpha`
-- **Caratteristiche**:
-  - Architettura completamente modulare TypeScript
+  - TypeScript completo con architettura modulare
+  - Build system Webpack per produzione
   - Separazione responsabilità (BLL, Model, UI, API)
   - Type safety completo
-  - Build system con Webpack
   - Componenti separati: ForcesManager, LinkManager, Canvas, NodeManager, LegendManager
-  - API wrapper TypeScript per Semantic MediaWiki
-  - Test framework incluso
+  - Compatibile con MediaWiki ResourceLoader
+  - Gestione errori migliorata (no alert(), error handling robusto)
+  - Documentazione completa (API, Configuration, Security)
 
-**Struttura**:
+**Struttura TypeScript**:
 ```
 includes/js/
 ├── Bll/                    # Business Logic Layer
@@ -46,7 +31,18 @@ includes/js/
 └── app.ts                   # Entry point principale
 ```
 
-**Quando usare**: Per sviluppo futuro con TypeScript, quando si vuole un'architettura più moderna e type-safe.
+**Build**: Il codice TypeScript viene compilato in `dist/main.js` tramite Webpack.
+
+**Quando usare**: Branch principale per produzione. Richiede `npm install` e `npm run build` prima del deployment.
+
+---
+
+### ~~`migration-to-ts`~~ (MERGED)
+**Branch TypeScript mergiata in main**
+
+- **Stato**: ✅ Mergiata in `main` e eliminata
+- **Data merge**: Gennaio 2024
+- **Risultato**: Main ora usa TypeScript completamente
 
 ---
 
