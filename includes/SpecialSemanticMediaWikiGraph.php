@@ -1,80 +1,142 @@
 <?php
+/**
+ * Special page for Semantic MediaWiki Graph visualization
+ * 
+ * @file
+ * @ingroup SemanticMediaWikiGraph
+ */
 
-class SpecialSemanticMediaWikiGraph extends SpecialPage
-{
-    function __construct()
-    {
+use SemanticMediaWikiGraph\Config;
+use SemanticMediaWikiGraph\Security;
+use MediaWiki\Html\Html;
+
+/**
+ * Special page implementation
+ */
+class SpecialSemanticMediaWikiGraph extends SpecialPage {
+    
+    /**
+     * Constructor
+     */
+    public function __construct() {
         parent::__construct('SemanticMediaWikiGraph');
     }
-
-    function getGroupName(): string
-    {
+    
+    /**
+     * Get group name for special page
+     * 
+     * @return string
+     */
+    public function getGroupName(): string {
         return 'smw_group';
     }
-
-    function execute($par)
-    {
-        global $wgOut;
-        global $wgScriptPath;
+    
+    /**
+     * Execute special page
+     * 
+     * @param string|null $par Subpage parameter
+     */
+    public function execute($par) {
         $request = $this->getRequest();
+        $out = $this->getOutput();
+        
         $this->setHeaders();
-//        $wgOut->addModules([ 'mediawiki', 'mediawiki.base', 'mw.util' ]);
-        $wgOut->addModules([ 'ext.SemanticMediaWikiGraph.init' ]);
-
-
-        $html = /** @lang HTML */
-            <<<TAG
-
-<!DOCTYPE html>
-<html>
-
-<head>
-<script src="https://code.jquery.com/jquery-3.6.3.js" integrity="sha256-nQLuAZGRRcILA+6dMBOvcRh5Pe310sBpanc6+QBmyVM=" crossorigin="anonymous"></script>
-
-<link href='{$wgScriptPath}/extensions/SemanticMediaWikiGraph/includes/css/select2.css' rel='stylesheet'/>
-<link href='{$wgScriptPath}/extensions/SemanticMediaWikiGraph/includes/css/screen.css' rel='stylesheet'>
-
-
-</head>
-<title>Title in the Browser</title>
-<body>
-<div class='wrapper' style='dispay:none'>
-
-    <section>
-        <article>
-            <form id="example1" action="javascript:alert('Validation Successful')">
-            <div>
-                <label>Wiki Article<span class='red'>*</span></label>
-                <select id='wikiArticle' class='select2-input'>
-                    <option value=''></option>
-                </select>
-
-            </div>
-            </br>
-            <div>
-                <input type='submit' id='visualiseSite' name='submit' value='Submit'/>
-                <span id='error_msg' style='display:none' class='red'>	Wiki Article is missing</span>
-            </div>
-
-            </form>
-        </article>
-    </section>
-
-</div>
-</br>
-</br>
-<div class='wrapper' id='cluster_chart'>
-    <div class='chart' style='height:600px'></div>
-</div>
-
-</body>
-
-
-</html>
-TAG;
-
-
-        $wgOut->addHTML($html);
+        $this->outputHeader();
+        
+        // Add required modules
+        $out->addModules(['ext.SemanticMediaWikiGraph.init']);
+        
+        // Get configuration values for JavaScript
+        $config = [
+            'maxNodes' => Config::get('MaxNodes', 500),
+            'maxLinks' => Config::get('MaxLinks', 1000),
+            'defaultWidth' => Config::get('DefaultWidth', 1200),
+            'defaultHeight' => Config::get('DefaultHeight', 800),
+            'tooltips' => Config::get('Tooltips', true),
+            'nodeColors' => Config::get('NodeColors', []),
+            'apiUrl' => $this->getConfig()->get('ScriptPath') . '/api.php',
+        ];
+        
+        // Inject configuration into page
+        $out->addInlineScript(
+            'window.SMWGraphConfig = ' . Security::escapeJson($config) . ';'
+        );
+        
+        // Build HTML
+        $html = $this->buildHTML();
+        $out->addHTML($html);
     }
-
+    
+    /**
+     * Build HTML content
+     * 
+     * @return string HTML content
+     */
+    private function buildHTML(): string {
+        $defaultHeight = Config::get('DefaultHeight', 800);
+        
+        return Html::rawElement('div', ['class' => 'smwgraph-container'],
+            Html::rawElement('div', ['class' => 'smwgraph-form-wrapper'],
+                Html::rawElement('section', ['class' => 'smwgraph-form-section'],
+                    Html::rawElement('article', [],
+                        Html::rawElement('form', [
+                            'id' => 'smwgraph-form',
+                            'class' => 'smwgraph-form'
+                        ],
+                            Html::rawElement('div', ['class' => 'smwgraph-form-group'],
+                                Html::rawElement('label', [
+                                    'for' => 'wikiArticle',
+                                    'class' => 'smwgraph-label'
+                                ],
+                                    $this->msg('smwgraph-article-label')->text() .
+                                    Html::rawElement('span', ['class' => 'smwgraph-required'], '*')
+                                ) .
+                                Html::rawElement('select', [
+                                    'id' => 'wikiArticle',
+                                    'class' => 'select2-input smwgraph-select',
+                                    'name' => 'article'
+                                ],
+                                    Html::rawElement('option', ['value' => ''], '')
+                                )
+                            ) .
+                            Html::rawElement('div', ['class' => 'smwgraph-form-actions'],
+                                Html::rawElement('button', [
+                                    'type' => 'submit',
+                                    'id' => 'visualiseSite',
+                                    'class' => 'smwgraph-button smwgraph-button-primary'
+                                ],
+                                    $this->msg('smwgraph-submit-button')->text()
+                                ) .
+                                Html::rawElement('span', [
+                                    'id' => 'error_msg',
+                                    'class' => 'smwgraph-error',
+                                    'style' => 'display:none'
+                                ],
+                                    $this->msg('smwgraph-error-missing-article')->text()
+                                )
+                            ) .
+                            Html::rawElement('div', [
+                                'id' => 'loading_indicator',
+                                'class' => 'smwgraph-loading',
+                                'style' => 'display:none'
+                            ],
+                                Html::rawElement('span', ['class' => 'smwgraph-spinner'], '') .
+                                $this->msg('smwgraph-loading')->text()
+                            )
+                        )
+                    )
+                )
+            ) .
+            Html::rawElement('div', [
+                'id' => 'cluster_chart',
+                'class' => 'smwgraph-chart-wrapper'
+            ],
+                Html::rawElement('div', [
+                    'class' => 'chart smwgraph-chart',
+                    'style' => 'height:' . $defaultHeight . 'px'
+                ], '')
+            )
+        );
+    }
 }
+

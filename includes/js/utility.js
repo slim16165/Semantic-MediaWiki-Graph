@@ -20,35 +20,44 @@ color.Date = '#d62790';
 color.Record = '#8927d6';
 
 
-window.onload = function ()
-{
-
-
+$(document).ready(function () {
     loadWikiArticles();
-    loadScript('select2.full.min.js');
+    // loadScript('select2.full.min.js'); // Already loaded via ResourceLoader
 
-
-    $(function () {
-        $('#visualiseSite').click(function () {
-            if ($("#wikiArticle").val() === "") {
-                //Error Message
-                $('#error_msg').show();
-            } else {
-                $('#error_msg').hide();
-                exec($('#wikiArticle').val());
-            }
-        });
+    $('#visualiseSite').click(function (event) {
+        event.preventDefault();
+        if ($("#wikiArticle").val() === "") {
+            //Error Message
+            $('#error_msg').show();
+        } else {
+            $('#error_msg').hide();
+            exec($('#wikiArticle').val());
+        }
     });
-};
+});
 
-function loadScript(name) {
-    $.getScript('/extensions/SemanticMediaWikiGraph/includes/js/' + name, function (data, textStatus, jqxhr)
-    {
-        console.log(name + " loaded");
-    });
-}
+// noinspection JSForgottenDebugStatementInspection
+// function loadScript(name) {
+//     $.getScript('/extensions/SemanticMediaWikiGraph/includes/js/' + name, function (data, textStatus, jqxhr)
+//     {
+//         console.log(name + " loaded");
+//     });
+// }
 
+/**
+ * Executes the main graph visualization for a given wiki article
+ * Fetches semantic data from MediaWiki API and renders the graph
+ * 
+ * @param {string} wikiArticle - The title of the wiki article to visualize
+ * @throws {Error} If API call fails or returns invalid data
+ */
 function exec(wikiArticle) {
+    if (!wikiArticle || typeof wikiArticle !== 'string') {
+        console.error('Invalid wikiArticle parameter');
+        $('#error_msg').text('Invalid article name').show();
+        return;
+    }
+    
     done = [];
     $.ajax({
         url: mw.util.wikiScript('api'),
@@ -62,8 +71,9 @@ function exec(wikiArticle) {
             if (data && data.edit && data.edit.result === 'Success') {
                 // debugger;
             } else if (data && data.error) {
-                alert(data);
-                // debugger;
+                // Show error message instead of alert
+                $('#error_msg').text(data.error.info || 'An error occurred').show();
+                console.error('API Error:', data.error);
             } else {
                 nodeSet = [];
                 linkSet = [];
@@ -146,7 +156,18 @@ function exec(wikiArticle) {
 
 }
 
+/**
+ * Maps Semantic MediaWiki property names and types to display names
+ * 
+ * @param {string} name - Property name (e.g., "_wpg", "_uri", "_boo")
+ * @param {number} type - Property type code (fallback if name not recognized)
+ * @returns {string} Display name for the node type (e.g., "Internal Link", "URI", "Boolean")
+ */
 function getNodeTypeName(name, type) {
+    if (!name) {
+        return "Unknown Type";
+    }
+    
     let result = "";
     switch (name) {
         case "_boo":
@@ -221,7 +242,17 @@ function getNodeTypeName(name, type) {
 }
 
 
+/**
+ * Converts Semantic MediaWiki property codes to human-readable names
+ * 
+ * @param {string} name - Property code (e.g., "_wpg", "_uri")
+ * @returns {string} Human-readable property name
+ */
 function nicePropertyName(name) {
+    if (!name) {
+        return "";
+    }
+    
     let result = "";
     switch (name) {
         case "_boo":
@@ -276,7 +307,17 @@ function nicePropertyName(name) {
 }
 
 
+/**
+ * Expands the graph by fetching and adding nodes for a clicked article
+ * 
+ * @param {string} wikiArticle - The title of the article to expand
+ */
 function askNode(wikiArticle) {
+    if (!wikiArticle || typeof wikiArticle !== 'string') {
+        console.error('Invalid wikiArticle parameter in askNode');
+        return;
+    }
+    
     $.ajax({
         url: mw.util.wikiScript('api'),
         data: {
@@ -289,8 +330,9 @@ function askNode(wikiArticle) {
             if (data && data.edit && data.edit.result === 'Success') {
                 // debugger;
             } else if (data && data.error) {
-                alert(data);
-                // debugger;
+                // Show error message instead of alert
+                $('#error_msg').text(data.error.info || 'An error occurred').show();
+                console.error('API Error:', data.error);
             } else {
                 done.push(wikiArticle);
 
@@ -410,8 +452,9 @@ function backlinks(wikiArticle) {
             if (data && data.edit && data.edit.result === 'Success') {
                 // debugger;
             } else if (data && data.error) {
-                alert(data);
-                // debugger;
+                // Show error message instead of alert
+                $('#error_msg').text(data.error.info || 'An error occurred').show();
+                console.error('API Error:', data.error);
             } else {
                 for (let i = 0; i < data.query.backlinks.length; i++) {
 
@@ -456,6 +499,10 @@ function cloneEdge(array) {
 }
 
 
+/**
+ * Loads all wiki articles and populates the Select2 dropdown
+ * Fetches article list from MediaWiki API
+ */
 function loadWikiArticles() {
     $.ajax({
         url: mw.util.wikiScript('api'),
@@ -489,7 +536,17 @@ function loadWikiArticles() {
     });
 }
 
+/**
+ * Returns the color for a given node type
+ * 
+ * @param {string} type - Node type (e.g., "Internal Link", "URI", "Boolean")
+ * @returns {string} Hex color code for the type, or undefined if not found
+ */
 function colorScaleMW(type) {
+    if (!type || !color[type]) {
+        console.warn('Color not found for type:', type);
+        return '#cccccc'; // Default gray color
+    }
     return color[type];
 }
 

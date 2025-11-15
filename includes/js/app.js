@@ -1,24 +1,40 @@
+/**
+ * Draws an interactive force-directed graph cluster visualization
+ * 
+ * @param {string} drawingName - A unique drawing identifier (no spaces, ".", or "#" characters)
+ * @param {string} focalNode - Primary node of context (the central node)
+ * @param {Array<Object>} nodeSetApp - Set of nodes with their relevant data (id, name, type, hlink, etc.)
+ * @param {Array<Object>} linkSetApp - Set of links with their relevant data (sourceId, targetId, linkName)
+ * @param {string} selectString - D3 selector string for the container element (e.g., "#cluster_chart .chart")
+ * @param {string} colors - Color scale identifier. Valid values:
+ *   - "colorScale10" - D3 category10 scale
+ *   - "colorScale20" - D3 category20 scale
+ *   - "colorScale20b" - D3 category20b scale
+ *   - "colorScale20c" - D3 category20c scale (default)
+ * @throws {Error} If selectString element is not found or invalid
+ * 
+ * @example
+ * drawCluster('Drawing1', 'Article_Name', nodes, links, '#cluster_chart .chart', 'colorScale20');
+ */
 function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectString, colors) {
 
-    // drawingName => A unique drawing identifier that has no spaces, no "." and no "#" characters.
-    // focalNode => Primary Node of Context.
-    // nodeSetApp => Set of nodes and their relevant data.
-    // linkSetApp => Set of links and their relevant data.
-    // selectString => String that allows you to pass in
-    //           a D3 select string.
-    // colors => String to set color scale.  Values can be...
-    //           => "colorScale10"
-    //           => "colorScale20"
-    //           => "colorScale20b"
-    //           => "colorScale20c"
-    // margin => Integer margin offset value.
-    // outerRadius => Integer outer radius value.
-    // innerRadius => Integer inner radius value.
-    // sortArcs => Controls sorting of Arcs by value.
-    //              0 = No Sort.  Maintain original order.
-    //              1 = Sort by arc value size.
+    // Validate inputs
+    if (!selectString || !$(selectString).length) {
+        console.error('Invalid selectString or element not found:', selectString);
+        return;
+    }
+    
+    if (!nodeSetApp || !Array.isArray(nodeSetApp)) {
+        console.error('Invalid nodeSetApp: must be an array');
+        return;
+    }
+    
+    if (!linkSetApp || !Array.isArray(linkSetApp)) {
+        console.error('Invalid linkSetApp: must be an array');
+        return;
+    }
 
-    // Color Scale Handling...
+    // Color Scale Handling - Initialize D3 color scale based on parameter
     var colorScale = d3.scale.category20c();
     switch (colors) {
         case "colorScale10":
@@ -36,7 +52,6 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
         default:
             colorScale = d3.scale.category20c();
     }
-    ;
 
     var width = $(".chart")[0].clientWidth;
     var height = $(".chart")[0].clientHeight;
@@ -45,65 +60,67 @@ function drawCluster(drawingName, focalNode, nodeSetApp, linkSetApp, selectStrin
     var color_hash = [];
     var scale = 1;
 
+    /**
+     * Handles click events on legend items to toggle node visibility
+     * @this {d3.Selection} - The clicked legend element
+     */
     var clickLegend = function () {
+        try {
+            var thisObject = d3.select(this);
+            var typeValue = thisObject.attr("type_value");
+            if (!typeValue) {
+                console.warn('Legend click: type_value attribute not found');
+                return;
+            }
+            
+            var strippedTypeValue = typeValue.replace(/ /g, "_");
+            var colorValue = thisObject.attr("color_value");
 
-        var thisObject = d3.select(this);
-        var typeValue = thisObject.attr("type_value");
-        var strippedTypeValue = typeValue.replace(/ /g, "_");
-        var colorValue = thisObject.attr("color_value");
-        var k = d3.selectAll(".node [type_value='" + typeValue + "']");
-
-        var legendBulletSelector = "." + "legendBullet-" + strippedTypeValue;
-        //    var selectedBullet = d3.selectAll(legendBulletSelector);
-        //  selectedBullet.style("fill", "none");
-        //    selectedBullet.style("stroke", colorValue);
-        //    selectedBullet.style("stroke-width", "3");
-        //  debugger;
-        //      $(".node [type_value='" + typeValue + "']").toggle();
-        //  [type_value='" + typeValue + "']")
-        //      var lis = $(".node");
-        var invIndexType = invisibleType.indexOf(typeValue);
-        if (invIndexType > -1) {
-            invisibleType.splice(typeValue, 1);
-        } else {
-            invisibleType.push(typeValue);
-        }
-        $(".node").each(function (index, el) {
-            if (el.__data__.type === typeValue) {
-                var invIndex = invisibleNode.indexOf(el.__data__.id);
-                if (invIndex > -1) {
-                    invisibleNode.splice(invIndex, 1);
-                } else {
-                    invisibleNode.push(el.__data__.id);
+            // Toggle visibility state for this type
+            var invIndexType = invisibleType.indexOf(typeValue);
+            if (invIndexType > -1) {
+                invisibleType.splice(invIndexType, 1);
+            } else {
+                invisibleType.push(typeValue);
+            }
+            
+            // Toggle visibility of nodes with matching type
+            $(".node").each(function (index, el) {
+                if (el.__data__ && el.__data__.type === typeValue) {
+                    var invIndex = invisibleNode.indexOf(el.__data__.id);
+                    if (invIndex > -1) {
+                        invisibleNode.splice(invIndex, 1);
+                    } else {
+                        invisibleNode.push(el.__data__.id);
+                    }
+                    $(this).toggle();
                 }
-                $(this).toggle();
-            }
+            });
 
-        });
+            // Toggle visibility of links connected to affected nodes
+            $(".gLink").each(function (index, el) {
+                if (!el.__data__) return;
+                
+                var valSource = el.__data__.sourceId;
+                var valTarget = el.__data__.targetId;
+                var indexSource = invisibleNode.indexOf(valSource);
+                var indexTarget = invisibleNode.indexOf(valTarget);
+                var edgeKey = valSource + "_" + valTarget + "_" + el.__data__.linkName;
+                var indexEdge = invisibleEdge.indexOf(edgeKey);
 
-        $(".gLink").each(function (index, el) {
-            //      debugger;
-            var valSource = el.__data__.sourceId;
-            var valTarget = el.__data__.targetId;
-            //if beide
-            var indexSource = invisibleNode.indexOf(valSource);
-            var indexTarget = invisibleNode.indexOf(valTarget);
-            var indexEdge = invisibleEdge.indexOf(valSource + "_" + valTarget + "_" + el.__data__.linkName);
-
-            if ((indexSource > -1 || indexTarget > -1) && indexEdge === -1) {
-                //Einer der beiden Knoten ist unsichtbar, aber Kante noch nicht
-                $(this).toggle();
-                invisibleEdge.push(valSource + "_" + valTarget + "_" + el.__data__.linkName);
-            } else if (indexSource === -1 && indexTarget === -1 && indexEdge === -1) {
-                //Beide Knoten sind nicht unsichtbar und Kante ist nicht unsichtbar
-            } else if (indexSource === -1 && indexTarget === -1 && indexEdge > -1) {
-                //Knoten sind nicht unsichtbar, aber Kante ist es
-                $(this).toggle();
-                invisibleEdge.splice(indexEdge, 1);
-            }
-
-        });
-
+                if ((indexSource > -1 || indexTarget > -1) && indexEdge === -1) {
+                    // One or both nodes are invisible, but edge is not yet hidden
+                    $(this).toggle();
+                    invisibleEdge.push(edgeKey);
+                } else if (indexSource === -1 && indexTarget === -1 && indexEdge > -1) {
+                    // Both nodes are visible, but edge is still hidden
+                    $(this).toggle();
+                    invisibleEdge.splice(indexEdge, 1);
+                }
+            });
+        } catch (error) {
+            console.error('Error in clickLegend:', error);
+        }
     };
 
     var typeMouseOver = function () {

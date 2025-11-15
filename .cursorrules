@@ -1,0 +1,30 @@
+## Verifica Directory Corrente
+
+PRIMA di eseguire comandi che dipendono dalla directory corrente (git, file operations, ecc.):
+- SEMPRE verificare la directory corrente con `Get-Location` (PowerShell) o `pwd` (bash)
+- SEMPRE fare un `cd` esplicito alla directory del progetto se necessario
+- MAI assumere che la shell sia già nella directory corretta
+- Se il workspace path è noto, usarlo esplicitamente: `cd "C:\Users\g.salvi\Dropbox\Siti internet\Altri siti\Semantic-MediaWiki-Graph"`
+
+## Prevenzione blocchi script Python e terminale
+
+Quando scrivi o modifichi script Python:
+- MAI usare `input()` in script automatizzati - usa sempre flag da riga di comando (--yes, --force, ecc.)
+- SEMPRE aggiungere `timeout=` a `subprocess.run()` (es: `timeout=300`)
+- Per file grandi (>10MB o >10k righe), processare in chunk/streaming invece di caricare tutto in memoria
+- Usare `--dry-run` o flag simili per evitare conferme interattive
+
+Quando esegui comandi terminale:
+- Evitare comandi che possono bloccarsi indefinitamente (grep su file enormi, operazioni senza timeout)
+- Per file molto grandi, usare comandi con limiti (head, tail, o limit nei tool)
+- Preferire comandi asincroni o con timeout quando possibile
+
+## File System
+
+- Per le ricerche nel file system ricordati di usare `es` (comando user disponibile nel profilo PowerShell che punta a `C:\Program Files\Everything\es.exe`), anche dagli scripty python che è velocissimo
+- Il comando `es` è configurato come funzione nel profilo PowerShell e può essere usato direttamente
+
+## Lingua
+
+- Always respond in Italiano
+

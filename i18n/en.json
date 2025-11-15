@@ -1,0 +1,18 @@
+{
+	"@metadata": {
+		"authors": ["Tobias Weller", "Enterprise Contributors"]
+	},
+	"smwgraph-desc": "Provides special pages for browsing Semantic MediaWiki links with enterprise features.",
+	"smwgraph-article-label": "Wiki Article",
+	"smwgraph-submit-button": "Visualize",
+	"smwgraph-error-missing-article": "Wiki Article is required",
+	"smwgraph-loading": "Loading...",
+	"smwgraph-error-invalid-input": "Invalid input provided",
+	"smwgraph-error-api-failed": "Failed to fetch data from API",
+	"smwgraph-error-rate-limited": "Rate limit exceeded. Please try again later.",
+	"smwgraph-error-network": "Network error occurred",
+	"smwgraph-error-unknown": "An unknown error occurred",
+	"smwgraph-no-data": "No data available for this article",
+	"smwgraph-legend-title": "Color Keys for Data Types"
+}
+
