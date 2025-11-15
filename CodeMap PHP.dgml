@@ -1,0 +1,292 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<DirectedGraph DataVirtualized="True" xmlns="http://schemas.microsoft.com/vs/2009/dgml">
+  <Nodes>
+    <Node Id="6db44599-7341-4939-90a8-351722c087591" Category="Comment" Bounds="16.3566636149091,-329.809996948242,50,25.96" Label="for" UseManualLocation="True" />
+    <Node Id="8deb6e82-ebec-4d14-bac5-a8c7d2fed3391" Category="Comment" Bounds="372.356663614909,110.990003051758,246.34,137.68" Label="private static LinkInit(link: Link) {&#xD;&#xA;        link.source = NodeStore.getNodeById(link.sourceId);&#xD;&#xA;        link.target = NodeStore.getNodeById(link.targetId);&#xD;&#xA;        link.direction = link.sourceId === MyClass.focalNodeID ? &quot;OUT&quot; : &quot;IN&quot;;&#xD;&#xA;    }" UseManualLocation="True" />
+    <Node Id="AddMainArticle_BrowseBySubject" Bounds="-135.304168866475,-218.600002746582,196.87,25.96" UseManualLocation="True" />
+    <Node Id="BacklinksCallback" Bounds="-304.818333333333,29.58,112.17,25.96" UseManualLocation="True" />
+    <Node Id="For" Category="Comment" Bounds="841.156663614909,-113.809996948242,50,25.96" Label="for" UseManualLocation="True" />
+    <Node Id="ForceFirstElemUrlBrowseBySubject" Bounds="584.099991455078,-131.512725008869,201.72,25.96" UseManualLocation="True" />
+    <Node Id="InitNodeAndLinks_Backlinks" Bounds="-108.185003051758,36.6299030519579,167.44,25.96" UseManualLocation="True" />
+    <Node Id="MyClass.getNodesAndLinksBrowseBySubject" Bounds="172.9,-57.8,209.676666666667,25.96" Label="getNodesAndLinksBrowseBySubject" UseManualLocation="True" />
+    <Node Id="NewINodeNewLinkNodeSet.push(node)LinkSet.push(link)" Category="Comment" Bounds="141.156663614909,9.46995063476566,126.61,73.84" Label="new INode&#xD;&#xA;new Link&#xD;&#xA;nodeSet.push(node)&#xD;&#xA;linkSet.push(link)" UseManualLocation="True" />
+    <Node Id="NodeSet.push" Category="Comment" Bounds="228.356663614909,-218.609996948242,92.2066666666667,25.96" Label="nodeSet.push" UseManualLocation="True" />
+    <Node Id="NodeSet.push(node)LinkSet.push(link)" Category="Comment" Bounds="676.356712646484,36.3675749911308,126.61,41.92" Label="nodeSet.push(node)&#xD;&#xA;linkSet.push(link)" UseManualLocation="True" />
+    <Node Id="NodeStore.InitialSetup" Bounds="-318.585003051758,123.790003051958,138.92,25.96" UseManualLocation="True" />
+    <Node Id="NodeStore.LinkInit" Bounds="154.214996337891,127.710050634766,117.75,25.96" UseManualLocation="True" />
+    <Node Id="ParseLinkBrowseBySubject" Bounds="656.900019124349,-19.5925250088692,159.093333333333,25.96" UseManualLocation="True" />
+    <Node Id="ParseNodeBrowseBySubject1" Bounds="185.7,-319.360099999844,173.603333333333,25.96" UseManualLocation="True" />
+    <Node Id="ParseNodeBrowseBySubject2" Bounds="637.55333028255,-75.5526261138916,173.603333333333,25.96" UseManualLocation="True" />
+    <Node Id="PopulateSelectorWithWikiArticleUi" Bounds="-443.2,-311.2,201.876666666667,25.96" UseManualLocation="True" />
+    <Node Id="SemanticWikiApi.IsSpecialProperty" Bounds="176.1,-140.999999999844,202.44,25.96" UseManualLocation="True" />
+    <Node Id="SemanticWikiApi.QueryBackLinks" Bounds="-440.780835533142,-221.010003356934,194.676666666667,25.96" UseManualLocation="True" />
+    <Node Id="Utility.drawCluster" Bounds="-306.585003051758,182.990003051758,116.26,25.96" UseManualLocation="True" />
+    <Node Id="Utility.drawCluster1" Bounds="-402.585003051758,-156.209996948242,116.26,25.96" Label="Utility.drawCluster" UseManualLocation="True" />
+  </Nodes>
+  <Links>
+    <Link Source="6db44599-7341-4939-90a8-351722c087591" Target="AddMainArticle_BrowseBySubject" Bounds="-22.5609752102961,-303.849996948242,54.7874224908066,77.888706892016" />
+    <Link Source="8deb6e82-ebec-4d14-bac5-a8c7d2fed3391" Target="NodeStore.LinkInit" Bounds="280.879802097544,150.0843281546,91.4768615173653,12.6768263186917" />
+    <Link Source="AddMainArticle_BrowseBySubject" Target="ParseNodeBrowseBySubject1" Bounds="2.98424091266401,-290.612957515438,221.10645576347,72.012954768856" />
+    <Link Source="BacklinksCallback" Target="InitNodeAndLinks_Backlinks" Bounds="-192.648329772949,44.3230379119424,75.4677701822651,2.3723393462941" />
+    <Link Source="BacklinksCallback" Target="NodeStore.InitialSetup" Bounds="-249.033620313634,55.5399985122681,0.246327277439008,59.2500873523773" />
+    <Link Source="For" Target="ParseNodeBrowseBySubject2" Bounds="781.154931023668,-94.0851230125064,60.0017325912413,16.1881648901458" />
+    <Link Source="ForceFirstElemUrlBrowseBySubject" Target="ParseNodeBrowseBySubject2" Bounds="694.097702155774,-105.552722473145,15.9387645390674,22.6408091144029" />
+    <Link Source="MyClass.getNodesAndLinksBrowseBySubject" Target="ForceFirstElemUrlBrowseBySubject" Bounds="349.445594780655,-103.949652536242,254.951063858178,46.1496528414175" />
+    <Link Source="NewINodeNewLinkNodeSet.push(node)LinkSet.push(link)" Target="InitNodeAndLinks_Backlinks" Bounds="68.2541059026018,47.2803631223915,72.9025563898787,1.02540507856545" />
+    <Link Source="NodeSet.push" Target="AddMainArticle_BrowseBySubject" Bounds="70.565831128887,-205.628517211946,157.790834622252,0.00506551180433235" />
+    <Link Source="NodeSet.push" Target="SemanticWikiApi.IsSpecialProperty" Bounds="274.938325440414,-192.649997253418,1.57192123445367,42.6561015711616" />
+    <Link Source="NodeSet.push(node)LinkSet.push(link)" Target="ParseLinkBrowseBySubject" Bounds="737.551309986434,15.3561193268245,1.05649497315824,21.0114556643063" />
+    <Link Source="NodeStore.InitialSetup" Target="NodeStore.LinkInit" Bounds="-179.665,137.359096984448,324.880319992058,2.75530362014678" />
+    <Link Source="NodeStore.InitialSetup" Target="Utility.drawCluster" Bounds="-248.978098629596,149.750008087158,0.274343077265712,24.2405712970927" />
+    <Link Source="ParseNodeBrowseBySubject1" Target="NodeSet.push" Bounds="272.753965712426,-293.400099999844,1.27882965909777,65.7918024426245" />
+    <Link Source="ParseNodeBrowseBySubject2" Target="ParseLinkBrowseBySubject" Bounds="727.159675961655,-49.5926261138916,4.58150597690826,21.2031206838823" />
+    <Link Source="PopulateSelectorWithWikiArticleUi" Target="AddMainArticle_BrowseBySubject" Bounds="-299.453967703827,-285.240016479492,211.164311240865,64.0284793154091" />
+    <Link Source="PopulateSelectorWithWikiArticleUi" Target="SemanticWikiApi.QueryBackLinks" Bounds="-343.154736990975,-285.240016479492,0.723114464273579,55.230784395969" />
+    <Link Source="SemanticWikiApi.IsSpecialProperty" Target="MyClass.getNodesAndLinksBrowseBySubject" Bounds="277.385270203647,-115.040000457764,0.242549210921709,48.2401142171805" />
+    <Link Source="SemanticWikiApi.QueryBackLinks" Target="Utility.drawCluster1" Bounds="-344.111580798398,-195.050006408691,0.466269913132066,29.8411079043949" />
+  </Links>
+  <Categories>
+    <Category Id="Comment" Label="Comment" Description="Represents a user defined comment on the diagram" CanBeDataDriven="True" IsProviderRoot="False" NavigationActionLabel="Comments" />
+  </Categories>
+  <Properties>
+    <Property Id="Bounds" DataType="System.Windows.Rect" />
+    <Property Id="CanBeDataDriven" Label="CanBeDataDriven" Description="CanBeDataDriven" DataType="System.Boolean" />
+    <Property Id="DataVirtualized" Label="Data Virtualized" Description="If true, the graph can contain nodes and links that represent data for virtualized nodes/links (i.e. not actually created in the graph)." DataType="System.Boolean" />
+    <Property Id="Expression" DataType="System.String" />
+    <Property Id="GroupLabel" DataType="System.String" />
+    <Property Id="IsEnabled" DataType="System.Boolean" />
+    <Property Id="IsProviderRoot" Label="IsProviderRoot" Description="IsProviderRoot" DataType="System.Boolean" />
+    <Property Id="Label" Label="Label" Description="Displayable label of an Annotatable object" DataType="System.String" />
+    <Property Id="NavigationActionLabel" Label="NavigationActionLabel" Description="NavigationActionLabel" DataType="System.String" />
+    <Property Id="TargetType" DataType="System.Type" />
+    <Property Id="UseManualLocation" DataType="System.Boolean" />
+    <Property Id="Value" DataType="System.String" />
+    <Property Id="ValueLabel" DataType="System.String" />
+    <Property Id="Visibility" Label="Visibility" Description="Defines whether a node in the graph is visible or not" DataType="System.Windows.Visibility" />
+  </Properties>
+  <Styles>
+    <Style TargetType="Node" GroupLabel="Results" ValueLabel="True">
+      <Condition Expression="HasCategory('QueryResult')" />
+      <Setter Property="Background" Value="#FFBCFFBE" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Test Project" ValueLabel="Test Project">
+      <Condition Expression="HasCategory('CodeMap_TestProject')" />
+      <Setter Property="Icon" Value="CodeMap_TestProject" />
+      <Setter Property="Background" Value="#FF307A69" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Web Project" ValueLabel="Web Project">
+      <Condition Expression="HasCategory('CodeMap_WebProject')" />
+      <Setter Property="Icon" Value="CodeMap_WebProject" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Windows Store Project" ValueLabel="Windows Store Project">
+      <Condition Expression="HasCategory('CodeMap_WindowsStoreProject')" />
+      <Setter Property="Icon" Value="CodeMap_WindowsStoreProject" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Phone Project" ValueLabel="Phone Project">
+      <Condition Expression="HasCategory('CodeMap_PhoneProject')" />
+      <Setter Property="Icon" Value="CodeMap_PhoneProject" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Portable Library" ValueLabel="Portable Library">
+      <Condition Expression="HasCategory('CodeMap_PortableLibraryProject')" />
+      <Setter Property="Icon" Value="CodeMap_PortableLibraryProject" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="WPF Project" ValueLabel="WPF Project">
+      <Condition Expression="HasCategory('CodeMap_WpfProject')" />
+      <Setter Property="Icon" Value="CodeMap_WpfProject" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="VSIX Project" ValueLabel="VSIX Project">
+      <Condition Expression="HasCategory('CodeMap_VsixProject')" />
+      <Setter Property="Icon" Value="CodeMap_VsixProject" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Modeling Project" ValueLabel="Modeling Project">
+      <Condition Expression="HasCategory('CodeMap_ModelingProject')" />
+      <Setter Property="Icon" Value="CodeMap_ModelingProject" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Assembly" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Assembly')" />
+      <Setter Property="Background" Value="#FF094167" />
+      <Setter Property="Stroke" Value="#FF094167" />
+      <Setter Property="Icon" Value="CodeSchema_Assembly" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Namespace" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Namespace')" />
+      <Setter Property="Background" Value="#FF0E619A" />
+      <Setter Property="Stroke" Value="#FF0E619A" />
+      <Setter Property="Icon" Value="CodeSchema_Namespace" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Interface" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Interface')" />
+      <Setter Property="Background" Value="#FF1382CE" />
+      <Setter Property="Stroke" Value="#FF1382CE" />
+      <Setter Property="Icon" Value="CodeSchema_Interface" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Struct" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Struct')" />
+      <Setter Property="Background" Value="#FF1382CE" />
+      <Setter Property="Stroke" Value="#FF1382CE" />
+      <Setter Property="Icon" Value="CodeSchema_Struct" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Enumeration" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Enum')" />
+      <Setter Property="Background" Value="#FF1382CE" />
+      <Setter Property="Stroke" Value="#FF1382CE" />
+      <Setter Property="Icon" Value="CodeSchema_Enum" />
+      <Setter Property="LayoutSettings" Value="List" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Delegate" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Delegate')" />
+      <Setter Property="Background" Value="#FF1382CE" />
+      <Setter Property="Stroke" Value="#FF1382CE" />
+      <Setter Property="Icon" Value="CodeSchema_Delegate" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Class" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Type')" />
+      <Setter Property="Background" Value="#FF0E70C0" />
+      <Setter Property="Stroke" Value="#FF0E70C0" />
+      <Setter Property="Icon" Value="CodeSchema_Class" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Property" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Property')" />
+      <Setter Property="Background" Value="#FFE0E0E0" />
+      <Setter Property="Stroke" Value="#FFE0E0E0" />
+      <Setter Property="Icon" Value="CodeSchema_Property" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Method" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Method') Or HasCategory('CodeSchema_CallStackUnresolvedMethod')" />
+      <Setter Property="Background" Value="#FFE0E0E0" />
+      <Setter Property="Stroke" Value="#FFE0E0E0" />
+      <Setter Property="Icon" Value="CodeSchema_Method" />
+      <Setter Property="LayoutSettings" Value="List" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Event" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Event')" />
+      <Setter Property="Background" Value="#FFE0E0E0" />
+      <Setter Property="Stroke" Value="#FFE0E0E0" />
+      <Setter Property="Icon" Value="CodeSchema_Event" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Field" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Field')" />
+      <Setter Property="Background" Value="#FFE0E0E0" />
+      <Setter Property="Stroke" Value="#FFE0E0E0" />
+      <Setter Property="Icon" Value="CodeSchema_Field" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Out Parameter" ValueLabel="Has category">
+      <Condition Expression="CodeSchemaProperty_IsOut = 'True'" />
+      <Setter Property="Icon" Value="CodeSchema_OutParameter" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Parameter" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Parameter')" />
+      <Setter Property="Icon" Value="CodeSchema_Parameter" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Local Variable" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_LocalExpression')" />
+      <Setter Property="Icon" Value="CodeSchema_LocalExpression" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Externals" ValueLabel="Has category">
+      <Condition Expression="HasCategory('Externals')" />
+      <Setter Property="Background" Value="#FF424242" />
+      <Setter Property="Stroke" Value="#FF424242" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Inherits From" ValueLabel="True">
+      <Condition Expression="HasCategory('InheritsFrom')" />
+      <Setter Property="Stroke" Value="#FF00A600" />
+      <Setter Property="StrokeDashArray" Value="2 0" />
+      <Setter Property="DrawArrow" Value="true" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Implements" ValueLabel="True">
+      <Condition Expression="HasCategory('Implements')" />
+      <Setter Property="Stroke" Value="#8000A600" />
+      <Setter Property="StrokeDashArray" Value="2 2" />
+      <Setter Property="DrawArrow" Value="true" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Calls" ValueLabel="True">
+      <Condition Expression="HasCategory('CodeSchema_Calls')" />
+      <Setter Property="Stroke" Value="#FFFF00FF" />
+      <Setter Property="StrokeDashArray" Value="2 0" />
+      <Setter Property="DrawArrow" Value="true" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Function Pointer" ValueLabel="True">
+      <Condition Expression="HasCategory('CodeSchema_FunctionPointer')" />
+      <Setter Property="Stroke" Value="#FFFF00FF" />
+      <Setter Property="StrokeDashArray" Value="2 2" />
+      <Setter Property="DrawArrow" Value="true" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Field Read" ValueLabel="True">
+      <Condition Expression="HasCategory('CodeSchema_FieldRead')" />
+      <Setter Property="Stroke" Value="#FF00AEEF" />
+      <Setter Property="StrokeDashArray" Value="2 2" />
+      <Setter Property="DrawArrow" Value="true" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Field Write" ValueLabel="True">
+      <Condition Expression="HasCategory('CodeSchema_FieldWrite')" />
+      <Setter Property="Stroke" Value="#FF00AEEF" />
+      <Setter Property="DrawArrow" Value="true" />
+      <Setter Property="IsHidden" Value="false" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Inherits From" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="HasCategory('InheritsFrom') And Target.HasCategory('CodeSchema_Class')" />
+      <Setter Property="TargetDecorator" Value="OpenArrow" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Implements" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="HasCategory('Implements') And Target.HasCategory('CodeSchema_Interface')" />
+      <Setter Property="TargetDecorator" Value="OpenArrow" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Comment Link" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="Source.HasCategory('Comment')" />
+      <Setter Property="Stroke" Value="#FFE5C365" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Cursor Location Changed" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="IsCursorLocation" />
+      <Setter Property="IndicatorWest" Value="WestIndicator" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Disabled Breakpoint Location Changed" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="DisabledBreakpointCount" />
+      <Setter Property="IndicatorWest" Value="WestIndicator" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Enabled Breakpoint Location Changed" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="EnabledBreakpointCount" />
+      <Setter Property="IndicatorWest" Value="WestIndicator" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Instruction Pointer Location Changed" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="IsInstructionPointerLocation" />
+      <Setter Property="IndicatorWest" Value="WestIndicator" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Current Callstack Changed" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="IsCurrentCallstackFrame" />
+      <Setter Property="IndicatorWest" Value="WestIndicator" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Return" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="HasCategory('CodeSchema_ReturnTypeLink')" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="References" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="HasCategory('References')" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Uses Attribute" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="HasCategory('CodeSchema_AttributeUse')" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Solution Folder" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="HasCategory('CodeMap_SolutionFolder')" />
+      <Setter Property="Background" Value="#FFDEBA83" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Project Reference" ValueLabel="Project Reference">
+      <Condition Expression="HasCategory('CodeMap_ProjectReference')" />
+      <Setter Property="Stroke" Value="#9A9A9A" />
+      <Setter Property="StrokeDashArray" Value="2 2" />
+      <Setter Property="DrawArrow" Value="true" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="External Reference" ValueLabel="External Reference">
+      <Condition Expression="HasCategory('CodeMap_ExternalReference')" />
+      <Setter Property="Stroke" Value="#9A9A9A" />
+      <Setter Property="StrokeDashArray" Value="2 2" />
+      <Setter Property="DrawArrow" Value="true" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Comment" ValueLabel="Has comment">
+      <Condition Expression="HasCategory('Comment')" />
+      <Setter Property="Background" Value="#FFFFFACD" />
+      <Setter Property="Stroke" Value="#FFE5C365" />
+      <Setter Property="StrokeThickness" Value="1" />
+      <Setter Property="NodeRadius" Value="2" />
+      <Setter Property="MaxWidth" Value="250" />
+    </Style>
+  </Styles>
+</DirectedGraph>

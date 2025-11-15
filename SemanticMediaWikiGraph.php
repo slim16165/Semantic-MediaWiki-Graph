@@ -70,11 +70,10 @@ $wgHooks['BeforePageDisplay'][] = function($out) {
     return true;
 };
 
-// Register resource modules with proper dependencies
+// Register resource modules with TypeScript build output
 $wgResourceModules['ext.SemanticMediaWikiGraph.init'] = [
     'scripts' => [
-        'includes/js/app.js',
-        'includes/js/utility.js',
+        'dist/main.js',
     ],
     'dependencies' => [
         'jquery',

@@ -139,4 +139,3 @@ class SpecialSemanticMediaWikiGraph extends SpecialPage {
         );
     }
 }
-

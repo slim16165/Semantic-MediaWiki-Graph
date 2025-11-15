@@ -1,0 +1,11 @@
+{
+  "plugins": [
+    ["transform-imports", {
+      "d3-selection": {
+        "transform": "d3-selection/src/index.js",
+        "preventFullImport": true,
+        "skipDefaultConversion": true
+      }
+    }]
+  ]
+}

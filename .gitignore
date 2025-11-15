@@ -1,2 +1,13 @@
 /node_modules
 /package-lock.json
+/obj/Debug/
+*.vsidx
+/dist/main.js.map
+/includes/js/*.d.ts
+/includes/js/*.d.ts.map
+/includes/js/*.js
+/src/index.ts
+/index.html
+.vs/
+.idea/
+megalinter-reports/
