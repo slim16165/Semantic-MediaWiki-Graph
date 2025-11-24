@@ -29,7 +29,7 @@
     "@typescript-eslint/parser": "^5.47.1",
     "@webpack-cli/generators": "^3.0.1",
     "clean-webpack-plugin": "^4.0.0",
-    "eslint": "^8.30.0",
+    "eslint": "^9.39.1",
     "jest": "^29.3.1",
     "mediawiki-api": "^0.1.8",
     "prettier": "^2.8.1",
